@@ -6,9 +6,13 @@
 coverage
 coverage.lcov
 docs
+lefthook.yml
 node_modules
 playwright-report
+playwright.config.ts
+renovate.json
 test-results
+tests
 .env
 .env.*
 !.env.example
