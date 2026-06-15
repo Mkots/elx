@@ -1,0 +1,29 @@
+FROM denoland/deno:debian-2.8.3 AS dependencies
+
+WORKDIR /app
+
+COPY deno.json deno.lock deps.ts ./
+RUN deno cache --frozen deps.ts
+
+FROM dependencies AS build
+
+COPY . .
+RUN deno cache --frozen main.ts drizzle.config.ts
+
+FROM denoland/deno:debian-2.8.3 AS runtime
+
+WORKDIR /app
+
+COPY --from=build /deno-dir /deno-dir
+COPY --from=build /app /app
+
+ENV DENO_DIR=/deno-dir
+ENV PORT=8000
+
+EXPOSE 8000
+
+RUN mkdir -p /data/kv && chown -R deno:deno /data/kv
+
+USER deno
+
+CMD ["run", "--frozen", "--unstable-kv", "--allow-net=0.0.0.0:8000,postgres:5432", "--allow-env=PORT,DATABASE_URL,DENO_KV_PATH,SENTRY_DSN,ENVIRONMENT", "--allow-read=/data/kv", "--allow-write=/data/kv", "main.ts"]

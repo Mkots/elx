@@ -1,0 +1,11 @@
+.DS_Store
+.data/
+.deno-cache/
+.env
+.env.*
+!.env.example
+coverage/
+coverage.lcov
+node_modules/
+playwright-report/
+test-results/

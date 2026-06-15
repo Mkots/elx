@@ -1,0 +1,43 @@
+name: elx-dev
+
+services:
+  app:
+    build:
+      context: .
+      target: build
+    command: ["task", "dev"]
+    environment:
+      DATABASE_URL: postgres://elx:elx@postgres:5432/elx
+      DENO_KV_PATH: /data/kv/elx.sqlite3
+      ENVIRONMENT: development
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - deno_cache:/deno-dir
+      - kv_data:/data/kv
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17.5-alpine
+    environment:
+      POSTGRES_DB: elx
+      POSTGRES_PASSWORD: elx
+      POSTGRES_USER: elx
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elx -d elx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  deno_cache:
+  kv_data:
+  postgres_data:

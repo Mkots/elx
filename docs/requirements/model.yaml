@@ -1,0 +1,124 @@
+# Custom lightweight SARA model for the LexTALE web application.
+# Instead of the built-in V-model (SOL->UC->SCEN->SYSREQ->SYSARCH->SWREQ->SWDD),
+# use a flat solution -> requirement structure plus decision (ADR) and
+# verification (tests/coverage).
+item_types:
+  - id: solution
+    display_name: Solution
+    prefix: SOL
+    id_format: "{prefix}-{name}"
+    parent_types: []
+    fields: []
+    allowed_targets: []
+
+  - id: requirement
+    display_name: Requirement
+    prefix: REQ
+    id_format: "{prefix}-{name}"
+    parent_types:
+      - solution
+    fields:
+      - name: specification
+        display_name: Specification
+        field_type: text
+        required: false
+        placeholder: The system SHALL <describe the requirement>.
+      - name: status
+        display_name: Status
+        field_type: text
+        required: false
+        placeholder: proposed | accepted | deferred
+    allowed_targets:
+      - relation: refines
+        targets:
+          - solution
+      - relation: depends_on
+        targets:
+          - requirement
+
+  - id: decision
+    display_name: Architecture Decision Record
+    prefix: ADR
+    id_format: "{prefix}-{name}"
+    parent_types: []
+    fields:
+      - name: status
+        display_name: Status
+        field_type: text
+        required: false
+        placeholder: proposed | accepted | superseded
+    allowed_targets:
+      - relation: justifies
+        targets:
+          - requirement
+      - relation: supersedes
+        targets:
+          - decision
+
+  - id: verification
+    display_name: Verification
+    prefix: VER
+    id_format: "{prefix}-{name}"
+    parent_types: []
+    fields:
+      - name: method
+        display_name: Method
+        field_type: text
+        required: false
+        placeholder: utest | itest | e2e
+    allowed_targets:
+      - relation: verifies
+        targets:
+          - requirement
+
+relations:
+  - id: refines
+    display_name: Refines
+    inverse: is_refined_by
+    direction: upstream
+    primary: true
+  - id: is_refined_by
+    display_name: Is refined by
+    inverse: refines
+    direction: downstream
+    primary: false
+  - id: depends_on
+    display_name: Depends on
+    inverse: is_required_by
+    direction: peer
+    primary: true
+  - id: is_required_by
+    display_name: Is required by
+    inverse: depends_on
+    direction: peer
+    primary: false
+  - id: justifies
+    display_name: Justifies
+    inverse: justified_by
+    direction: upstream
+    primary: true
+  - id: justified_by
+    display_name: Justified by
+    inverse: justifies
+    direction: downstream
+    primary: false
+  - id: supersedes
+    display_name: Supersedes
+    inverse: superseded_by
+    direction: peer
+    primary: true
+  - id: superseded_by
+    display_name: Superseded by
+    inverse: supersedes
+    direction: peer
+    primary: false
+  - id: verifies
+    display_name: Verifies
+    inverse: is_verified_by
+    direction: upstream
+    primary: true
+  - id: is_verified_by
+    display_name: Is verified by
+    inverse: verifies
+    direction: downstream
+    primary: false

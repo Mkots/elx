@@ -1,0 +1,14 @@
+.devcontainer
+.deno-cache
+.git
+.github
+.zed
+coverage
+coverage.lcov
+docs
+node_modules
+playwright-report
+test-results
+.env
+.env.*
+!.env.example
