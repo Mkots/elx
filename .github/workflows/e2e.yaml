@@ -1,0 +1,33 @@
+name: E2E
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.61.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install unzip for setup-deno
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.8.3
+
+      - name: Run E2E tests
+        run: deno task e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore

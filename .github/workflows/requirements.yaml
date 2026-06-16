@@ -1,0 +1,22 @@
+name: Requirements
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  requirements:
+    name: SARA requirements
+    runs-on: ubuntu-24.04
+    container: rust:1-bookworm
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install SARA
+        run: cargo install --locked --git https://github.com/cledouarec/sara sara-cli
+
+      - name: Validate requirement graph
+        working-directory: docs/requirements
+        run: sara check
