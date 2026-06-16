@@ -14,113 +14,25 @@ permissions:
 
 jobs:
   quality:
-    name: Deno quality gates
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.8.3
-
-      - name: Run checks and tests
-        run: deno task ci
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage
-          path: coverage.lcov
+    uses: ./.github/workflows/quality.yaml
 
   e2e:
-    name: Playwright E2E
-    runs-on: ubuntu-24.04
-    container: mcr.microsoft.com/playwright:v1.61.0-noble
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.8.3
-
-      - name: Run E2E tests
-        run: deno task e2e
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-report
-          path: playwright-report/
-          if-no-files-found: ignore
+    uses: ./.github/workflows/e2e.yaml
 
   requirements:
-    name: SARA requirements
-    runs-on: ubuntu-24.04
-    container: rust:1-bookworm
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install SARA
-        run: cargo install --locked --git https://github.com/cledouarec/sara sara-cli
-
-      - name: Validate requirement graph
-        working-directory: docs/requirements
-        run: sara check
+    uses: ./.github/workflows/requirements.yaml
 
   image:
-    name: Build and publish image
     needs:
-      - e2e
       - quality
+      - e2e
       - requirements
-    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
-    outputs:
-      image: ${{ steps.image-name.outputs.image }}
-      tag: sha-${{ github.sha }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Normalize image name
-        id: image-name
-        shell: bash
-        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@v4
-
-      - name: Log in to GHCR
-        if: github.event_name == 'push'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate image metadata
-        id: metadata
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ steps.image-name.outputs.image }}
-          tags: |
-            type=raw,value=sha-${{ github.sha }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
-      - name: Build and optionally publish
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    uses: ./.github/workflows/image.yaml
 
   deploy:
-    name: Deploy
     needs:
       - image
     if: >-
@@ -128,29 +40,8 @@ jobs:
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
       startsWith(github.ref, 'refs/tags/v'))
-    runs-on: ubuntu-24.04
-    environment: production
-    steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.5
-        env:
-          APP_IMAGE: ${{ needs.image.outputs.image }}
-          APP_TAG: ${{ needs.image.outputs.tag }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: APP_IMAGE,APP_TAG,DEPLOY_PATH,GHCR_TOKEN,GHCR_USERNAME
-          script: |
-            set -eu
-            cd "$DEPLOY_PATH"
-            git pull --ff-only
-            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker compose pull
-            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker compose up -d postgres
-            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker compose run --rm app task db:migrate
-            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker compose up -d --remove-orphans
-            docker image prune -f
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      image: ${{ needs.image.outputs.image }}
+      tag: ${{ needs.image.outputs.tag }}
+    secrets: inherit
