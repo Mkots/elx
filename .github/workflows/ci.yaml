@@ -40,6 +40,9 @@ jobs:
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
       startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: read
+      packages: read
     uses: ./.github/workflows/deploy.yaml
     with:
       image: ${{ needs.image.outputs.image }}
