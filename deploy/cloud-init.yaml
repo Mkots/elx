@@ -6,7 +6,6 @@ packages:
   - ca-certificates
   - curl
   - fail2ban
-  - git
 
 users:
   - default
@@ -24,12 +23,18 @@ write_files:
       PermitRootLogin no
 
 runcmd:
+  # Create SWAP file (2GB)
+  - fallocate -l 2G /swapfile
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  - swapon /swapfile
+  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  # Install Docker
   - curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
   - sh /tmp/get-docker.sh
   - usermod -aG docker deploy
   - install -d -o deploy -g deploy -m 0750 /opt/elx
-  - sudo -u deploy git clone https://github.com/Mkots/elx.git /opt/elx
   - systemctl enable --now docker
   - systemctl restart ssh
 
-final_message: "ELX host provisioning completed"
+final_message: "ELX host provisioning completed with SWAP"
