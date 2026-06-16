@@ -6,6 +6,7 @@ packages:
   - ca-certificates
   - curl
   - fail2ban
+  - git
 
 users:
   - default
@@ -27,6 +28,7 @@ runcmd:
   - sh /tmp/get-docker.sh
   - usermod -aG docker deploy
   - install -d -o deploy -g deploy -m 0750 /opt/elx
+  - sudo -u deploy git clone https://github.com/Mkots/elx.git /opt/elx
   - systemctl enable --now docker
   - systemctl restart ssh
 
