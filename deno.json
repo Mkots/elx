@@ -48,6 +48,7 @@
     "test:coverage": "DENO_DIR=.deno-cache deno test --clean --coverage=coverage --coverage-raw-data-only --allow-env && DENO_DIR=.deno-cache deno coverage coverage --lcov --output=coverage.lcov",
     "seed:words": "deno run --allow-net --allow-env scripts/seed_words.ts",
     "seed:synonyms": "deno run --allow-net --allow-env scripts/seed_synonyms.ts",
+    "seed:spelling": "deno run --allow-net --allow-env scripts/seed_spelling.ts",
     "db:generate": "deno run -A npm:drizzle-kit@0.31.10 generate",
     "db:migrate": "deno run -A npm:drizzle-kit@0.31.10 migrate",
     "e2e": "deno run -A npm:@playwright/test@1.61.0 test",
