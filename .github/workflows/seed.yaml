@@ -1,0 +1,43 @@
+name: Seed
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Seed task to run inside the running app container
+        required: true
+        default: seed:words
+        type: choice
+        options:
+          - seed:words
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    name: Run seed task
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Run seed task over SSH
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          SEED_TASK: ${{ inputs.task }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: SEED_TASK
+          script: |
+            set -eu
+            # The app runs only as a container, so exec the seeder inside the
+            # running one: it already has Deno, the source, and a DATABASE_URL
+            # whose `postgres` host resolves on Docker's internal network.
+            # The seeder is idempotent (upsert), so re-running is safe.
+            cid=$(docker ps \
+              --filter "label=com.docker.compose.project=elx" \
+              --filter "label=com.docker.compose.service=app" \
+              --format '{{.ID}}')
+            test -n "$cid" || { echo "app container is not running" >&2; exit 1; }
+            docker exec "$cid" deno task "$SEED_TASK"
