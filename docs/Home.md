@@ -4,68 +4,94 @@ This wiki is synchronized from the repository `docs/` directory.
 
 ## Overview
 
-ELX is a LexTALE-style application. This wiki collects product intent,
-requirements, implementation decisions, delivery milestones, and technical
-notes.
+ELX is a LexTALE-style English vocabulary assessment application. Users select
+known words from a mix of real English words and pseudowords, then undergo
+verification and scoring. Optional challenge stages test synonyms, antonyms,
+spelling, and word meaning.
 
-## Start Here
+**Key architectural decisions:** Server-side rendering (Deno + Hono SSR/MPA),
+offline-generated question bank (PostgreSQL), minimal client JavaScript.
 
-- [Project idea](idea)
-- [Requirements index](requirements/README)
-- [Roadmap overview](roadmap/00-data-seeding)
-- [Technology stack](tech-details/tech-stack)
+## Quick Start
 
-## Requirements
+- [Project Idea](idea) — what ELX does and how it works
+- [Technology Stack](tech-details/tech-stack) — Deno + Hono + PostgreSQL
+  architecture
+- [Requirements Index](requirements/README) — SARA-managed requirements with
+  traceability
 
-- [Requirements index](requirements/README)
-- [Requirements model](requirements/model.yaml)
-- [SARA config](requirements/sara.toml)
+## Documentation
 
-## Requirement Documents
+### [Roadmap](roadmap/index)
 
-- [Question bank](requirements/requirements/REQ-QUESTION-BANK)
-- [Session state](requirements/requirements/REQ-SESSION-STATE)
-- [SSR stage flow](requirements/requirements/REQ-SSR-STAGE-FLOW)
-- [Word selection](requirements/requirements/REQ-WORD-SELECTION)
-- [Verification scoring](requirements/requirements/REQ-VERIFICATION-SCORING)
-- [Synonyms and antonyms](requirements/requirements/REQ-SYNONYMS-ANTONYMS)
-- [Spelling](requirements/requirements/REQ-SPELLING)
-- [Meaning](requirements/requirements/REQ-MEANING)
-- [Semantic usage](requirements/requirements/REQ-SEMANTIC-USAGE)
-- [Data persistence](requirements/requirements/REQ-DATA-PERSISTENCE)
-- [Backups](requirements/requirements/REQ-BACKUPS)
-- [Observability](requirements/requirements/REQ-OBSERVABILITY)
-- [Deployment](requirements/requirements/REQ-DEPLOYMENT)
-- [Quality gates](requirements/requirements/REQ-QUALITY-GATES)
+Development milestones organized as sequential stages:
 
-## Architecture Decisions
+| Stage | Name                        | Status      |
+| ----- | --------------------------- | ----------- |
+| 0     | Offline Database Seeding    | Implemented |
+| 1     | Core LexTALE Word Selection | Implemented |
+| 2     | Verification and Scoring    | Implemented |
+| 3     | Synonyms and Antonyms       | Implemented |
+| 4     | Contextual Spelling         | Implemented |
+| 5     | Meaning (Definitions)       | Implemented |
+| 6     | Semantic Usage              | Deferred    |
 
-- [Database](requirements/decisions/ADR-DATABASE)
-- [Hosting](requirements/decisions/ADR-HOSTING)
-- [Offline question bank](requirements/decisions/ADR-OFFLINE-QUESTION-BANK)
-- [Traceability](requirements/decisions/ADR-OFT-TRACEABILITY)
-- [Session store](requirements/decisions/ADR-SESSION-STORE)
-- [SSR architecture](requirements/decisions/ADR-SSR-ARCHITECTURE)
-- [Test traceability](requirements/decisions/ADR-TEST-TRACEABILITY)
+### [Requirements](requirements/requirements/index)
 
-## Solutions And Verification
+System requirements managed by SARA, organized by category:
 
-- [LexTALE solution notes](requirements/solutions/SOL-LEXTALE)
-- [Seed words verification](requirements/verifications/VER-SEED-WORDS)
-- [Seed synonyms verification](requirements/verifications/VER-SEED-SYNONYMS)
+- **Core Test Flow** — word selection, verification, scoring, session state
+- **Optional Challenges** — synonyms, spelling, meaning, semantic usage
+  (deferred)
+- **Data & Infrastructure** — question bank, persistence, deployment, backups,
+  observability
 
-## Roadmap
+### [Architecture Decisions](requirements/decisions/index)
 
-- [00. Data seeding](roadmap/00-data-seeding)
-- [01. LexTALE core](roadmap/01-lextale-core)
-- [02. Scoring verification](roadmap/02-scoring-verification)
-- [03. Synonyms and antonyms](roadmap/03-synonyms-antonyms)
-- [04. Spelling](roadmap/04-spelling)
-- [05. Meaning](roadmap/05-meaning)
-- [06. Semantic usage](roadmap/06-semantic-usage)
+Key decisions including database (PostgreSQL + Drizzle), hosting (DO Droplet +
+Docker Compose), session store (Deno KV), and architecture (SSR/MPA instead of
+SPA).
 
-## Technical Notes
+### [Solutions](requirements/solutions/index)
 
-- [Technology stack](tech-details/tech-stack)
-- [Operations stack](tech-details/ops-tech-stack)
-- [Test stack](tech-details/test-tech-stack)
+Top-level product definitions —
+[SOL-LEXTALE](requirements/solutions/SOL-LEXTALE) covers the full vocabulary
+test scope.
+
+### [Verifications](requirements/verifications/index)
+
+Test coverage mapping seeder scripts to requirements via the `verifies`
+relation.
+
+### [Technical Details](tech-details/index)
+
+Architecture, infrastructure, and tooling:
+
+- [Technology Stack](tech-details/tech-stack) — runtime, framework, database,
+  ORM
+- [Operations Stack](tech-details/ops-tech-stack) — deployment, CI/CD, hosting,
+  observability
+- [Test Stack](tech-details/test-tech-stack) — testing pyramid and SARA
+  traceability
+
+## Requirements Model
+
+Managed by [SARA](https://github.com/cledouarec/sara) with a custom lightweight
+model (`requirements/model.yaml`):
+
+| Type           | Prefix | Purpose                      |
+| -------------- | ------ | ---------------------------- |
+| `solution`     | SOL    | Entire product               |
+| `requirement`  | REQ    | Independently developed unit |
+| `decision`     | ADR    | Architecture decision record |
+| `verification` | VER    | Test or coverage item        |
+
+## Commands
+
+```bash
+cd requirements/
+sara check                    # validate graph (CI gate)
+sara report coverage          # requirement coverage
+sara report matrix            # traceability matrix
+sara query REQ-WORD-SELECTION # item relations
+```
