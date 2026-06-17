@@ -1,0 +1,74 @@
+name: Seed
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Seed task to run on the production database
+        required: true
+        default: seed:words
+        type: choice
+        options:
+          - seed:words
+      tag:
+        description: Image tag to run the seeder from (defaults to the current commit)
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  seed:
+    name: Run seed task
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Normalize image name
+        id: image-name
+        shell: bash
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image tag
+        id: resolve-tag
+        shell: bash
+        run: |
+          tag="${{ inputs.tag }}"
+          if [ -z "$tag" ]; then
+            tag="sha-${{ github.sha }}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Run seeder over SSH
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          APP_IMAGE: ${{ steps.image-name.outputs.image }}
+          APP_TAG: ${{ steps.resolve-tag.outputs.tag }}
+          SEED_TASK: ${{ inputs.task }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          # Application secrets needed to interpolate compose.yaml.
+          DOMAIN: ${{ secrets.DOMAIN }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: APP_IMAGE,APP_TAG,SEED_TASK,GHCR_TOKEN,GHCR_USERNAME,DOMAIN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
+          script: |
+            set -eu
+            cd /opt/elx
+
+            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+
+            docker compose pull app
+            docker compose up -d postgres
+
+            # Idempotent: re-running upserts rows without creating duplicates.
+            docker compose run --rm app deno task "$SEED_TASK"
