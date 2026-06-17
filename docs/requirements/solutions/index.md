@@ -4,8 +4,8 @@ Top-level product definitions that requirements refine.
 
 ## Solutions
 
-| ID | Name | Description |
-|----|------|-------------|
+| ID                            | Name                    | Description                                                         |
+| ----------------------------- | ----------------------- | ------------------------------------------------------------------- |
 | [SOL-LEXTALE](SOL-LEXTALE.md) | LexTALE vocabulary test | Web application assessing English vocabulary via the LexTALE method |
 
 ## Scope

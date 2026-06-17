@@ -4,11 +4,11 @@ Architecture, infrastructure, and tooling documentation for the ELX project.
 
 ## Documents
 
-| Document | Description |
-|----------|-------------|
-| [Technology Stack](tech-stack.md) | Core architecture: Deno + Hono SSR/MPA, Deno KV, PostgreSQL, Drizzle ORM |
-| [Operations Stack](ops-tech-stack.md) | Deployment, CI/CD, hosting, Docker Compose, observability |
-| [Test Stack](test-tech-stack.md) | Testing pyramid: deno test, Playwright E2E, SARA traceability |
+| Document                              | Description                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| [Technology Stack](tech-stack.md)     | Core architecture: Deno + Hono SSR/MPA, Deno KV, PostgreSQL, Drizzle ORM |
+| [Operations Stack](ops-tech-stack.md) | Deployment, CI/CD, hosting, Docker Compose, observability                |
+| [Test Stack](test-tech-stack.md)      | Testing pyramid: deno test, Playwright E2E, SARA traceability            |
 
 ## Architecture Summary
 
@@ -23,5 +23,7 @@ Architecture, infrastructure, and tooling documentation for the ELX project.
 ## Key Principles
 
 1. **Server-side rendering** — no client-side scoring or logic tampering
-2. **Offline question bank** — all data generated before runtime, only SELECT at runtime
-3. **MVP scale** — one node, minimal infrastructure, defer complexity until needed
+2. **Offline question bank** — all data generated before runtime, only SELECT at
+   runtime
+3. **MVP scale** — one node, minimal infrastructure, defer complexity until
+   needed
