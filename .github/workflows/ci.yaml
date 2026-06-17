@@ -19,15 +19,12 @@ concurrency:
 jobs:
   quality:
     uses: ./.github/workflows/quality.yaml
-    timeout-minutes: 10
 
   e2e:
     uses: ./.github/workflows/e2e.yaml
-    timeout-minutes: 10
 
   requirements:
     uses: ./.github/workflows/requirements.yaml
-    timeout-minutes: 10
 
   image:
     needs:
@@ -43,7 +40,6 @@ jobs:
       contents: read
       packages: write
     uses: ./.github/workflows/image.yaml
-    timeout-minutes: 10
 
   deploy:
     needs:
