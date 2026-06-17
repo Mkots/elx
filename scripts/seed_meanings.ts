@@ -12,6 +12,14 @@ const DICTIONARY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en";
 const MIN_DEFINITION_LENGTH = 10;
 const MAX_DEFINITION_LENGTH = 240;
 
+/** Politeness delay between requests, plus retry/backoff for HTTP 429. */
+const REQUEST_DELAY_MS = 250;
+const MAX_RETRIES = 5;
+const BASE_RETRY_MS = 1000;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export interface DictionaryDefinition {
   definition?: string;
 }
@@ -63,24 +71,39 @@ export function extractDefinition(
   return null;
 }
 
-/** Fetches dictionary entries for `word`; a 404 means the word has no entry. */
+/**
+ * Fetches dictionary entries for `word`; a 404 means the word has no entry.
+ * Retries with exponential backoff when the API rate-limits us (HTTP 429),
+ * honouring a `Retry-After` header when present.
+ */
 async function fetchEntries(
   word: string,
   fetchImpl: Fetch,
 ): Promise<DictionaryEntry[]> {
-  const response = await fetchImpl(
-    `${DICTIONARY_URL}/${encodeURIComponent(word)}`,
-  );
-  if (response.status === 404) {
-    await response.body?.cancel();
-    return [];
-  }
-  if (!response.ok) {
-    throw new Error(
-      `Dictionary request failed for "${word}": ${response.status}`,
+  for (let attempt = 0;; attempt++) {
+    const response = await fetchImpl(
+      `${DICTIONARY_URL}/${encodeURIComponent(word)}`,
     );
+    if (response.status === 404) {
+      await response.body?.cancel();
+      return [];
+    }
+    if (response.status === 429 && attempt < MAX_RETRIES) {
+      await response.body?.cancel();
+      const retryAfter = Number(response.headers.get("retry-after"));
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : BASE_RETRY_MS * 2 ** attempt;
+      await sleep(waitMs);
+      continue;
+    }
+    if (!response.ok) {
+      throw new Error(
+        `Dictionary request failed for "${word}": ${response.status}`,
+      );
+    }
+    return await response.json() as DictionaryEntry[];
   }
-  return await response.json() as DictionaryEntry[];
 }
 
 type Database = ReturnType<typeof createDatabase>["db"];
@@ -121,7 +144,8 @@ export async function seedMeanings(
   const plans: ChallengePlan[] = [];
   let skipped = 0;
 
-  for (const word of realWords) {
+  for (const [index, word] of realWords.entries()) {
+    if (index > 0) await sleep(REQUEST_DELAY_MS);
     const entries = await fetchEntries(word.value, fetchImpl);
     const definitionText = extractDefinition(entries, word.value);
     if (!definitionText) {
