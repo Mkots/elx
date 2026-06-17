@@ -20,17 +20,36 @@ deno task --env-file=.env dev
 Application: <http://localhost:8000>\
 Healthcheck: <http://localhost:8000/health>
 
+Adminer can be started alongside Postgres for browser-based database access:
+
+```bash
+docker compose -f compose.dev.yaml up -d postgres adminer
+```
+
+Adminer: <http://localhost:8080>
+
+Use these connection settings on the login screen:
+
+- System: `PostgreSQL`
+- Server: `postgres`
+- Username: `elx`
+- Password: `elx`
+- Database: `elx`
+
 Fully containerized local startup:
 
 ```bash
 docker compose -f compose.dev.yaml up --build
 ```
 
+This also starts Adminer, so the database UI is available at
+<http://localhost:8080>.
+
 ## Dev Container in Zed
 
 Open the repository as a Dev Container. The configuration installs Deno and the
-Docker CLI, mounts the host's `/var/run/docker.sock`, and forwards ports `8000`
-and `5432`.
+Docker CLI, mounts the host's `/var/run/docker.sock`, and forwards ports `8000`,
+`5432`, and `8080`.
 
 From the Dev Container, start Postgres through the host Docker daemon and run
 the application directly:
