@@ -5,6 +5,7 @@ paths = [
     "solutions",
     "requirements",
     "decisions",
+    "verifications",
 ]
 
 [validation]
