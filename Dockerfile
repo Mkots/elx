@@ -14,8 +14,8 @@ FROM denoland/deno:debian-2.8.3 AS runtime
 
 WORKDIR /app
 
-COPY --from=build /deno-dir /deno-dir
-COPY --from=build /app /app
+COPY --link --from=build /deno-dir /deno-dir
+COPY --link --from=build /app /app
 
 ENV DENO_DIR=/deno-dir
 ENV PORT=8000
