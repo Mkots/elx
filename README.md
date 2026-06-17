@@ -101,3 +101,14 @@ GitHub Actions publishes the image to GHCR and deploys over SSH. The
 
 `DEPLOY_PATH` must contain a repository checkout and a protected production
 `.env`.
+
+## Wiki Sync
+
+`.github/workflows/wiki-sync.yaml` mirrors `docs/` into the GitHub wiki
+repository `Mkots/elx.wiki.git` on each push to `main` or `master` that changes
+documentation.
+
+Configure the repository secret `WIKI_SYNC_TOKEN` before enabling the workflow.
+Use a GitHub token that can push to `Mkots/elx.wiki.git`. The workflow treats
+`docs/` as the source of truth and deletes wiki pages removed from `docs/`.
+Create and maintain `docs/Home.md` manually for the wiki landing page.
