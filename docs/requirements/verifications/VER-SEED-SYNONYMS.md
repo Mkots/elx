@@ -9,9 +9,9 @@ verifies:
 
 # Verification: seed:synonyms
 
-Covers the `seed:synonyms` seeder against [[REQ-QUESTION-BANK]] (offline Datamuse
-sourcing, one unambiguous answer with distractors, and idempotency). The runtime
-challenge it feeds is specified by [[REQ-SYNONYMS-ANTONYMS]].
+Covers the `seed:synonyms` seeder against [[REQ-QUESTION-BANK]] (offline
+Datamuse sourcing, one unambiguous answer with distractors, and idempotency).
+The runtime challenge it feeds is specified by [[REQ-SYNONYMS-ANTONYMS]].
 
 ## Code under verification
 
@@ -32,11 +32,11 @@ challenge it feeds is specified by [[REQ-SYNONYMS-ANTONYMS]].
 
 ## Requirement coverage
 
-- *Seeder-only data sources* — Datamuse calls live in the seeder, never on the
+- _Seeder-only data sources_ — Datamuse calls live in the seeder, never on the
   request path.
-- *Pre-write validation* / *"one unambiguous correct answer"* — single-word
+- _Pre-write validation_ / _"one unambiguous correct answer"_ — single-word
   filtering, plus the `MIN_DISTRACTORS` distractor count drawn from real words
   excluding the prompt, the answer, and the prompt's other synonyms/antonyms.
-- *Idempotency* — challenges are rebuilt via a `delete` + `insert` transaction;
-  imported target words upsert with `onConflictDoNothing`, verified end-to-end by
-  two consecutive runs producing the same challenge count.
+- _Idempotency_ — challenges are rebuilt via a `delete` + `insert` transaction;
+  imported target words upsert with `onConflictDoNothing`, verified end-to-end
+  by two consecutive runs producing the same challenge count.

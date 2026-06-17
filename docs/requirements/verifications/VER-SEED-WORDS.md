@@ -28,8 +28,8 @@ validation and idempotency).
 
 ## Requirement coverage
 
-- *Pre-write validation* and *"Invalid rows never enter the database"* — the
+- _Pre-write validation_ and _"Invalid rows never enter the database"_ — the
   duplicate, casing, and difficulty-range assertions.
-- *Idempotency* / *"Re-running a seeder does not change database contents"* —
+- _Idempotency_ / _"Re-running a seeder does not change database contents"_ —
   the `onConflictDoUpdate` upsert on `words.value`, verified end-to-end by two
   consecutive runs leaving the row count unchanged.
