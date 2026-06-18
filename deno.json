@@ -11,6 +11,7 @@
   "fmt": {
     "exclude": [
       "coverage",
+      ".wiki-build",
       "node_modules",
       "playwright-report",
       "test-results"
@@ -19,6 +20,7 @@
   "lint": {
     "exclude": [
       "coverage",
+      ".wiki-build",
       "node_modules",
       "playwright-report",
       "test-results"
@@ -29,6 +31,7 @@
     "@playwright/test": "npm:@playwright/test@1.61.0",
     "@std/assert": "jsr:@std/assert@1.0.19",
     "@std/cli/parse-args": "jsr:@std/cli@1.0.21/parse-args",
+    "@std/front-matter": "jsr:@std/front-matter@1.0.9",
     "drizzle-kit": "npm:drizzle-kit@0.31.10",
     "drizzle-orm": "npm:drizzle-orm@0.45.2",
     "drizzle-orm/": "npm:/drizzle-orm@0.45.2/",
@@ -46,6 +49,7 @@
     "lint": "deno lint",
     "test": "deno test --allow-env",
     "test:coverage": "DENO_DIR=.deno-cache deno test --clean --coverage=coverage --coverage-raw-data-only --allow-env && DENO_DIR=.deno-cache deno coverage coverage --lcov --output=coverage.lcov",
+    "wiki:build": "deno run -A scripts/build_wiki.ts docs .wiki-build",
     "seed:words": "deno run --allow-net --allow-env scripts/seed_words.ts",
     "seed:synonyms": "deno run --allow-net --allow-env scripts/seed_synonyms.ts",
     "seed:spelling": "deno run --allow-net --allow-env scripts/seed_spelling.ts",

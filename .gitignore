@@ -1,6 +1,7 @@
 .DS_Store
 .data/
 .deno-cache/
+.wiki-build/
 .env
 .env.*
 !.env.example
