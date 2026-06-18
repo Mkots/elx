@@ -2,6 +2,12 @@ import { Hono } from "@hono/hono";
 import { sql } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
 import { words } from "../db/schema.ts";
+import {
+  getKv,
+  parseSessionId,
+  saveWordSelection,
+  sessionCookie,
+} from "../session.ts";
 import { WordGrid } from "../ui/word_grid.tsx";
 
 export interface Stage1WordLoader {
@@ -13,16 +19,6 @@ export interface Stage1SessionStore {
 }
 
 const WORD_COUNT = 60;
-const SESSION_COOKIE = "sessionId";
-
-let kvInstance: Deno.Kv | null = null;
-
-async function getKv(): Promise<Deno.Kv> {
-  if (!kvInstance) {
-    kvInstance = await Deno.openKv();
-  }
-  return kvInstance;
-}
 
 export const databaseStage1WordLoader: Stage1WordLoader = {
   async loadWords(count) {
@@ -42,7 +38,7 @@ export const databaseStage1WordLoader: Stage1WordLoader = {
 export const kvStage1SessionStore: Stage1SessionStore = {
   async saveWordSelection(sessionId, wordIds) {
     const kv = await getKv();
-    await kv.set(["session", sessionId, "stage1_selections"], wordIds);
+    await saveWordSelection(kv, sessionId, wordIds);
   },
 };
 
@@ -58,25 +54,15 @@ export function createStage1Route(
   });
 
   route.post("/", async (context) => {
-    let sessionId = context.req.raw.headers.get("cookie")
-      ?.split(";")
-      .map((s) => s.trim())
-      .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
-      ?.slice(SESSION_COOKIE.length + 1);
-
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-    }
+    const cookieHeader = context.req.raw.headers.get("cookie");
+    const sessionId = parseSessionId(cookieHeader) ?? crypto.randomUUID();
 
     const form = await context.req.formData();
     const wordIds = form.getAll("word").map((v) => Number(v));
 
     await store.saveWordSelection(sessionId, wordIds);
 
-    context.header(
-      "Set-Cookie",
-      `${SESSION_COOKIE}=${sessionId}; HttpOnly; Path=/; SameSite=Lax`,
-    );
+    context.header("Set-Cookie", sessionCookie(sessionId));
     return context.redirect("/stage/2", 302);
   });
 
