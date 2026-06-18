@@ -29,7 +29,7 @@ Optional Stage 4. Source:
 3. **Feedback:** check immediately or accumulate the result until the stage
    ends.
 
-Prepare sentence templates and distractors offline through [[REQ-QUESTION-BANK]]
+Prepare sentence templates and distractors offline through [REQ-QUESTION-BANK](REQ-QUESTION-BANK.md)
 and `seed:spelling`.
 
 ## Acceptance Criteria

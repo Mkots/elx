@@ -18,7 +18,7 @@ depends_on:
 Cross-cutting preparation block for Stage 0. Sources:
 [`roadmap/00-data-seeding.md`](../../roadmap/00-data-seeding.md),
 [`tech-details/tech-stack.md`](../../tech-details/tech-stack.md). The choice is
-justified by [[ADR-OFFLINE-QUESTION-BANK]].
+justified by [ADR-OFFLINE-QUESTION-BANK](../decisions/ADR-OFFLINE-QUESTION-BANK.md).
 
 ## Requirements
 

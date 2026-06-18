@@ -16,7 +16,7 @@ depends_on:
 
 Source:
 [`tech-details/ops-tech-stack.md`](../../tech-details/ops-tech-stack.md).
-Justification: [[ADR-HOSTING]].
+Justification: [ADR-HOSTING](../decisions/ADR-HOSTING.md).
 
 ## Requirements
 
@@ -25,7 +25,7 @@ Justification: [[ADR-HOSTING]].
    without `--allow-all`, and a committed `deno.lock`.
 2. **CI pipeline:** on pushes and pull requests, GitHub Actions runs
    `deno fmt --check`, `deno lint`, `deno test`, `deno coverage`, Playwright
-   E2E, and SARA traceability checks from [[REQ-QUALITY-GATES]], then builds and
+   E2E, and SARA traceability checks from [REQ-QUALITY-GATES](REQ-QUALITY-GATES.md), then builds and
    publishes an image tagged with the Git SHA and semver to GHCR before
    deployment.
 3. **Droplet deployment:** provision Ubuntu LTS with `cloud-init`; run `app`,

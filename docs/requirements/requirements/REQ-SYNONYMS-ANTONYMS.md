@@ -26,7 +26,7 @@ Optional Stage 3. Source:
 2. **Question format:** show a word and ask the user to select its synonym or
    antonym.
 3. **Answer options:** provide four options with exactly one correct answer.
-   Prepare the bank and distractors offline through [[REQ-QUESTION-BANK]] and
+   Prepare the bank and distractors offline through [REQ-QUESTION-BANK](REQ-QUESTION-BANK.md) and
    `seed:synonyms`.
 4. **Optional launch:** offer the stage after the core LexTALE test.
 

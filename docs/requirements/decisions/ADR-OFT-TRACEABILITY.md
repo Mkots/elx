@@ -22,4 +22,4 @@ Use **OpenFastTrace (OFT)** with `req~name~rev` tags in Markdown and
 ## Why It Was Superseded
 
 OFT is a Java CLI and **requires a JRE**, which is too heavy for this project.
-SARA replaces it; see [[ADR-TEST-TRACEABILITY]].
+SARA replaces it; see [ADR-TEST-TRACEABILITY](ADR-TEST-TRACEABILITY.md).

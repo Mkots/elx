@@ -17,7 +17,7 @@ depends_on:
 
 Source:
 [`tech-details/ops-tech-stack.md`](../../tech-details/ops-tech-stack.md). The
-minimum sufficient MVP stack is justified by [[ADR-HOSTING]].
+minimum sufficient MVP stack is justified by [ADR-HOSTING](../decisions/ADR-HOSTING.md).
 
 ## Requirements
 
