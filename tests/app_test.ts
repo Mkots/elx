@@ -7,7 +7,7 @@ Deno.test("GET / returns server-rendered HTML", async () => {
 
   assertEquals(response.status, 200);
   assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
-  assertStringIncludes(body, "Hello, ELX.");
+  assertStringIncludes(body, "ELX Vocabulary Assessment");
 });
 
 Deno.test("GET /health returns service status", async () => {

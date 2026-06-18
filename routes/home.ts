@@ -1,5 +1,5 @@
 import { Hono } from "@hono/hono";
-import { HomePage } from "../ui/home_page.tsx";
+import { HomePage } from "../ui/pages/HomePage.tsx";
 
 export const homeRoute = new Hono();
 

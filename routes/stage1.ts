@@ -8,7 +8,7 @@ import {
   saveWordSelection,
   sessionCookie,
 } from "../session.ts";
-import { WordGrid } from "../ui/word_grid.tsx";
+import { Stage1Page } from "../ui/pages/Stage1Page.tsx";
 
 export interface Stage1WordLoader {
   loadWords(count: number): Promise<{ id: number; value: string }[]>;
@@ -50,7 +50,7 @@ export function createStage1Route(
 
   route.get("/", async (context) => {
     const wordList = await loader.loadWords(WORD_COUNT);
-    return context.html(WordGrid({ words: wordList }));
+    return context.html(Stage1Page({ words: wordList }));
   });
 
   route.post("/", async (context) => {
