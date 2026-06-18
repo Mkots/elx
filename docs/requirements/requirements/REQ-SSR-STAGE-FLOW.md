@@ -16,7 +16,7 @@ depends_on:
 # SSR Rendering and Stage Flow
 
 Source: [`tech-details/tech-stack.md`](../../tech-details/tech-stack.md).
-Justification: [[ADR-SSR-ARCHITECTURE]].
+Justification: [ADR-SSR-ARCHITECTURE](../decisions/ADR-SSR-ARCHITECTURE.md).
 
 ## Requirements
 

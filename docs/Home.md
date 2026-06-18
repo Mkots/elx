@@ -14,15 +14,15 @@ offline-generated question bank (PostgreSQL), minimal client JavaScript.
 
 ## Quick Start
 
-- [Project Idea](idea) — what ELX does and how it works
-- [Technology Stack](tech-details/tech-stack) — Deno + Hono + PostgreSQL
+- [Project Idea](idea.md) — what ELX does and how it works
+- [Technology Stack](tech-details/tech-stack.md) — Deno + Hono + PostgreSQL
   architecture
-- [Requirements Index](requirements/README) — SARA-managed requirements with
+- [Requirements Index](requirements/README.md) — SARA-managed requirements with
   traceability
 
 ## Documentation
 
-### [Roadmap](roadmap/index)
+### [Roadmap](roadmap/index.md)
 
 Development milestones organized as sequential stages:
 
@@ -36,7 +36,7 @@ Development milestones organized as sequential stages:
 | 5     | Meaning (Definitions)       | Implemented |
 | 6     | Semantic Usage              | Deferred    |
 
-### [Requirements](requirements/requirements/index)
+### [Requirements](requirements/requirements/index.md)
 
 System requirements managed by SARA, organized by category:
 
@@ -46,32 +46,32 @@ System requirements managed by SARA, organized by category:
 - **Data & Infrastructure** — question bank, persistence, deployment, backups,
   observability
 
-### [Architecture Decisions](requirements/decisions/index)
+### [Architecture Decisions](requirements/decisions/index.md)
 
 Key decisions including database (PostgreSQL + Drizzle), hosting (DO Droplet +
 Docker Compose), session store (Deno KV), and architecture (SSR/MPA instead of
 SPA).
 
-### [Solutions](requirements/solutions/index)
+### [Solutions](requirements/solutions/index.md)
 
 Top-level product definitions —
-[SOL-LEXTALE](requirements/solutions/SOL-LEXTALE) covers the full vocabulary
+[SOL-LEXTALE](requirements/solutions/SOL-LEXTALE.md) covers the full vocabulary
 test scope.
 
-### [Verifications](requirements/verifications/index)
+### [Verifications](requirements/verifications/index.md)
 
 Test coverage mapping seeder scripts to requirements via the `verifies`
 relation.
 
-### [Technical Details](tech-details/index)
+### [Technical Details](tech-details/index.md)
 
 Architecture, infrastructure, and tooling:
 
-- [Technology Stack](tech-details/tech-stack) — runtime, framework, database,
+- [Technology Stack](tech-details/tech-stack.md) — runtime, framework, database,
   ORM
-- [Operations Stack](tech-details/ops-tech-stack) — deployment, CI/CD, hosting,
-  observability
-- [Test Stack](tech-details/test-tech-stack) — testing pyramid and SARA
+- [Operations Stack](tech-details/ops-tech-stack.md) — deployment, CI/CD,
+  hosting, observability
+- [Test Stack](tech-details/test-tech-stack.md) — testing pyramid and SARA
   traceability
 
 ## Requirements Model

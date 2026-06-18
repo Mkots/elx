@@ -33,4 +33,4 @@ best semantically. Select options by meaning rather than sound, such as
 - No validation that each sentence has one unambiguous correct answer.
 
 > Excluded from mandatory coverage because `status: deferred`; see
-> [[REQ-QUALITY-GATES]].
+> [REQ-QUALITY-GATES](REQ-QUALITY-GATES.md).

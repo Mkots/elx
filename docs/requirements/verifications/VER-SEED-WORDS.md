@@ -9,8 +9,9 @@ verifies:
 
 # Verification: seed:words
 
-Covers the `seed:words` seeder against [[REQ-QUESTION-BANK]] (pre-write
-validation and idempotency).
+Covers the `seed:words` seeder against
+[REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (pre-write validation
+and idempotency).
 
 ## Code under verification
 

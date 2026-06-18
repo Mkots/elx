@@ -9,9 +9,11 @@ verifies:
 
 # Verification: seed:synonyms
 
-Covers the `seed:synonyms` seeder against [[REQ-QUESTION-BANK]] (offline
-Datamuse sourcing, one unambiguous answer with distractors, and idempotency).
-The runtime challenge it feeds is specified by [[REQ-SYNONYMS-ANTONYMS]].
+Covers the `seed:synonyms` seeder against
+[REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse
+sourcing, one unambiguous answer with distractors, and idempotency). The runtime
+challenge it feeds is specified by
+[REQ-SYNONYMS-ANTONYMS](../requirements/REQ-SYNONYMS-ANTONYMS.md).
 
 ## Code under verification
 

@@ -111,4 +111,6 @@ documentation.
 Configure the repository secret `WIKI_SYNC_TOKEN` before enabling the workflow.
 Use a GitHub token that can push to `Mkots/elx.wiki.git`. The workflow treats
 `docs/` as the source of truth and deletes wiki pages removed from `docs/`.
-Create and maintain `docs/Home.md` manually for the wiki landing page.
+Create and maintain `docs/Home.md` manually for the wiki landing page. During
+sync, internal Markdown links to `*.md` pages are rewritten to extensionless
+wiki links so GitHub renders the target page instead of opening the raw file.

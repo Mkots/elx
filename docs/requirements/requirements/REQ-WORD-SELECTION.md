@@ -24,7 +24,8 @@ Stage 1. Source:
 
 1. **Word bank:** show 60 words per page, mixing real English words of varying
    difficulty with English-looking pseudowords. Each has a reality flag and
-   difficulty level prepared by [[REQ-QUESTION-BANK]] and `seed:words`.
+   difficulty level prepared by [REQ-QUESTION-BANK](REQ-QUESTION-BANK.md) and
+   `seed:words`.
 2. **Selection interface:** server-render a grid or list of 60 words. Let the
    user mark known words with HTML form checkboxes without requiring client-side
    JavaScript.

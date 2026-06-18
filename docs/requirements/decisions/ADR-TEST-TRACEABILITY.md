@@ -34,7 +34,7 @@ traceability without heavy dependencies. Source:
 
 OFT requires a JRE and is too heavy. SARA is a single Rust binary with no
 runtime dependencies and works with ordinary Markdown files. It supersedes
-[[ADR-OFT-TRACEABILITY]].
+[ADR-OFT-TRACEABILITY](ADR-OFT-TRACEABILITY.md).
 
 ## Consequences
 
