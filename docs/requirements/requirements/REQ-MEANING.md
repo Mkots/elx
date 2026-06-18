@@ -22,8 +22,8 @@ Optional Stage 5. Source:
 ## Requirements
 
 1. **Definition prompt:** show a short English definition. Retrieve definitions
-   from a dictionary API during `seed:meanings` in [REQ-QUESTION-BANK](REQ-QUESTION-BANK.md) and
-   only read them at runtime.
+   from a dictionary API during `seed:meanings` in
+   [REQ-QUESTION-BANK](REQ-QUESTION-BANK.md) and only read them at runtime.
 2. **Word selection:** provide four words with exactly one correct match.
 3. **Difficulty adaptation:** select definitions for the level detected in the
    core Stages 1-2.

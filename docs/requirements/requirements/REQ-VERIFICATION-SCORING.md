@@ -18,7 +18,8 @@ depends_on:
 
 Stage 2. Source:
 [`roadmap/02-scoring-verification.md`](../../roadmap/02-scoring-verification.md).
-Server-side scoring is justified by [ADR-SSR-ARCHITECTURE](../decisions/ADR-SSR-ARCHITECTURE.md).
+Server-side scoring is justified by
+[ADR-SSR-ARCHITECTURE](../decisions/ADR-SSR-ARCHITECTURE.md).
 
 ## Requirements
 

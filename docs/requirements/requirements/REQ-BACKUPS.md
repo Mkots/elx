@@ -17,7 +17,8 @@ depends_on:
 
 Source:
 [`tech-details/ops-tech-stack.md`](../../tech-details/ops-tech-stack.md). The
-decision not to use a managed database is justified by [ADR-HOSTING](../decisions/ADR-HOSTING.md).
+decision not to use a managed database is justified by
+[ADR-HOSTING](../decisions/ADR-HOSTING.md).
 
 ## Requirements
 

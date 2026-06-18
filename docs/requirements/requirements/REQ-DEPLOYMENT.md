@@ -25,9 +25,9 @@ Justification: [ADR-HOSTING](../decisions/ADR-HOSTING.md).
    without `--allow-all`, and a committed `deno.lock`.
 2. **CI pipeline:** on pushes and pull requests, GitHub Actions runs
    `deno fmt --check`, `deno lint`, `deno test`, `deno coverage`, Playwright
-   E2E, and SARA traceability checks from [REQ-QUALITY-GATES](REQ-QUALITY-GATES.md), then builds and
-   publishes an image tagged with the Git SHA and semver to GHCR before
-   deployment.
+   E2E, and SARA traceability checks from
+   [REQ-QUALITY-GATES](REQ-QUALITY-GATES.md), then builds and publishes an image
+   tagged with the Git SHA and semver to GHCR before deployment.
 3. **Droplet deployment:** provision Ubuntu LTS with `cloud-init`; run `app`,
    automatic-HTTPS `caddy`, and `postgres` in one Docker Compose project. Deploy
    over SSH with `docker compose pull && docker compose up -d`, and roll back by

@@ -10,9 +10,11 @@ verifies:
 
 # Verification: seed:spelling
 
-Covers the `seed:spelling` seeder against [REQ-SPELLING](../requirements/REQ-SPELLING.md) (a context sentence
-with a single gap and four phonetically similar options, exactly one correct)
-and [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse sourcing and idempotency).
+Covers the `seed:spelling` seeder against
+[REQ-SPELLING](../requirements/REQ-SPELLING.md) (a context sentence with a
+single gap and four phonetically similar options, exactly one correct) and
+[REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse
+sourcing and idempotency).
 
 ## Code under verification
 

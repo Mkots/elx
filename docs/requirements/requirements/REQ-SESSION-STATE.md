@@ -27,7 +27,8 @@ Justification: [ADR-SESSION-STORE](../decisions/ADR-SESSION-STORE.md).
    under the `sessionId`.
 3. **Persistence:** in the single-instance deployment with Deno KV's SQLite
    backend, place the KV file on a persistent bind mount or volume outside the
-   container so it survives redeployments; see [REQ-DEPLOYMENT](REQ-DEPLOYMENT.md).
+   container so it survives redeployments; see
+   [REQ-DEPLOYMENT](REQ-DEPLOYMENT.md).
 
 ## Acceptance Criteria
 

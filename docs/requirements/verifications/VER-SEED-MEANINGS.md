@@ -10,10 +10,11 @@ verifies:
 
 # Verification: seed:meanings
 
-Covers the `seed:meanings` seeder against [REQ-MEANING](../requirements/REQ-MEANING.md) (a short definition
-prompt with four words and exactly one correct match, chosen to fit the detected
-vocabulary level) and [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline dictionary sourcing and
-idempotency).
+Covers the `seed:meanings` seeder against
+[REQ-MEANING](../requirements/REQ-MEANING.md) (a short definition prompt with
+four words and exactly one correct match, chosen to fit the detected vocabulary
+level) and [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline
+dictionary sourcing and idempotency).
 
 ## Code under verification
 

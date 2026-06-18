@@ -14,7 +14,8 @@ refines:
 
 Source:
 [`tech-details/test-tech-stack.md`](../../tech-details/test-tech-stack.md). Tool
-selection is justified by [ADR-TEST-TRACEABILITY](../decisions/ADR-TEST-TRACEABILITY.md).
+selection is justified by
+[ADR-TEST-TRACEABILITY](../decisions/ADR-TEST-TRACEABILITY.md).
 
 ## Requirements
 
