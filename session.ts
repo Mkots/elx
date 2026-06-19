@@ -41,6 +41,8 @@ export async function saveWordSelection(
   wordIds: number[],
 ): Promise<void> {
   await kv.set(wordSelectionKey(sessionId), wordIds);
+  await kv.delete(stage2AnswersKey(sessionId));
+  await kv.delete(stage2ResultKey(sessionId));
 }
 
 export async function loadWordSelection(
@@ -49,6 +51,31 @@ export async function loadWordSelection(
 ): Promise<number[]> {
   const result = await kv.get<number[]>(wordSelectionKey(sessionId));
   return result.value ?? [];
+}
+
+export type Stage2Answers = Record<string, boolean>;
+
+function stage2AnswersKey(sessionId: string): Deno.KvKey {
+  return ["session", sessionId, "stage2_answers"];
+}
+
+export async function loadStage2Answers(
+  kv: Deno.Kv,
+  sessionId: string,
+): Promise<Stage2Answers> {
+  const entry = await kv.get<Stage2Answers>(stage2AnswersKey(sessionId));
+  return entry.value ?? {};
+}
+
+export async function saveStage2Answer(
+  kv: Deno.Kv,
+  sessionId: string,
+  wordId: number,
+  known: boolean,
+): Promise<void> {
+  const answers = await loadStage2Answers(kv, sessionId);
+  answers[String(wordId)] = known;
+  await kv.set(stage2AnswersKey(sessionId), answers);
 }
 
 export interface Stage2Result {

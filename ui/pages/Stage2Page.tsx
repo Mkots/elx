@@ -5,44 +5,60 @@ type Word = {
   value: string;
 };
 
-type Stage2PageProps = {
-  words: Word[];
+type Stage2CardProps = {
+  currentIndex: number;
+  totalWords: number;
+  word: Word;
 };
 
-export function Stage2Page({ words }: Stage2PageProps) {
+type Stage2PageProps = Stage2CardProps;
+
+export function Stage2Card(
+  { currentIndex, totalWords, word }: Stage2CardProps,
+) {
   return (
-    <Layout title="ELX – Verification">
+    <section
+      id="stage2-card-shell"
+      class="verification-card-shell"
+      aria-live="polite"
+    >
+      <p class="stage-progress">
+        Word {currentIndex + 1} of {totalWords}
+      </p>
+      <form
+        class="verification-card"
+        method="post"
+        action="/stage/2"
+        hx-post="/stage/2"
+        hx-target="#stage2-card-shell"
+        hx-swap="outerHTML"
+      >
+        <input type="hidden" name="wordId" value={String(word.id)} />
+        <span class="word-value">{word.value}</span>
+        <div class="card-choices">
+          <button type="submit" name="answer" value="know">
+            Know
+          </button>
+          <button
+            class="secondary"
+            type="submit"
+            name="answer"
+            value="dont_know"
+          >
+            {"Don't know"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+export function Stage2Page(props: Stage2PageProps) {
+  return (
+    <Layout title="ELX – Verification" htmx>
       <h1>Stage 2: Verification</h1>
       <p>Confirm which words you truly know.</p>
-      <form method="post" action="/stage/2">
-        <div class="verification-grid">
-          {words.map((word) => (
-            <div key={word.id} class="verification-card">
-              <span class="word-value">{word.value}</span>
-              <div class="card-choices">
-                <label>
-                  <input
-                    type="radio"
-                    name={`word_${word.id}`}
-                    value="know"
-                    checked
-                  />
-                  Know
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name={`word_${word.id}`}
-                    value="dont_know"
-                  />
-                  {"Don't Know"}
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-        <button class="next-stage-btn" type="submit">Submit →</button>
-      </form>
+      <Stage2Card {...props} />
     </Layout>
   );
 }

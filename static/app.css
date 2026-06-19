@@ -76,3 +76,56 @@
     background-color: var(--pico-primary);
     border: none;
 }
+
+/* ── Stage 2 verification ── */
+
+.verification-card-shell {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    max-width: 36rem;
+}
+
+.stage-progress {
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
+.verification-card {
+    display: grid;
+    gap: 1.5rem;
+    padding: 2rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+}
+
+.word-value {
+    display: block;
+    min-height: 3rem;
+    font-family: var(--pico-font-family-monospace);
+    font-size: 2rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.card-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.card-choices button {
+    margin: 0;
+    min-height: 3rem;
+}
+
+@media (max-width: 560px) {
+    .verification-card {
+        padding: 1.25rem;
+    }
+
+    .card-choices {
+        grid-template-columns: 1fr;
+    }
+}
