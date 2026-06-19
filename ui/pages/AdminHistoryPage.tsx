@@ -89,6 +89,23 @@ export function AdminHistoryPage({
           <h3 style="margin: 0; font-size: 1.25rem;">
             Test Session History ({totalCount})
           </h3>
+          <div style="display: inline-flex; gap: 0.5rem;">
+            <a
+              href="/admin/history/export?format=csv"
+              role="button"
+              style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; background: var(--pico-primary); color: #2d2839; font-weight: 700;"
+            >
+              📥 Export CSV
+            </a>
+            <a
+              href="/admin/history/export?format=json"
+              role="button"
+              class="outline"
+              style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+            >
+              📥 Export JSON
+            </a>
+          </div>
         </div>
 
         {/* Filter / Search bar */}
