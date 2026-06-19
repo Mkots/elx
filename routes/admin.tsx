@@ -18,6 +18,7 @@ import { AdminWordsPage } from "../ui/pages/AdminWordsPage.tsx";
 import { AdminWordEditPage } from "../ui/pages/AdminWordEditPage.tsx";
 import { AdminChallengesPage } from "../ui/pages/AdminChallengesPage.tsx";
 import { AdminChallengeEditPage } from "../ui/pages/AdminChallengeEditPage.tsx";
+import { AdminHistoryPage } from "../ui/pages/AdminHistoryPage.tsx";
 import { getKv } from "../session.ts";
 
 export interface AdminDashboardLoader {
@@ -453,6 +454,66 @@ export const databaseAdminChallengesLoader: AdminChallengesLoader = {
   },
 };
 
+export interface AdminHistoryLoader {
+  listHistory(params: {
+    search?: string;
+    orderBy: string;
+    orderDir: "asc" | "desc";
+    page: number;
+    limit: number;
+  }): Promise<
+    { history: (typeof testHistory.$inferSelect)[]; totalCount: number }
+  >;
+}
+
+export const databaseAdminHistoryLoader: AdminHistoryLoader = {
+  async listHistory({ search, orderBy, orderDir, page, limit }) {
+    const { client, db } = createDatabase();
+    try {
+      // deno-lint-ignore no-explicit-any
+      const conditions: any[] = [];
+      if (search) {
+        conditions.push(ilike(testHistory.sessionId, `%${search}%`));
+      }
+
+      const whereClause = conditions.length > 0
+        ? and(...conditions)
+        : undefined;
+      const offset = (page - 1) * limit;
+
+      const totalCountResult = await db
+        .select({ count: sql<number>`count(${testHistory.id})::integer` })
+        .from(testHistory)
+        .where(whereClause);
+      const totalCount = totalCountResult[0]?.count ?? 0;
+
+      // deno-lint-ignore no-explicit-any
+      let orderByClause: any;
+      if (orderBy === "score") {
+        orderByClause = orderDir === "asc"
+          ? testHistory.score
+          : desc(testHistory.score);
+      } else {
+        orderByClause = orderDir === "asc"
+          ? testHistory.completedAt
+          : desc(testHistory.completedAt);
+      }
+
+      const result = await db
+        .select()
+        .from(testHistory)
+        .where(whereClause)
+        .orderBy(orderByClause)
+        .limit(limit)
+        .offset(offset);
+
+      return { history: result, totalCount };
+    } finally {
+      await client.end();
+    }
+  },
+};
+
 // Helper to check credentials from env
 function getAdminCredentials() {
   const username = Deno.env.get("ADMIN_USERNAME") || "admin";
@@ -493,6 +554,7 @@ export function createAdminRoute(
   dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
   wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
   challengesLoader: AdminChallengesLoader = databaseAdminChallengesLoader,
+  historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
 ) {
   const route = new Hono();
 
@@ -1213,6 +1275,61 @@ export function createAdminRoute(
       return context.redirect(
         `/admin/challenges?type=${challengeType}&error=` +
           encodeURIComponent("Failed to delete challenge: " + errMsg),
+      );
+    }
+  });
+
+  // GET /admin/history
+  route.get("/history", async (context) => {
+    const page = Number(context.req.query("page") || 1);
+    const search = context.req.query("q") || "";
+    const orderBy = context.req.query("orderBy") || "completedAt";
+    const orderDir = (context.req.query("orderDir") || "desc") as
+      | "asc"
+      | "desc";
+
+    const limit = 20;
+    try {
+      const { history: historyList, totalCount } = await historyLoader
+        .listHistory({
+          search,
+          orderBy,
+          orderDir,
+          page,
+          limit,
+        });
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const successMsg = context.req.query("success") || undefined;
+      const errorMsg = context.req.query("error") || undefined;
+
+      return context.html(
+        AdminHistoryPage({
+          history: historyList,
+          totalCount,
+          page,
+          totalPages,
+          search,
+          orderBy,
+          orderDir,
+          success: successMsg,
+          error: errorMsg,
+        }),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.html(
+        AdminHistoryPage({
+          history: [],
+          totalCount: 0,
+          page: 1,
+          totalPages: 0,
+          search,
+          orderBy,
+          orderDir,
+          error: "Failed to load test history: " + errMsg,
+        }),
       );
     }
   });
