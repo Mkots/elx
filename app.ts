@@ -1,4 +1,5 @@
 import { Hono } from "@hono/hono";
+import { serveStatic } from "@hono/hono/deno";
 import { healthRoute } from "./routes/health.ts";
 import { homeRoute } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
@@ -6,20 +7,32 @@ import {
   createSeedVerificationRoute,
   type SeedVerificationLoader,
 } from "./routes/seed_verification.ts";
+import {
+  createStage1Route,
+  type Stage1SessionStore,
+  type Stage1WordLoader,
+} from "./routes/stage1.ts";
 
 interface CreateAppOptions {
   seedVerificationLoader?: SeedVerificationLoader;
+  stage1WordLoader?: Stage1WordLoader;
+  stage1SessionStore?: Stage1SessionStore;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
   const app = new Hono();
 
   app.use("*", requestLogger);
+  app.use("/static/*", serveStatic({ root: "./" }));
   app.route("/", homeRoute);
   app.route("/health", healthRoute);
   app.route(
     "/health/seeds",
     createSeedVerificationRoute(options.seedVerificationLoader),
+  );
+  app.route(
+    "/stage/1",
+    createStage1Route(options.stage1WordLoader, options.stage1SessionStore),
   );
 
   app.notFound((context) => context.json({ error: "Not found" }, 404));

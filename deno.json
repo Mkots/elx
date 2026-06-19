@@ -14,7 +14,8 @@
       ".wiki-build",
       "node_modules",
       "playwright-report",
-      "test-results"
+      "test-results",
+      "static"
     ]
   },
   "lint": {
@@ -23,7 +24,8 @@
       ".wiki-build",
       "node_modules",
       "playwright-report",
-      "test-results"
+      "test-results",
+      "static"
     ]
   },
   "imports": {
@@ -41,15 +43,17 @@
     "postgres": "npm:postgres@3.4.9"
   },
   "tasks": {
-    "dev": "deno run --watch --unstable-kv --allow-net --allow-env --allow-read=.data,/data/kv --allow-write=.data,/data/kv main.ts",
-    "start": "deno run --unstable-kv --allow-net --allow-env main.ts",
-    "check": "deno check main.ts app.ts deps.ts drizzle.config.ts playwright.config.ts routes/*.ts ui/*.tsx db/*.ts scripts/*.ts tests/*.ts tests/e2e/*.ts",
+    "dev": "deno run --watch --unstable-kv --allow-net --allow-env --allow-read=static,.data,/data/kv --allow-write=.data,/data/kv main.ts",
+    "start": "deno run --unstable-kv --allow-net --allow-env --allow-read=static,/data/kv --allow-write=/data/kv main.ts",
+    "start:e2e": "deno run --unstable-kv --allow-net --allow-env --allow-read=static,.data --allow-write=.data main.ts",
+    "check": "deno check main.ts app.ts session.ts deps.ts drizzle.config.ts playwright.config.ts routes/*.ts ui/components/*.tsx ui/pages/*.tsx db/*.ts scripts/*.ts tests/*.ts tests/e2e/*.ts",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",
     "test": "deno test --allow-env",
     "test:coverage": "DENO_DIR=.deno-cache deno test --clean --coverage=coverage --coverage-raw-data-only --allow-env && DENO_DIR=.deno-cache deno coverage coverage --lcov --output=coverage.lcov",
     "wiki:build": "deno run -A scripts/build_wiki.ts docs .wiki-build",
+    "seed:e2e": "deno task db:migrate && deno task seed:words",
     "seed:words": "deno run --allow-net --allow-env scripts/seed_words.ts",
     "seed:synonyms": "deno run --allow-net --allow-env scripts/seed_synonyms.ts",
     "seed:spelling": "deno run --allow-net --allow-env scripts/seed_spelling.ts",

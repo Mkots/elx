@@ -11,6 +11,21 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-24.04
     container: mcr.microsoft.com/playwright:v1.61.0-noble
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: elx_test
+          POSTGRES_USER: elx
+          POSTGRES_PASSWORD: elx
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
+      DENO_KV_PATH: .data/elx.sqlite3
     steps:
       - uses: actions/checkout@v6
 
@@ -28,6 +43,9 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.8.3
+
+      - name: Migrate and seed static data
+        run: deno task seed:e2e
 
       - name: Run E2E tests
         run: deno task e2e
