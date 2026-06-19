@@ -19,7 +19,7 @@ export function WordGrid({ words, action }: WordGridProps) {
           </label>
         ))}
       </div>
-      <button type="submit">Next →</button>
+      <button class="next-stage-btn" type="submit">Next →</button>
     </form>
   );
 }
