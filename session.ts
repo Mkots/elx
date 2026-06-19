@@ -21,7 +21,12 @@ let kvInstance: Deno.Kv | null = null;
 
 export async function getKv(): Promise<Deno.Kv> {
   if (!kvInstance) {
-    kvInstance = await Deno.openKv(Deno.env.get("DENO_KV_PATH"));
+    const kvPath = Deno.env.get("DENO_KV_PATH");
+    if (kvPath) {
+      const dir = kvPath.lastIndexOf("/");
+      if (dir > 0) await Deno.mkdir(kvPath.slice(0, dir), { recursive: true });
+    }
+    kvInstance = await Deno.openKv(kvPath);
   }
   return kvInstance;
 }
