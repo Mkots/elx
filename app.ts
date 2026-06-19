@@ -1,4 +1,5 @@
 import { Hono } from "@hono/hono";
+import { serveStatic } from "@hono/hono/deno";
 import { healthRoute } from "./routes/health.ts";
 import { homeRoute } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
@@ -22,6 +23,7 @@ export function createApp(options: CreateAppOptions = {}) {
   const app = new Hono();
 
   app.use("*", requestLogger);
+  app.use("/static/*", serveStatic({ root: "./" }));
   app.route("/", homeRoute);
   app.route("/health", healthRoute);
   app.route(
