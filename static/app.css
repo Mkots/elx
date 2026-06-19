@@ -20,6 +20,11 @@
     /* Дополнительно */
     --pico-muted-color: #c9c2de;
     --pico-primary-hover: #c4a4ce;
+    --color-positive: #8bd5ca;
+    --color-positive-dark: #2f766f;
+    --color-caution: #f2c177;
+    --color-caution-dark: #7a5221;
+    --color-panel-strong: #4f4a68;
 }
 
 /* ── Word grid ── */
@@ -81,14 +86,53 @@
 
 .verification-card-shell {
     display: grid;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-top: 2rem;
     max-width: 36rem;
+}
+
+.stage-progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
 }
 
 .stage-progress {
     color: var(--pico-muted-color);
     margin: 0;
+}
+
+.stage-progress-count {
+    color: var(--pico-color);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.verification-progress,
+.truthfulness-progress {
+    width: 100%;
+    height: 0.625rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(242, 239, 250, 0.16);
+}
+
+.verification-progress::-webkit-progress-bar,
+.truthfulness-progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: rgba(242, 239, 250, 0.16);
+}
+
+.verification-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-positive), var(--pico-primary));
+}
+
+.verification-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-positive), var(--pico-primary));
 }
 
 .verification-card {
@@ -120,6 +164,136 @@
     min-height: 3rem;
 }
 
+.answer-btn {
+    border: 0;
+    font-weight: 700;
+    transition:
+        background 0.15s,
+        box-shadow 0.15s,
+        color 0.15s,
+        transform 0.15s;
+}
+
+.answer-btn:hover {
+    transform: translateY(-1px);
+}
+
+.answer-btn:focus-visible {
+    outline: 3px solid rgba(242, 239, 250, 0.35);
+    outline-offset: 2px;
+}
+
+.answer-btn-know {
+    background: var(--color-positive);
+    color: #102b28;
+    box-shadow: 0 0.75rem 1.75rem rgba(139, 213, 202, 0.18);
+}
+
+.answer-btn-know:hover {
+    background: #a1e0d8;
+}
+
+.answer-btn-dont-know {
+    background: #f3edf7;
+    color: #332c43;
+    box-shadow: inset 0 0 0 1px rgba(51, 44, 67, 0.12);
+}
+
+.answer-btn-dont-know:hover {
+    background: var(--color-caution);
+    color: #2b2110;
+}
+
+/* ── Results ── */
+
+.result-shell {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 48rem;
+}
+
+.result-header {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.result-header h1,
+.result-header p {
+    margin: 0;
+}
+
+.result-kicker {
+    color: var(--color-positive);
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.result-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 1rem;
+}
+
+.result-score,
+.result-truthfulness {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    min-height: 12rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(242, 239, 250, 0.16);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+}
+
+.result-primary-metric {
+    background:
+        linear-gradient(135deg, rgba(139, 213, 202, 0.18), transparent 48%),
+        var(--color-panel-strong);
+}
+
+.result-label {
+    color: var(--pico-muted-color);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.result-value {
+    color: var(--pico-color);
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.truthfulness-progress {
+    height: 0.75rem;
+}
+
+.truthfulness-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-caution), var(--color-positive));
+}
+
+.truthfulness-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-caution), var(--color-positive));
+}
+
+.result-caption {
+    color: var(--pico-muted-color);
+    font-size: 0.95rem;
+}
+
+.result-restart-btn {
+    justify-self: start;
+    margin: 0;
+    background: var(--pico-primary);
+    border: 0;
+    color: #2d2839;
+    font-weight: 800;
+}
+
 @media (max-width: 560px) {
     .verification-card {
         padding: 1.25rem;
@@ -127,5 +301,14 @@
 
     .card-choices {
         grid-template-columns: 1fr;
+    }
+
+    .result-card {
+        grid-template-columns: 1fr;
+    }
+
+    .result-score,
+    .result-truthfulness {
+        min-height: auto;
     }
 }

@@ -91,6 +91,9 @@ Deno.test("GET /stage/2 returns HTML with the first verification card", async ()
   assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
   assertStringIncludes(body, "Stage 2: Verification");
   assertStringIncludes(body, "Word 1 of 3");
+  assertStringIncludes(body, 'class="verification-progress"');
+  assertStringIncludes(body, 'value="1"');
+  assertStringIncludes(body, 'max="3"');
   assertStringIncludes(body, "apple");
   assertEquals(body.includes("blurp"), false);
   assertEquals(body.includes("chair"), false);
