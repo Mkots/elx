@@ -4,14 +4,14 @@ const username = Deno.env.get("ADMIN_USERNAME") || "admin";
 const password = Deno.env.get("ADMIN_PASSWORD") || "admin";
 const testId = Date.now();
 
-test.describe("Admin Panel E2E Flows", () => {
-  test("unauthenticated users are redirected from /admin to /admin/login", async ({ page }) => {
+test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
+  test("VER-ADMIN-E2E: unauthenticated users are redirected from /admin to /admin/login", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL("/admin/login");
     await expect(page.locator("h2")).toContainText("ELX Admin Portal");
   });
 
-  test("login with invalid credentials shows error message", async ({ page }) => {
+  test("VER-ADMIN-E2E: login with invalid credentials shows error message", async ({ page }) => {
     await page.goto("/admin/login");
     await page.locator('input[name="username"]').fill("invalid_user");
     await page.locator('input[name="password"]').fill("invalid_pass");
@@ -23,7 +23,7 @@ test.describe("Admin Panel E2E Flows", () => {
     );
   });
 
-  test("login with valid credentials, navigation, and logout", async ({ page }) => {
+  test("VER-ADMIN-E2E: login with valid credentials, navigation, and logout", async ({ page }) => {
     // 1. Successful Login
     await page.goto("/admin/login");
     await page.locator('input[name="username"]').fill(username);
@@ -55,7 +55,7 @@ test.describe("Admin Panel E2E Flows", () => {
     await expect(page).toHaveURL("/admin/login");
   });
 
-  test("Words CRUD cycle", async ({ page }) => {
+  test("VER-ADMIN-E2E: Words CRUD cycle", async ({ page }) => {
     // Login
     await page.goto("/admin/login");
     await page.locator('input[name="username"]').fill(username);
@@ -99,7 +99,7 @@ test.describe("Admin Panel E2E Flows", () => {
     await expect(page.locator("tr", { hasText: wordValue })).toHaveCount(0);
   });
 
-  test("Data export downloads CSV and JSON files", async ({ page }) => {
+  test("VER-ADMIN-E2E: Data export downloads CSV and JSON files", async ({ page }) => {
     // Login
     await page.goto("/admin/login");
     await page.locator('input[name="username"]').fill(username);
@@ -131,7 +131,7 @@ test.describe("Admin Panel E2E Flows", () => {
     expect(Array.isArray(parsedJson)).toBeTruthy();
   });
 
-  test("Challenges CRUD cycles (Synonyms, Spelling, Definitions)", async ({ page }) => {
+  test("VER-ADMIN-E2E: Challenges CRUD cycles (Synonyms, Spelling, Definitions)", async ({ page }) => {
     // Login
     await page.goto("/admin/login");
     await page.locator('input[name="username"]').fill(username);
@@ -283,7 +283,7 @@ test.describe("Admin Panel E2E Flows", () => {
     ).toHaveCount(0);
   });
 
-  test("Test History view, search and sort", async ({ page }) => {
+  test("VER-ADMIN-E2E: Test History view, search and sort", async ({ page }) => {
     // 1. Complete a test run to ensure we have at least one history entry
     await page.goto("/stage/1");
     const checkboxes = page.locator('.word-grid input[type="checkbox"]');

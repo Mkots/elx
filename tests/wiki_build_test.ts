@@ -7,7 +7,7 @@ import {
   type SourcePage,
 } from "../scripts/build_wiki.ts";
 
-Deno.test("derivePageName keeps stable wiki names for published docs", () => {
+Deno.test("VER-WIKI-BUILD: derivePageName keeps stable wiki names for published docs", () => {
   assertEquals(derivePageName("Home.md"), "Home");
   assertEquals(derivePageName("idea.md"), "Project-Idea");
   assertEquals(
@@ -24,7 +24,7 @@ Deno.test("derivePageName keeps stable wiki names for published docs", () => {
   );
 });
 
-Deno.test("renderWikiPage strips frontmatter and rewrites wiki links", () => {
+Deno.test("VER-WIKI-BUILD: renderWikiPage strips frontmatter and rewrites wiki links", () => {
   const pageNamesBySourcePath = new Map<string, string>([
     ["Home.md", "Home"],
     ["idea.md", "Project-Idea"],
@@ -82,7 +82,7 @@ Deno.test("renderWikiPage strips frontmatter and rewrites wiki links", () => {
   );
 });
 
-Deno.test("renderWikiPage adds a heading to prose pages without one", () => {
+Deno.test("VER-WIKI-BUILD: renderWikiPage adds a heading to prose pages without one", () => {
   const page: SourcePage = {
     sourcePath: "idea.md",
     pageName: "Project-Idea",
@@ -105,7 +105,7 @@ Deno.test("renderWikiPage adds a heading to prose pages without one", () => {
   assertStringIncludes(rendered, "[Requirements](Requirements-SARA)");
 });
 
-Deno.test("renderWikiSidebar and renderWikiFooter use friendly wiki targets", () => {
+Deno.test("VER-WIKI-BUILD: renderWikiSidebar and renderWikiFooter use friendly wiki targets", () => {
   const sidebar = renderWikiSidebar(
     new Map<string, string>([
       ["Home.md", "Home"],

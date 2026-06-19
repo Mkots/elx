@@ -46,7 +46,7 @@ function createStore(
   };
 }
 
-Deno.test("GET /stage/2 redirects to /stage/1 when no session cookie", async () => {
+Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when no session cookie", async () => {
   const store = createStore();
   const app = createApp({
     stage2WordLoader: createLoader(),
@@ -59,7 +59,7 @@ Deno.test("GET /stage/2 redirects to /stage/1 when no session cookie", async () 
   assertEquals(response.headers.get("location"), "/stage/1");
 });
 
-Deno.test("GET /stage/2 redirects to /stage/1 when word selection is empty", async () => {
+Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when word selection is empty", async () => {
   const store = createStore([]);
   const app = createApp({
     stage2WordLoader: createLoader(),
@@ -74,7 +74,7 @@ Deno.test("GET /stage/2 redirects to /stage/1 when word selection is empty", asy
   assertEquals(response.headers.get("location"), "/stage/1");
 });
 
-Deno.test("GET /stage/2 returns HTML with the first verification card", async () => {
+Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verification card", async () => {
   const words = makeWords();
   const store = createStore([1, 2, 3]);
   const app = createApp({
@@ -100,7 +100,7 @@ Deno.test("GET /stage/2 returns HTML with the first verification card", async ()
   assertStringIncludes(body, "/static/htmx.min.js");
 });
 
-Deno.test("GET /stage/2 renders htmx Know/Don't know buttons", async () => {
+Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders htmx Know/Don't know buttons", async () => {
   const store = createStore([1, 2, 3]);
   const app = createApp({
     stage2WordLoader: createLoader(),
@@ -121,7 +121,7 @@ Deno.test("GET /stage/2 renders htmx Know/Don't know buttons", async () => {
   assertStringIncludes(body, 'action="/stage/2"');
 });
 
-Deno.test("POST /stage/2 redirects to /stage/1 when no session cookie", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session cookie", async () => {
   const store = createStore();
   const app = createApp({
     stage2WordLoader: createLoader(),
@@ -138,7 +138,7 @@ Deno.test("POST /stage/2 redirects to /stage/1 when no session cookie", async ()
   assertEquals(response.headers.get("location"), "/stage/1");
 });
 
-Deno.test("POST /stage/2 htmx request stores answer and returns next card", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and returns next card", async () => {
   const store = createStore([1, 2, 3]);
   const words = makeWords();
   const app = createApp({
@@ -168,7 +168,7 @@ Deno.test("POST /stage/2 htmx request stores answer and returns next card", asyn
   assertEquals(responseBody.includes("apple"), false);
 });
 
-Deno.test("POST /stage/2 final htmx request stores result and sends HX redirect", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and sends HX redirect", async () => {
   const store = createStore([1, 2]);
   store.answers["1"] = true;
   const words = makeWords().slice(0, 2);
@@ -198,7 +198,7 @@ Deno.test("POST /stage/2 final htmx request stores result and sends HX redirect"
   assertEquals(store.savedResults[0].result.truthfulness, 100);
 });
 
-Deno.test("POST /stage/2 computes score and redirects to /result", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /result", async () => {
   const store = createStore([1, 2, 3]);
   const words = makeWords();
   const app = createApp({
@@ -228,7 +228,7 @@ Deno.test("POST /stage/2 computes score and redirects to /result", async () => {
   assertEquals(store.savedResults[0].result.truthfulness, 100);
 });
 
-Deno.test("POST /stage/2 applies pseudoword penalty when pseudoword is claimed", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseudoword is claimed", async () => {
   const store = createStore([1, 2, 3]);
   const words = makeWords();
   const app = createApp({
@@ -255,7 +255,7 @@ Deno.test("POST /stage/2 applies pseudoword penalty when pseudoword is claimed",
   assertEquals(store.savedResults[0].result.truthfulness, 50);
 });
 
-Deno.test("POST /stage/2 sets session cookie in response", async () => {
+Deno.test("VER-STAGE2-ROUTE: POST /stage/2 sets session cookie in response", async () => {
   const store = createStore([1]);
   const app = createApp({
     stage2WordLoader: createLoader([{ id: 1, value: "word", isReal: true }]),

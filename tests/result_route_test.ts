@@ -11,7 +11,7 @@ function createStore(
   };
 }
 
-Deno.test("GET /result redirects to /stage/1 when no session cookie", async () => {
+Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/1 when no session cookie", async () => {
   const app = createApp({
     resultSessionStore: createStore(null),
   });
@@ -22,7 +22,7 @@ Deno.test("GET /result redirects to /stage/1 when no session cookie", async () =
   assertEquals(response.headers.get("location"), "/stage/1");
 });
 
-Deno.test("GET /result redirects to /stage/2 when no result in session", async () => {
+Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/2 when no result in session", async () => {
   const app = createApp({
     resultSessionStore: createStore(null),
   });
@@ -35,7 +35,7 @@ Deno.test("GET /result redirects to /stage/2 when no result in session", async (
   assertEquals(response.headers.get("location"), "/stage/2");
 });
 
-Deno.test("GET /result renders score and truthfulness", async () => {
+Deno.test("VER-RESULT-ROUTE: GET /result renders score and truthfulness", async () => {
   const app = createApp({
     resultSessionStore: createStore({ score: 42, truthfulness: 87 }),
   });
@@ -53,7 +53,7 @@ Deno.test("GET /result renders score and truthfulness", async () => {
   assertStringIncludes(body, 'class="truthfulness-progress"');
 });
 
-Deno.test("GET /result renders a link to restart", async () => {
+Deno.test("VER-RESULT-ROUTE: GET /result renders a link to restart", async () => {
   const app = createApp({
     resultSessionStore: createStore({ score: 10, truthfulness: 100 }),
   });

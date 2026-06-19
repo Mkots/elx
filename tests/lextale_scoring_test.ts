@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { computeScore } from "../scoring/lextale.ts";
 
-Deno.test("computeScore: all real words known → score equals count, truthfulness 100", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: all real words known → score equals count, truthfulness 100", () => {
   const answers = [
     { isReal: true, known: true },
     { isReal: true, known: true },
@@ -12,7 +12,7 @@ Deno.test("computeScore: all real words known → score equals count, truthfulne
   assertEquals(result.truthfulness, 100);
 });
 
-Deno.test("computeScore: mix of real and pseudo → score = real - pseudo", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: mix of real and pseudo → score = real - pseudo", () => {
   const answers = [
     { isReal: true, known: true },
     { isReal: true, known: true },
@@ -23,7 +23,7 @@ Deno.test("computeScore: mix of real and pseudo → score = real - pseudo", () =
   assertEquals(result.truthfulness, 67); // 2/3 * 100 rounded
 });
 
-Deno.test("computeScore: all pseudowords known → score negative, truthfulness 0", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: all pseudowords known → score negative, truthfulness 0", () => {
   const answers = [
     { isReal: false, known: true },
     { isReal: false, known: true },
@@ -33,7 +33,7 @@ Deno.test("computeScore: all pseudowords known → score negative, truthfulness 
   assertEquals(result.truthfulness, 0);
 });
 
-Deno.test("computeScore: no words known → score 0, truthfulness 100", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: no words known → score 0, truthfulness 100", () => {
   const answers = [
     { isReal: true, known: false },
     { isReal: false, known: false },
@@ -43,13 +43,13 @@ Deno.test("computeScore: no words known → score 0, truthfulness 100", () => {
   assertEquals(result.truthfulness, 100);
 });
 
-Deno.test("computeScore: empty answers → score 0, truthfulness 100", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: empty answers → score 0, truthfulness 100", () => {
   const result = computeScore([]);
   assertEquals(result.score, 0);
   assertEquals(result.truthfulness, 100);
 });
 
-Deno.test("computeScore: only don't-know answers ignored in score", () => {
+Deno.test("VER-VERIFICATION-SCORING: computeScore: only don't-know answers ignored in score", () => {
   const answers = [
     { isReal: true, known: false },
     { isReal: true, known: true },

@@ -331,13 +331,13 @@ async function createAdminSession() {
   return sessionId;
 }
 
-Deno.test("GET /admin redirects unauthenticated user to login", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin redirects unauthenticated user to login", async () => {
   const response = await app.request("/admin");
   assertEquals(response.status, 302);
   assertEquals(response.headers.get("location"), "/admin/login");
 });
 
-Deno.test("GET /admin/login renders login page", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/login renders login page", async () => {
   const response = await app.request("/admin/login");
   const body = await response.text();
   assertEquals(response.status, 200);
@@ -345,7 +345,7 @@ Deno.test("GET /admin/login renders login page", async () => {
   assertStringIncludes(body, "ELX Admin Portal");
 });
 
-Deno.test("POST /admin/login handles authentication and session creation", async () => {
+Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session creation", async () => {
   Deno.env.set("ADMIN_USERNAME", "testadmin");
   Deno.env.set("ADMIN_PASSWORD", "testpass");
 
@@ -415,7 +415,7 @@ Deno.test("POST /admin/login handles authentication and session creation", async
   }
 });
 
-Deno.test("GET /admin/words lists words and filters them", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/words lists words and filters them", async () => {
   const sessionId = await createAdminSession();
 
   // Test full list
@@ -437,7 +437,7 @@ Deno.test("GET /admin/words lists words and filters them", async () => {
   assertEquals(searchBody.includes("apple"), false);
 });
 
-Deno.test("GET /admin/words/new renders edit form", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/words/new renders edit form", async () => {
   const sessionId = await createAdminSession();
 
   const response = await app.request("/admin/words/new", {
@@ -449,7 +449,7 @@ Deno.test("GET /admin/words/new renders edit form", async () => {
   assertStringIncludes(body, "Word Value");
 });
 
-Deno.test("POST /admin/words/new validation and creation", async () => {
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/new validation and creation", async () => {
   const sessionId = await createAdminSession();
 
   // 1. Missing value validation
@@ -516,7 +516,7 @@ Deno.test("POST /admin/words/new validation and creation", async () => {
   assertStringIncludes(verifyBody, "cherry");
 });
 
-Deno.test("GET and POST /admin/words/:id/edit prefill and update", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/:id/edit prefill and update", async () => {
   const sessionId = await createAdminSession();
 
   // Prefill form
@@ -552,7 +552,7 @@ Deno.test("GET and POST /admin/words/:id/edit prefill and update", async () => {
   assertEquals(listBody.includes("banana"), false);
 });
 
-Deno.test("POST /admin/words/:id/delete safe checks", async () => {
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/:id/delete safe checks", async () => {
   const sessionId = await createAdminSession();
 
   // 1. Delete with reference error (simulating id 1 check)
@@ -585,7 +585,7 @@ Deno.test("POST /admin/words/:id/delete safe checks", async () => {
   assertEquals(listBody.includes("blarg"), false);
 });
 
-Deno.test("GET /admin/challenges lists synonyms, spelling, and definitions", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/challenges lists synonyms, spelling, and definitions", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -620,7 +620,7 @@ Deno.test("GET /admin/challenges lists synonyms, spelling, and definitions", asy
   assertStringIncludes(defBody, "banana"); // target word
 });
 
-Deno.test("GET /admin/challenges/:type/new renders edit form", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/challenges/:type/new renders edit form", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -634,7 +634,7 @@ Deno.test("GET /admin/challenges/:type/new renders edit form", async () => {
   assertStringIncludes(body, "Target Synonym Word");
 });
 
-Deno.test("POST /admin/challenges/:type/new validation and creation", async () => {
+Deno.test("VER-ADMIN-ROUTE: POST /admin/challenges/:type/new validation and creation", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -708,7 +708,7 @@ Deno.test("POST /admin/challenges/:type/new validation and creation", async () =
   assertStringIncludes(listBody, "blarg");
 });
 
-Deno.test("GET and POST /admin/challenges/:type/:id/edit prefill and update", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/challenges/:type/:id/edit prefill and update", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -745,7 +745,7 @@ Deno.test("GET and POST /admin/challenges/:type/:id/edit prefill and update", as
   assertStringIncludes(listBody, "banana");
 });
 
-Deno.test("POST /admin/challenges/:type/:id/delete deletes challenges", async () => {
+Deno.test("VER-ADMIN-ROUTE: POST /admin/challenges/:type/:id/delete deletes challenges", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -768,7 +768,7 @@ Deno.test("POST /admin/challenges/:type/:id/delete deletes challenges", async ()
   assertEquals(listBody.includes("/admin/challenges/synonyms/1/edit"), false);
 });
 
-Deno.test("GET /admin/history lists and sorts/filters test sessions", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/history lists and sorts/filters test sessions", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
@@ -806,7 +806,7 @@ Deno.test("GET /admin/history lists and sorts/filters test sessions", async () =
   assertEquals(idxAbc < idxGhi, true);
 });
 
-Deno.test("GET /admin/history/export exports CSV and JSON formats", async () => {
+Deno.test("VER-ADMIN-ROUTE: GET /admin/history/export exports CSV and JSON formats", async () => {
   resetMockData();
   const sessionId = await createAdminSession();
 
