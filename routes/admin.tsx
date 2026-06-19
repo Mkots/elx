@@ -1,5 +1,5 @@
-import { Hono } from "@hono/hono";
-import { getCookie, setCookie, deleteCookie } from "hono/cookie";
+import { type Context, Hono } from "@hono/hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { LoginPage } from "../ui/pages/LoginPage.tsx";
 import { AdminLayout } from "../ui/components/AdminLayout.tsx";
 import { getKv } from "../session.ts";
@@ -14,7 +14,10 @@ function getAdminCredentials() {
 }
 
 // Authentication middleware
-export async function adminAuthMiddleware(context: any, next: () => Promise<void>) {
+export async function adminAuthMiddleware(
+  context: Context,
+  next: () => Promise<void>,
+) {
   const path = context.req.path;
   // Exclude login endpoint from auth check
   if (path === "/admin/login") {
@@ -62,9 +65,11 @@ adminRoute.post("/login", async (context) => {
   if (usernameInput === username && passwordInput === password) {
     const sessionId = crypto.randomUUID();
     const kv = await getKv();
-    
+
     // Store session in Deno KV (24 hours expiry)
-    await kv.set(["admin_session", sessionId], { username }, { expireIn: 24 * 60 * 60 * 1000 });
+    await kv.set(["admin_session", sessionId], { username }, {
+      expireIn: 24 * 60 * 60 * 1000,
+    });
 
     // Set secure cookie
     setCookie(context, "admin_session", sessionId, {
@@ -98,10 +103,15 @@ adminRoute.get("/", (context) => {
       activeTab: "dashboard",
       children: (
         <article class="card" style="margin: 0;">
-          <h3 style="margin-top: 0; color: var(--pico-primary);">Welcome to ELX Admin Panel</h3>
-          <p>Use the sidebar navigation to manage vocabulary words, challenges, and view participant results.</p>
+          <h3 style="margin-top: 0; color: var(--pico-primary);">
+            Welcome to ELX Admin Panel
+          </h3>
+          <p>
+            Use the sidebar navigation to manage vocabulary words, challenges,
+            and view participant results.
+          </p>
         </article>
       ),
-    })
+    }),
   );
 });

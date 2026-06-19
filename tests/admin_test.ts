@@ -1,6 +1,5 @@
 import { app } from "../app.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { getCookie } from "hono/cookie";
 import { getKv } from "../session.ts";
 
 Deno.test("GET /admin redirects unauthenticated user to login", async () => {

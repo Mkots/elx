@@ -61,7 +61,11 @@ export function AdminLayout({ children, title, activeTab }: AdminLayoutProps) {
             </nav>
             <div class="admin-sidebar-footer">
               <form action="/admin/logout" method="post" style="margin: 0;">
-                <button type="submit" class="outline contrast logout-btn" style="margin: 0; width: 100%;">
+                <button
+                  type="submit"
+                  class="outline contrast logout-btn"
+                  style="margin: 0; width: 100%;"
+                >
                   Logout
                 </button>
               </form>
@@ -70,8 +74,12 @@ export function AdminLayout({ children, title, activeTab }: AdminLayoutProps) {
           <div class="admin-main-wrapper">
             <header class="admin-header">
               <h2 style="margin: 0; font-size: 1.5rem;">{title}</h2>
-              <div class="admin-user-info" style="font-size: 0.875rem; color: var(--pico-muted-color);">
-                Logged in as <strong style="color: var(--pico-color);">Admin</strong>
+              <div
+                class="admin-user-info"
+                style="font-size: 0.875rem; color: var(--pico-muted-color);"
+              >
+                Logged in as{" "}
+                <strong style="color: var(--pico-color);">Admin</strong>
               </div>
             </header>
             <main class="admin-content">
