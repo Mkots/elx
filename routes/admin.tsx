@@ -10,7 +10,53 @@ import {
 } from "../ui/pages/AdminDashboardPage.tsx";
 import { getKv } from "../session.ts";
 
-export const adminRoute = new Hono();
+export interface AdminDashboardLoader {
+  getDashboardStats(): Promise<{
+    totalRuns: number;
+    avgScore: number;
+    avgTruthfulness: number;
+    recentRuns: TestRun[];
+  }>;
+}
+
+export const databaseAdminDashboardLoader: AdminDashboardLoader = {
+  async getDashboardStats() {
+    const { client, db } = createDatabase();
+    try {
+      const stats = await db
+        .select({
+          totalRuns: sql<number>`count(${testHistory.id})::integer`,
+          avgScore: sql<
+            number
+          >`coalesce(avg(${testHistory.score}), 0)::numeric`,
+          avgTruthfulness: sql<
+            number
+          >`coalesce(avg(${testHistory.truthfulness}), 0)::numeric`,
+        })
+        .from(testHistory);
+
+      const totalRuns = stats[0]?.totalRuns ?? 0;
+      const avgScore = Math.round(Number(stats[0]?.avgScore ?? 0) * 10) / 10;
+      const avgTruthfulness =
+        Math.round(Number(stats[0]?.avgTruthfulness ?? 0) * 10) / 10;
+
+      const recentRuns = await db
+        .select()
+        .from(testHistory)
+        .orderBy(desc(testHistory.completedAt))
+        .limit(10);
+
+      return {
+        totalRuns,
+        avgScore,
+        avgTruthfulness,
+        recentRuns,
+      };
+    } finally {
+      await client.end();
+    }
+  },
+};
 
 // Helper to check credentials from env
 function getAdminCredentials() {
@@ -48,98 +94,71 @@ export async function adminAuthMiddleware(
   await next();
 }
 
-// Apply middleware to all /admin routes
-adminRoute.use("*", adminAuthMiddleware);
+export function createAdminRoute(
+  dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
+) {
+  const route = new Hono();
 
-// GET /admin/login
-adminRoute.get("/login", (context) => {
-  const sessionId = getCookie(context, "admin_session");
-  if (sessionId) {
-    return context.redirect("/admin");
-  }
-  return context.html(LoginPage());
-});
+  // Apply middleware to all /admin routes
+  route.use("*", adminAuthMiddleware);
 
-// POST /admin/login
-adminRoute.post("/login", async (context) => {
-  const body = await context.req.parseBody();
-  const usernameInput = body.username;
-  const passwordInput = body.password;
+  // GET /admin/login
+  route.get("/login", (context) => {
+    const sessionId = getCookie(context, "admin_session");
+    if (sessionId) {
+      return context.redirect("/admin");
+    }
+    return context.html(LoginPage());
+  });
 
-  const { username, password } = getAdminCredentials();
+  // POST /admin/login
+  route.post("/login", async (context) => {
+    const body = await context.req.parseBody();
+    const usernameInput = body.username;
+    const passwordInput = body.password;
 
-  if (usernameInput === username && passwordInput === password) {
-    const sessionId = crypto.randomUUID();
-    const kv = await getKv();
+    const { username, password } = getAdminCredentials();
 
-    // Store session in Deno KV (24 hours expiry)
-    await kv.set(["admin_session", sessionId], { username }, {
-      expireIn: 24 * 60 * 60 * 1000,
-    });
+    if (usernameInput === username && passwordInput === password) {
+      const sessionId = crypto.randomUUID();
+      const kv = await getKv();
 
-    // Set secure cookie
-    setCookie(context, "admin_session", sessionId, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "Lax",
-    });
+      // Store session in Deno KV (24 hours expiry)
+      await kv.set(["admin_session", sessionId], { username }, {
+        expireIn: 24 * 60 * 60 * 1000,
+      });
 
-    return context.redirect("/admin");
-  }
+      // Set secure cookie
+      setCookie(context, "admin_session", sessionId, {
+        httpOnly: true,
+        path: "/",
+        sameSite: "Lax",
+      });
 
-  return context.html(LoginPage({ error: "Invalid username or password" }));
-});
+      return context.redirect("/admin");
+    }
 
-// POST /admin/logout
-adminRoute.post("/logout", async (context) => {
-  const sessionId = getCookie(context, "admin_session");
-  if (sessionId) {
-    const kv = await getKv();
-    await kv.delete(["admin_session", sessionId]);
-    deleteCookie(context, "admin_session");
-  }
-  return context.redirect("/admin/login");
-});
+    return context.html(LoginPage({ error: "Invalid username or password" }));
+  });
 
-// GET /admin
-adminRoute.get("/", async (context) => {
-  const { client, db } = createDatabase();
-  let totalRuns = 0;
-  let avgScore = 0;
-  let avgTruthfulness = 0;
-  let recentRuns: TestRun[] = [];
+  // POST /admin/logout
+  route.post("/logout", async (context) => {
+    const sessionId = getCookie(context, "admin_session");
+    if (sessionId) {
+      const kv = await getKv();
+      await kv.delete(["admin_session", sessionId]);
+      deleteCookie(context, "admin_session");
+    }
+    return context.redirect("/admin/login");
+  });
 
-  try {
-    const stats = await db
-      .select({
-        totalRuns: sql<number>`count(${testHistory.id})::integer`,
-        avgScore: sql<number>`coalesce(avg(${testHistory.score}), 0)::numeric`,
-        avgTruthfulness: sql<
-          number
-        >`coalesce(avg(${testHistory.truthfulness}), 0)::numeric`,
-      })
-      .from(testHistory);
+  // GET /admin
+  route.get("/", async (context) => {
+    const stats = await dashboardLoader.getDashboardStats();
+    return context.html(AdminDashboardPage(stats));
+  });
 
-    totalRuns = stats[0]?.totalRuns ?? 0;
-    avgScore = Math.round(Number(stats[0]?.avgScore ?? 0) * 10) / 10;
-    avgTruthfulness = Math.round(Number(stats[0]?.avgTruthfulness ?? 0) * 10) /
-      10;
+  return route;
+}
 
-    recentRuns = await db
-      .select()
-      .from(testHistory)
-      .orderBy(desc(testHistory.completedAt))
-      .limit(10);
-  } finally {
-    await client.end();
-  }
-
-  return context.html(
-    AdminDashboardPage({
-      totalRuns,
-      avgScore,
-      avgTruthfulness,
-      recentRuns,
-    }),
-  );
-});
+export const adminRoute = createAdminRoute();

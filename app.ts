@@ -18,7 +18,10 @@ import {
   type Stage2SessionStore,
   type Stage2WordLoader,
 } from "./routes/stage2.ts";
-import { adminRoute } from "./routes/admin.tsx";
+import {
+  type AdminDashboardLoader,
+  createAdminRoute,
+} from "./routes/admin.tsx";
 
 interface CreateAppOptions {
   seedVerificationLoader?: SeedVerificationLoader;
@@ -27,6 +30,7 @@ interface CreateAppOptions {
   stage2WordLoader?: Stage2WordLoader;
   stage2SessionStore?: Stage2SessionStore;
   resultSessionStore?: ResultSessionStore;
+  adminDashboardLoader?: AdminDashboardLoader;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -49,7 +53,7 @@ export function createApp(options: CreateAppOptions = {}) {
     createStage2Route(options.stage2WordLoader, options.stage2SessionStore),
   );
   app.route("/result", createResultRoute(options.resultSessionStore));
-  app.route("/admin", adminRoute);
+  app.route("/admin", createAdminRoute(options.adminDashboardLoader));
 
   app.notFound((context) => context.json({ error: "Not found" }, 404));
 
