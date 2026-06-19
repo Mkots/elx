@@ -14,6 +14,7 @@ test("stage 2 renders one verification card after stage 1 submission", async ({ 
   await expect(page.getByRole("heading", { name: /stage 2/i })).toBeVisible();
   await expect(page.locator(".verification-card")).toHaveCount(1);
   await expect(page.locator(".stage-progress")).toHaveText("Word 1 of 3");
+  await expect(page.locator(".verification-progress")).toBeVisible();
 });
 
 test("stage 2 shows Know and Don't know buttons", async ({ page }) => {
@@ -57,6 +58,7 @@ test("stage 2 result page shows score and truthfulness", async ({ page }) => {
   await expect(page).toHaveURL("/result");
   await expect(page.getByTestId("score")).toBeVisible();
   await expect(page.getByTestId("truthfulness")).toBeVisible();
+  await expect(page.locator(".truthfulness-progress")).toBeVisible();
 });
 
 test("stage 2 is accessible without JavaScript", async ({ browser }) => {

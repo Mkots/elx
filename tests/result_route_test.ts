@@ -49,6 +49,8 @@ Deno.test("GET /result renders score and truthfulness", async () => {
   assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
   assertStringIncludes(body, "42");
   assertStringIncludes(body, "87%");
+  assertStringIncludes(body, "High confidence");
+  assertStringIncludes(body, 'class="truthfulness-progress"');
 });
 
 Deno.test("GET /result renders a link to restart", async () => {
