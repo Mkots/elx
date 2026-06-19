@@ -53,6 +53,7 @@
     "test": "deno test --allow-env",
     "test:coverage": "DENO_DIR=.deno-cache deno test --clean --coverage=coverage --coverage-raw-data-only --allow-env && DENO_DIR=.deno-cache deno coverage coverage --lcov --output=coverage.lcov",
     "wiki:build": "deno run -A scripts/build_wiki.ts docs .wiki-build",
+    "seed:e2e": "deno task db:migrate && deno task seed:words",
     "seed:words": "deno run --allow-net --allow-env scripts/seed_words.ts",
     "seed:synonyms": "deno run --allow-net --allow-env scripts/seed_synonyms.ts",
     "seed:spelling": "deno run --allow-net --allow-env scripts/seed_spelling.ts",
