@@ -75,7 +75,11 @@ test("stage 2 is accessible without JavaScript", async ({ browser }) => {
   await context.close();
 });
 
-test("/result redirects to /stage/2 without a completed session", async ({ page }) => {
+test("/result redirects to /stage/2 after stage 1 but before stage 2", async ({ page }) => {
+  await page.goto("/stage/1");
+  await page.getByRole("button", { name: /next/i }).click();
+  await expect(page).toHaveURL("/stage/2");
+
   await page.goto("/result");
 
   await expect(page).toHaveURL("/stage/2");
