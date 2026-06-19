@@ -2,10 +2,11 @@ import type { Child } from "hono/jsx";
 
 type LayoutProps = {
   children: Child;
+  htmx?: boolean;
   title: string;
 };
 
-export function Layout({ children, title }: LayoutProps) {
+export function Layout({ children, htmx = false, title }: LayoutProps) {
   return (
     <html lang="en" data-theme="dark">
       <head>
@@ -18,6 +19,7 @@ export function Layout({ children, title }: LayoutProps) {
         <title>{title}</title>
         <link rel="stylesheet" href="/static/pico.min.css" />
         <link rel="stylesheet" href="/static/app.css" />
+        {htmx && <script src="/static/htmx.min.js" defer></script>}
       </head>
       <body>
         <main>{children}</main>

@@ -21,16 +21,24 @@ function createLoader(wordList = makeWords()): Stage2WordLoader {
 function createStore(
   wordIds: number[] = [1, 2, 3],
 ): Stage2SessionStore & {
+  answers: Record<string, boolean>;
   savedResults: Array<
     { sessionId: string; result: { score: number; truthfulness: number } }
   >;
 } {
+  const answers: Record<string, boolean> = {};
   const savedResults: Array<
     { sessionId: string; result: { score: number; truthfulness: number } }
   > = [];
   return {
+    answers,
+    loadStage2Answers: () => Promise.resolve({ ...answers }),
     savedResults,
     loadWordSelection: () => Promise.resolve(wordIds),
+    saveStage2Answer(_sessionId, wordId, known) {
+      answers[String(wordId)] = known;
+      return Promise.resolve();
+    },
     saveStage2Result(sessionId, result) {
       savedResults.push({ sessionId, result });
       return Promise.resolve();
@@ -66,7 +74,7 @@ Deno.test("GET /stage/2 redirects to /stage/1 when word selection is empty", asy
   assertEquals(response.headers.get("location"), "/stage/1");
 });
 
-Deno.test("GET /stage/2 returns HTML with verification cards", async () => {
+Deno.test("GET /stage/2 returns HTML with the first verification card", async () => {
   const words = makeWords();
   const store = createStore([1, 2, 3]);
   const app = createApp({
@@ -82,12 +90,14 @@ Deno.test("GET /stage/2 returns HTML with verification cards", async () => {
   assertEquals(response.status, 200);
   assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
   assertStringIncludes(body, "Stage 2: Verification");
+  assertStringIncludes(body, "Word 1 of 3");
   assertStringIncludes(body, "apple");
-  assertStringIncludes(body, "blurp");
-  assertStringIncludes(body, "chair");
+  assertEquals(body.includes("blurp"), false);
+  assertEquals(body.includes("chair"), false);
+  assertStringIncludes(body, "/static/htmx.min.js");
 });
 
-Deno.test("GET /stage/2 renders Know/Don't Know radio buttons", async () => {
+Deno.test("GET /stage/2 renders htmx Know/Don't know buttons", async () => {
   const store = createStore([1, 2, 3]);
   const app = createApp({
     stage2WordLoader: createLoader(),
@@ -99,7 +109,9 @@ Deno.test("GET /stage/2 renders Know/Don't Know radio buttons", async () => {
   });
   const body = await response.text();
 
-  assertStringIncludes(body, 'type="radio"');
+  assertStringIncludes(body, 'hx-post="/stage/2"');
+  assertStringIncludes(body, 'hx-target="#stage2-card-shell"');
+  assertStringIncludes(body, 'name="answer"');
   assertStringIncludes(body, 'value="know"');
   assertStringIncludes(body, 'value="dont_know"');
   assertStringIncludes(body, 'method="post"');
@@ -121,6 +133,66 @@ Deno.test("POST /stage/2 redirects to /stage/1 when no session cookie", async ()
 
   assertEquals(response.status, 302);
   assertEquals(response.headers.get("location"), "/stage/1");
+});
+
+Deno.test("POST /stage/2 htmx request stores answer and returns next card", async () => {
+  const store = createStore([1, 2, 3]);
+  const words = makeWords();
+  const app = createApp({
+    stage2WordLoader: createLoader(words),
+    stage2SessionStore: store,
+  });
+
+  const body = new URLSearchParams();
+  body.append("wordId", "1");
+  body.append("answer", "know");
+
+  const response = await app.request("/stage/2", {
+    method: "POST",
+    body,
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "cookie": "sessionId=test-session",
+      "HX-Request": "true",
+    },
+  });
+  const responseBody = await response.text();
+
+  assertEquals(response.status, 200);
+  assertEquals(store.answers["1"], true);
+  assertStringIncludes(responseBody, "Word 2 of 3");
+  assertStringIncludes(responseBody, "blurp");
+  assertEquals(responseBody.includes("apple"), false);
+});
+
+Deno.test("POST /stage/2 final htmx request stores result and sends HX redirect", async () => {
+  const store = createStore([1, 2]);
+  store.answers["1"] = true;
+  const words = makeWords().slice(0, 2);
+  const app = createApp({
+    stage2WordLoader: createLoader(words),
+    stage2SessionStore: store,
+  });
+
+  const body = new URLSearchParams();
+  body.append("wordId", "2");
+  body.append("answer", "dont_know");
+
+  const response = await app.request("/stage/2", {
+    method: "POST",
+    body,
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "cookie": "sessionId=test-session",
+      "HX-Request": "true",
+    },
+  });
+
+  assertEquals(response.status, 204);
+  assertEquals(response.headers.get("HX-Redirect"), "/result");
+  assertEquals(store.savedResults.length, 1);
+  assertEquals(store.savedResults[0].result.score, 1);
+  assertEquals(store.savedResults[0].result.truthfulness, 100);
 });
 
 Deno.test("POST /stage/2 computes score and redirects to /result", async () => {
