@@ -1,6 +1,15 @@
 import { app } from "../app.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
+import { createDatabase } from "../db/client.ts";
+import { testHistory } from "../db/schema.ts";
+import { sql } from "drizzle-orm";
+
+// Ensure DATABASE_URL is set for tests
+Deno.env.set(
+  "DATABASE_URL",
+  Deno.env.get("DATABASE_URL") || "postgres://elx:elx@127.0.0.1:5432/elx",
+);
 
 Deno.test("GET /admin redirects unauthenticated user to login", async () => {
   const response = await app.request("/admin");
@@ -67,7 +76,8 @@ Deno.test("POST /admin/login handles authentication and session creation", async
   });
   const authBody = await authenticatedResponse.text();
   assertEquals(authenticatedResponse.status, 200);
-  assertStringIncludes(authBody, "Welcome to ELX Admin Panel");
+  assertStringIncludes(authBody, "Recent Test Activity");
+  assertStringIncludes(authBody, "Total Runs");
 
   // 5. Test logout
   const logoutResponse = await app.request("/admin/logout", {
@@ -84,4 +94,54 @@ Deno.test("POST /admin/login handles authentication and session creation", async
   // Clean up env
   Deno.env.delete("ADMIN_USERNAME");
   Deno.env.delete("ADMIN_PASSWORD");
+});
+
+Deno.test("GET /admin aggregates metrics from database and displays them", async () => {
+  Deno.env.set("ADMIN_USERNAME", "testadmin");
+  Deno.env.set("ADMIN_PASSWORD", "testpass");
+
+  const { client, db } = createDatabase();
+
+  // Insert mock test runs
+  const testSessionId = `test-session-${crypto.randomUUID()}`;
+  await db.insert(testHistory).values([
+    { sessionId: testSessionId, score: 80, truthfulness: 90 },
+    { sessionId: testSessionId, score: 60, truthfulness: 80 },
+  ]);
+
+  try {
+    const loginData = new URLSearchParams();
+    loginData.append("username", "testadmin");
+    loginData.append("password", "testpass");
+
+    const loginRes = await app.request("/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: loginData.toString(),
+    });
+
+    const cookieHeader = loginRes.headers.get("set-cookie") ?? "";
+    const match = cookieHeader.match(/admin_session=([^;]+)/);
+    const sessionId = match ? match[1] : "";
+
+    const dashboardRes = await app.request("/admin", {
+      headers: { "Cookie": `admin_session=${sessionId}` },
+    });
+
+    const body = await dashboardRes.text();
+    assertEquals(dashboardRes.status, 200);
+    assertStringIncludes(body, "Total Runs");
+    assertStringIncludes(body, "Average Score");
+    assertStringIncludes(body, "Avg Truthfulness");
+    assertStringIncludes(body, testSessionId);
+    assertStringIncludes(body, "80%");
+    assertStringIncludes(body, "90%");
+  } finally {
+    // Clean up DB records
+    await db.delete(testHistory).where(sql`session_id = ${testSessionId}`);
+    await client.end();
+
+    Deno.env.delete("ADMIN_USERNAME");
+    Deno.env.delete("ADMIN_PASSWORD");
+  }
 });

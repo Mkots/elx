@@ -1,7 +1,13 @@
 import { type Context, Hono } from "@hono/hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { desc, sql } from "drizzle-orm";
+import { createDatabase } from "../db/client.ts";
+import { testHistory } from "../db/schema.ts";
 import { LoginPage } from "../ui/pages/LoginPage.tsx";
-import { AdminLayout } from "../ui/components/AdminLayout.tsx";
+import {
+  AdminDashboardPage,
+  type TestRun,
+} from "../ui/pages/AdminDashboardPage.tsx";
 import { getKv } from "../session.ts";
 
 export const adminRoute = new Hono();
@@ -95,23 +101,45 @@ adminRoute.post("/logout", async (context) => {
   return context.redirect("/admin/login");
 });
 
-// GET /admin (Dashboard placeholder)
-adminRoute.get("/", (context) => {
+// GET /admin
+adminRoute.get("/", async (context) => {
+  const { client, db } = createDatabase();
+  let totalRuns = 0;
+  let avgScore = 0;
+  let avgTruthfulness = 0;
+  let recentRuns: TestRun[] = [];
+
+  try {
+    const stats = await db
+      .select({
+        totalRuns: sql<number>`count(${testHistory.id})::integer`,
+        avgScore: sql<number>`coalesce(avg(${testHistory.score}), 0)::numeric`,
+        avgTruthfulness: sql<
+          number
+        >`coalesce(avg(${testHistory.truthfulness}), 0)::numeric`,
+      })
+      .from(testHistory);
+
+    totalRuns = stats[0]?.totalRuns ?? 0;
+    avgScore = Math.round(Number(stats[0]?.avgScore ?? 0) * 10) / 10;
+    avgTruthfulness = Math.round(Number(stats[0]?.avgTruthfulness ?? 0) * 10) /
+      10;
+
+    recentRuns = await db
+      .select()
+      .from(testHistory)
+      .orderBy(desc(testHistory.completedAt))
+      .limit(10);
+  } finally {
+    await client.end();
+  }
+
   return context.html(
-    AdminLayout({
-      title: "Dashboard",
-      activeTab: "dashboard",
-      children: (
-        <article class="card" style="margin: 0;">
-          <h3 style="margin-top: 0; color: var(--pico-primary);">
-            Welcome to ELX Admin Panel
-          </h3>
-          <p>
-            Use the sidebar navigation to manage vocabulary words, challenges,
-            and view participant results.
-          </p>
-        </article>
-      ),
+    AdminDashboardPage({
+      totalRuns,
+      avgScore,
+      avgTruthfulness,
+      recentRuns,
     }),
   );
 });
