@@ -307,6 +307,11 @@ const mockHistoryLoader: AdminHistoryLoader = {
 
     return { history: paginated, totalCount };
   },
+
+  async exportAllHistory() {
+    await Promise.resolve();
+    return [...mockHistoryList];
+  },
 };
 
 const app = createApp({
@@ -799,4 +804,47 @@ Deno.test("GET /admin/history lists and sorts/filters test sessions", async () =
   const idxGhi = body3.indexOf("session-ghi-789");
   assertEquals(idxDef < idxAbc, true);
   assertEquals(idxAbc < idxGhi, true);
+});
+
+Deno.test("GET /admin/history/export exports CSV and JSON formats", async () => {
+  resetMockData();
+  const sessionId = await createAdminSession();
+
+  // 1. Export CSV
+  const csvRes = await app.request("/admin/history/export?format=csv", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const csvBody = await csvRes.text();
+  assertEquals(csvRes.status, 200);
+  assertEquals(csvRes.headers.get("Content-Type"), "text/csv");
+  assertStringIncludes(
+    csvRes.headers.get("Content-Disposition") ?? "",
+    "attachment; filename=elx-test-history.csv",
+  );
+  assertStringIncludes(
+    csvBody,
+    "id,session_id,score,truthfulness,completed_at",
+  );
+  assertStringIncludes(csvBody, "session-abc-123");
+  assertStringIncludes(csvBody, "session-def-456");
+
+  // 2. Export JSON
+  const jsonRes = await app.request("/admin/history/export?format=json", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const jsonBody = await jsonRes.json();
+  assertEquals(jsonRes.status, 200);
+  assertEquals(jsonRes.headers.get("Content-Type"), "application/json");
+  assertStringIncludes(
+    jsonRes.headers.get("Content-Disposition") ?? "",
+    "attachment; filename=elx-test-history.json",
+  );
+  assertEquals(jsonBody.length, 3);
+  assertEquals(jsonBody[0].sessionId, "session-abc-123");
+
+  // 3. Invalid format
+  const invalidRes = await app.request("/admin/history/export?format=invalid", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  assertEquals(invalidRes.status, 400);
 });

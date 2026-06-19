@@ -464,6 +464,7 @@ export interface AdminHistoryLoader {
   }): Promise<
     { history: (typeof testHistory.$inferSelect)[]; totalCount: number }
   >;
+  exportAllHistory(): Promise<(typeof testHistory.$inferSelect)[]>;
 }
 
 export const databaseAdminHistoryLoader: AdminHistoryLoader = {
@@ -508,6 +509,17 @@ export const databaseAdminHistoryLoader: AdminHistoryLoader = {
         .offset(offset);
 
       return { history: result, totalCount };
+    } finally {
+      await client.end();
+    }
+  },
+
+  async exportAllHistory() {
+    const { client, db } = createDatabase();
+    try {
+      return await db.select().from(testHistory).orderBy(
+        desc(testHistory.completedAt),
+      );
     } finally {
       await client.end();
     }
@@ -1331,6 +1343,53 @@ export function createAdminRoute(
           error: "Failed to load test history: " + errMsg,
         }),
       );
+    }
+  });
+
+  // GET /admin/history/export
+  route.get("/history/export", async (context) => {
+    const format = context.req.query("format") || "csv";
+    if (format !== "csv" && format !== "json") {
+      return context.text("Invalid format. Must be csv or json.", 400);
+    }
+
+    try {
+      const allHistory = await historyLoader.exportAllHistory();
+
+      if (format === "csv") {
+        let csvContent = "id,session_id,score,truthfulness,completed_at\n";
+        for (const run of allHistory) {
+          const dateStr = run.completedAt instanceof Date
+            ? run.completedAt.toISOString()
+            : new Date(run.completedAt).toISOString();
+          let safeSessionId = run.sessionId;
+          if (
+            safeSessionId.includes(",") || safeSessionId.includes('"') ||
+            safeSessionId.includes("\n")
+          ) {
+            safeSessionId = `"${safeSessionId.replace(/"/g, '""')}"`;
+          }
+          csvContent +=
+            `${run.id},${safeSessionId},${run.score},${run.truthfulness},${dateStr}\n`;
+        }
+
+        context.header("Content-Type", "text/csv");
+        context.header(
+          "Content-Disposition",
+          "attachment; filename=elx-test-history.csv",
+        );
+        return context.body(csvContent);
+      } else {
+        context.header("Content-Type", "application/json");
+        context.header(
+          "Content-Disposition",
+          "attachment; filename=elx-test-history.json",
+        );
+        return context.json(allHistory);
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.text("Failed to export test history: " + errMsg, 500);
     }
   });
 

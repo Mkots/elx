@@ -82,9 +82,28 @@ export function AdminDashboardPage({
         </section>
 
         <section class="activity-section">
-          <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">
-            Recent Test Activity
-          </h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 style="margin: 0; font-size: 1.25rem;">
+              Recent Test Activity
+            </h3>
+            <div style="display: inline-flex; gap: 0.5rem;">
+              <a
+                href="/admin/history/export?format=csv"
+                role="button"
+                style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; background: var(--pico-primary); color: #2d2839; font-weight: 700;"
+              >
+                📥 Export CSV
+              </a>
+              <a
+                href="/admin/history/export?format=json"
+                role="button"
+                class="outline"
+                style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+              >
+                📥 Export JSON
+              </a>
+            </div>
+          </div>
           {recentRuns.length === 0
             ? (
               <article style="padding: 2rem; text-align: center; color: var(--pico-muted-color); background: rgba(242, 239, 250, 0.03); border: 1px dashed rgba(242, 239, 250, 0.16); border-radius: var(--pico-border-radius);">
