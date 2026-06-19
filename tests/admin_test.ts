@@ -4,6 +4,7 @@ import { createApp } from "../app.ts";
 import type {
   AdminChallengesLoader,
   AdminDashboardLoader,
+  AdminHistoryLoader,
   AdminWordsLoader,
 } from "../routes/admin.tsx";
 import type { TestRun } from "../ui/pages/AdminDashboardPage.tsx";
@@ -116,6 +117,8 @@ const mockDefinitionsList = [
   { id: 1, wordId: 2, definitionText: "A yellow fruit.", distractors: [1, 3] },
 ];
 
+const mockHistoryList: TestRun[] = [];
+
 function resetMockData() {
   mockWordsList.length = 0;
   mockWordsList.push(
@@ -152,6 +155,31 @@ function resetMockData() {
       wordId: 2,
       definitionText: "A yellow fruit.",
       distractors: [1, 3],
+    },
+  );
+
+  mockHistoryList.length = 0;
+  mockHistoryList.push(
+    {
+      id: 1,
+      sessionId: "session-abc-123",
+      score: 80,
+      truthfulness: 90,
+      completedAt: new Date("2026-06-19T10:00:00Z"),
+    },
+    {
+      id: 2,
+      sessionId: "session-def-456",
+      score: 70,
+      truthfulness: 85,
+      completedAt: new Date("2026-06-19T11:00:00Z"),
+    },
+    {
+      id: 3,
+      sessionId: "session-ghi-789",
+      score: 95,
+      truthfulness: 100,
+      completedAt: new Date("2026-06-19T12:00:00Z"),
     },
   );
 }
@@ -252,10 +280,40 @@ const mockChallengesLoader: AdminChallengesLoader = {
   },
 };
 
+const mockHistoryLoader: AdminHistoryLoader = {
+  async listHistory({ search, orderBy, orderDir, page, limit }) {
+    await Promise.resolve();
+    let filtered = [...mockHistoryList];
+    if (search) {
+      filtered = filtered.filter((r) => r.sessionId.includes(search));
+    }
+
+    if (orderBy === "score") {
+      filtered.sort((
+        a,
+        b,
+      ) => (orderDir === "asc" ? a.score - b.score : b.score - a.score));
+    } else {
+      filtered.sort((a, b) =>
+        orderDir === "asc"
+          ? a.completedAt.getTime() - b.completedAt.getTime()
+          : b.completedAt.getTime() - a.completedAt.getTime()
+      );
+    }
+
+    const totalCount = filtered.length;
+    const offset = (page - 1) * limit;
+    const paginated = filtered.slice(offset, offset + limit);
+
+    return { history: paginated, totalCount };
+  },
+};
+
 const app = createApp({
   adminDashboardLoader: mockDashboardLoader,
   adminWordsLoader: mockWordsLoader,
   adminChallengesLoader: mockChallengesLoader,
+  adminHistoryLoader: mockHistoryLoader,
 });
 
 // Setup helper for authenticated session
@@ -696,11 +754,49 @@ Deno.test("POST /admin/challenges/:type/:id/delete deletes challenges", async ()
     "/admin/challenges?type=synonyms&success=",
   );
 
-  // Verify deletion in list
+  // Verify deletion
   const listRes = await app.request("/admin/challenges?type=synonyms", {
     headers: { "Cookie": `admin_session=${sessionId}` },
   });
   const listBody = await listRes.text();
   // Expecting list list body to not contain distractors or IDs we deleted
   assertEquals(listBody.includes("/admin/challenges/synonyms/1/edit"), false);
+});
+
+Deno.test("GET /admin/history lists and sorts/filters test sessions", async () => {
+  resetMockData();
+  const sessionId = await createAdminSession();
+
+  // 1. Basic list
+  const res1 = await app.request("/admin/history", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const body1 = await res1.text();
+  assertEquals(res1.status, 200);
+  assertStringIncludes(body1, "Test Session History");
+  assertStringIncludes(body1, "session-abc-123");
+  assertStringIncludes(body1, "session-def-456");
+  assertStringIncludes(body1, "session-ghi-789");
+
+  // 2. Filter by search query
+  const res2 = await app.request("/admin/history?q=def", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const body2 = await res2.text();
+  assertEquals(res2.status, 200);
+  assertStringIncludes(body2, "session-def-456");
+  assertEquals(body2.includes("session-abc-123"), false);
+
+  // 3. Sort by score ascending
+  const res3 = await app.request("/admin/history?orderBy=score&orderDir=asc", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const body3 = await res3.text();
+  assertEquals(res3.status, 200);
+  // Order check: session-def-456 (70%) is before session-abc-123 (80%) which is before session-ghi-789 (95%)
+  const idxDef = body3.indexOf("session-def-456");
+  const idxAbc = body3.indexOf("session-abc-123");
+  const idxGhi = body3.indexOf("session-ghi-789");
+  assertEquals(idxDef < idxAbc, true);
+  assertEquals(idxAbc < idxGhi, true);
 });
