@@ -1,5 +1,27 @@
 import { defineConfig } from "@playwright/test";
 
+function loadEnvFile(path: string): Record<string, string> {
+  try {
+    return Object.fromEntries(
+      Deno.readTextFileSync(path)
+        .split("\n")
+        .flatMap((line) => {
+          const m = line.trim().replace(/^export\s+/, "").match(
+            /^([^#=][^=]*)=(.*)/,
+          );
+          return m
+            ? [[m[1].trim(), m[2].trim().replace(/^["']|["']$/g, "")]]
+            : [];
+        }),
+    );
+  } catch {
+    return {};
+  }
+}
+
+const envFile = loadEnvFile(".env");
+const getEnv = (key: string) => Deno.env.get(key) ?? envFile[key] ?? "";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -11,9 +33,13 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "deno task start",
+    command: "deno task start:e2e",
     url: "http://127.0.0.1:8000/health",
     reuseExistingServer: Deno.env.get("CI") !== "true",
     timeout: 30_000,
+    env: {
+      DATABASE_URL: getEnv("DATABASE_URL"),
+      DENO_KV_PATH: getEnv("DENO_KV_PATH") || ".data/elx.sqlite3",
+    },
   },
 });
