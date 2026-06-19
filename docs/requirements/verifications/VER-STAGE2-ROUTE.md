@@ -11,11 +11,16 @@ verifies:
 
 # Verification: Stage 2 Route Integration Tests
 
-Covers the HTTP endpoint and card-by-card transition flow of the second stage of word verification against [REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md), [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and [REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
+Covers the HTTP endpoint and card-by-card transition flow of the second stage of
+word verification against
+[REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md),
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and
+[REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
 
 ## Code under verification
 
-- `routes/stage2.tsx` — implements Hono routes for GET and POST `/stage/2`, processing interactive word verification.
+- `routes/stage2.tsx` — implements Hono routes for GET and POST `/stage/2`,
+  processing interactive word verification.
 
 ## Tests
 
@@ -33,6 +38,10 @@ Covers the HTTP endpoint and card-by-card transition flow of the second stage of
 
 ## Requirement coverage
 
-- _Verification cards_ — GET/POST requests return individual cards with "Know"/"Don't know" buttons dynamically utilizing htmx.
-- _Truthfulness score_ and _Scoring algorithm_ — POSTs correctly record answers on the server and apply pseudoword penalties during the final score calculation.
-- _GET/POST/302 flow_ — GETs without valid session states redirect to `/stage/1`, and completing the stage redirects to `/result`.
+- _Verification cards_ — GET/POST requests return individual cards with
+  "Know"/"Don't know" buttons dynamically utilizing htmx.
+- _Truthfulness score_ and _Scoring algorithm_ — POSTs correctly record answers
+  on the server and apply pseudoword penalties during the final score
+  calculation.
+- _GET/POST/302 flow_ — GETs without valid session states redirect to
+  `/stage/1`, and completing the stage redirects to `/result`.

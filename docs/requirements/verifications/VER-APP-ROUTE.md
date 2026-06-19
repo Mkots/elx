@@ -10,11 +10,14 @@ verifies:
 
 # Verification: App Route Integration Tests
 
-Covers the index and health check endpoints against [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md) and [REQ-OBSERVABILITY](../requirements/REQ-OBSERVABILITY.md).
+Covers the index and health check endpoints against
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md) and
+[REQ-OBSERVABILITY](../requirements/REQ-OBSERVABILITY.md).
 
 ## Code under verification
 
-- `app.ts` — contains the Hono application definition, including routes for the homepage and health checks.
+- `app.ts` — contains the Hono application definition, including routes for the
+  homepage and health checks.
 
 ## Tests
 
@@ -24,5 +27,7 @@ Covers the index and health check endpoints against [REQ-SSR-STAGE-FLOW](../requ
 
 ## Requirement coverage
 
-- _Server rendering_ — GET `/` returns server-rendered HTML with the homepage heading and description.
-- _Healthcheck_ — GET `/health` returns service status metadata used by external monitors.
+- _Server rendering_ — GET `/` returns server-rendered HTML with the homepage
+  heading and description.
+- _Healthcheck_ — GET `/health` returns service status metadata used by external
+  monitors.

@@ -33,4 +33,4 @@ Markdown file with YAML frontmatter, managed by [SARA](../README.md).
 | [REQ-BACKUPS](REQ-BACKUPS.md)                   | Database backups                               | accepted |
 | [REQ-OBSERVABILITY](REQ-OBSERVABILITY.md)       | Observability                                  | accepted |
 | [REQ-QUALITY-GATES](REQ-QUALITY-GATES.md)       | Automated quality gates and traceability       | accepted |
-| [REQ-ADMIN-PANEL](REQ-ADMIN-PANEL.md)             | Admin panel and content management             | accepted |
+| [REQ-ADMIN-PANEL](REQ-ADMIN-PANEL.md)           | Admin panel and content management             | accepted |

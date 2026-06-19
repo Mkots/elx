@@ -10,11 +10,14 @@ verifies:
 
 # Verification: Admin Panel Routes and CRUD Integration Tests
 
-Covers admin panel access, authentication, words, challenges CRUD operations and history exporting against [REQ-ADMIN-PANEL](../requirements/REQ-ADMIN-PANEL.md) and [REQ-DATA-PERSISTENCE](../requirements/REQ-DATA-PERSISTENCE.md).
+Covers admin panel access, authentication, words, challenges CRUD operations and
+history exporting against [REQ-ADMIN-PANEL](../requirements/REQ-ADMIN-PANEL.md)
+and [REQ-DATA-PERSISTENCE](../requirements/REQ-DATA-PERSISTENCE.md).
 
 ## Code under verification
 
-- `routes/admin.tsx` — implements Hono route handlers for secure administrator interactions, dashboard rendering, content editing and data exporting.
+- `routes/admin.tsx` — implements Hono route handlers for secure administrator
+  interactions, dashboard rendering, content editing and data exporting.
 
 ## Tests
 
@@ -37,6 +40,9 @@ Covers admin panel access, authentication, words, challenges CRUD operations and
 
 ## Requirement coverage
 
-- _Authentication_ — redirects unauthorized users attempting access to `/admin` paths to `/admin/login`.
-- _Words and Challenges CRUD_ — handles data validation, creation, editing and deletion.
-- _Test History & Export_ — lists test sessions, supports sorting/filtering, and provides CSV/JSON format export.
+- _Authentication_ — redirects unauthorized users attempting access to `/admin`
+  paths to `/admin/login`.
+- _Words and Challenges CRUD_ — handles data validation, creation, editing and
+  deletion.
+- _Test History & Export_ — lists test sessions, supports sorting/filtering, and
+  provides CSV/JSON format export.

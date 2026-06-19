@@ -11,11 +11,15 @@ verifies:
 
 # Verification: Stage 1 Route Integration Tests
 
-Covers the HTTP endpoint and flow of the first stage of word selection against [REQ-WORD-SELECTION](../requirements/REQ-WORD-SELECTION.md), [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and [REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
+Covers the HTTP endpoint and flow of the first stage of word selection against
+[REQ-WORD-SELECTION](../requirements/REQ-WORD-SELECTION.md),
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and
+[REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
 
 ## Code under verification
 
-- `routes/stage1.tsx` — implements Hono routes for GET and POST `/stage/1`, displaying the word grid and handling submissions.
+- `routes/stage1.tsx` — implements Hono routes for GET and POST `/stage/1`,
+  displaying the word grid and handling submissions.
 
 ## Tests
 
@@ -28,5 +32,8 @@ Covers the HTTP endpoint and flow of the first stage of word selection against [
 
 ## Requirement coverage
 
-- _Word bank_ and _Selection interface_ — GET request returns server-rendered HTML containing a grid of words with checkbox forms.
-- _Navigation_ and _GET/POST/302 flow_ — POSTing selections responds with a `302` redirect to `/stage/2`, persisting selections in session state and creating new session cookies if none exist.
+- _Word bank_ and _Selection interface_ — GET request returns server-rendered
+  HTML containing a grid of words with checkbox forms.
+- _Navigation_ and _GET/POST/302 flow_ — POSTing selections responds with a
+  `302` redirect to `/stage/2`, persisting selections in session state and
+  creating new session cookies if none exist.

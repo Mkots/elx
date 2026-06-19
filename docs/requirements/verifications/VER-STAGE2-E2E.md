@@ -11,11 +11,15 @@ verifies:
 
 # Verification: Stage 2 End-to-End Tests
 
-Covers real browser interaction with Stage 2 and results viewing against [REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md), [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and [REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
+Covers real browser interaction with Stage 2 and results viewing against
+[REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md),
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and
+[REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
 
 ## Code under verification
 
-- `routes/stage2.tsx` — implements Hono server-side JSX for Stage 2 interactive word verification.
+- `routes/stage2.tsx` — implements Hono server-side JSX for Stage 2 interactive
+  word verification.
 - `routes/result.tsx` — renders the final score summary page.
 
 ## Tests
@@ -30,7 +34,12 @@ Covers real browser interaction with Stage 2 and results viewing against [REQ-VE
 
 ## Requirement coverage
 
-- _Verification cards_ — browser displays cards one by one with "Know" and "Don't know" options, utilizing HTMX to dynamically swap content.
-- _Truthfulness score_ and _Scoring algorithm_ — completing all cards calculates scores and redirects to `/result` showing correct results.
-- _JavaScript-free accessibility_ — verified that fallback HTML forms allow the entire verification flow to run properly when client-side JavaScript/HTMX is disabled.
-- _GET/POST/302 flow_ — unauthorized entry or direct `/result` access without valid verification progress results in correct redirections.
+- _Verification cards_ — browser displays cards one by one with "Know" and
+  "Don't know" options, utilizing HTMX to dynamically swap content.
+- _Truthfulness score_ and _Scoring algorithm_ — completing all cards calculates
+  scores and redirects to `/result` showing correct results.
+- _JavaScript-free accessibility_ — verified that fallback HTML forms allow the
+  entire verification flow to run properly when client-side JavaScript/HTMX is
+  disabled.
+- _GET/POST/302 flow_ — unauthorized entry or direct `/result` access without
+  valid verification progress results in correct redirections.

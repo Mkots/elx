@@ -11,11 +11,15 @@ verifies:
 
 # Verification: Result Page Route Integration Tests
 
-Covers the HTTP endpoint and logic of the final test results page against [REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md), [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and [REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
+Covers the HTTP endpoint and logic of the final test results page against
+[REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md),
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md), and
+[REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
 
 ## Code under verification
 
-- `routes/result.tsx` — implements Hono routes for GET `/result`, rendering the final results page with the computed score and truthfulness.
+- `routes/result.tsx` — implements Hono routes for GET `/result`, rendering the
+  final results page with the computed score and truthfulness.
 
 ## Tests
 
@@ -27,5 +31,7 @@ Covers the HTTP endpoint and logic of the final test results page against [REQ-V
 
 ## Requirement coverage
 
-- _Result display_ — GET request returns server-rendered HTML showing the calculated final score and truthfulness metrics.
-- _GET/POST/302 flow_ — GETs without valid session states or completed results redirect to the appropriate initial stages (`/stage/1` or `/stage/2`).
+- _Result display_ — GET request returns server-rendered HTML showing the
+  calculated final score and truthfulness metrics.
+- _GET/POST/302 flow_ — GETs without valid session states or completed results
+  redirect to the appropriate initial stages (`/stage/1` or `/stage/2`).

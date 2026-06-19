@@ -9,11 +9,13 @@ verifies:
 
 # Verification: Session State Unit Tests
 
-Covers sessionId extraction and cookie header assembly against [REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
+Covers sessionId extraction and cookie header assembly against
+[REQ-SESSION-STATE](../requirements/REQ-SESSION-STATE.md).
 
 ## Code under verification
 
-- `session.ts` — contains helper functions `parseSessionId` and `sessionCookie` to manage HTTP cookie-based session identification.
+- `session.ts` — contains helper functions `parseSessionId` and `sessionCookie`
+  to manage HTTP cookie-based session identification.
 
 ## Tests
 
@@ -27,4 +29,6 @@ Covers sessionId extraction and cookie header assembly against [REQ-SESSION-STAT
 
 ## Requirement coverage
 
-- _Session identification_ — `parseSessionId` and `sessionCookie` correctly extract and construct the `sessionId` cookies used to bind each test run to a session.
+- _Session identification_ — `parseSessionId` and `sessionCookie` correctly
+  extract and construct the `sessionId` cookies used to bind each test run to a
+  session.

@@ -13,11 +13,18 @@ verifies:
 
 # Verification: Admin Panel End-to-End Tests
 
-Covers secure administrator flows, content updates, exports and sorting/searching within the admin interface against [REQ-ADMIN-PANEL](../requirements/REQ-ADMIN-PANEL.md), [REQ-DATA-PERSISTENCE](../requirements/REQ-DATA-PERSISTENCE.md), [REQ-SYNONYMS-ANTONYMS](../requirements/REQ-SYNONYMS-ANTONYMS.md), [REQ-SPELLING](../requirements/REQ-SPELLING.md), and [REQ-MEANING](../requirements/REQ-MEANING.md).
+Covers secure administrator flows, content updates, exports and
+sorting/searching within the admin interface against
+[REQ-ADMIN-PANEL](../requirements/REQ-ADMIN-PANEL.md),
+[REQ-DATA-PERSISTENCE](../requirements/REQ-DATA-PERSISTENCE.md),
+[REQ-SYNONYMS-ANTONYMS](../requirements/REQ-SYNONYMS-ANTONYMS.md),
+[REQ-SPELLING](../requirements/REQ-SPELLING.md), and
+[REQ-MEANING](../requirements/REQ-MEANING.md).
 
 ## Code under verification
 
-- `routes/admin.tsx` — implements visual layouts and interfaces for administrator portal actions.
+- `routes/admin.tsx` — implements visual layouts and interfaces for
+  administrator portal actions.
 
 ## Tests
 
@@ -32,7 +39,11 @@ Covers secure administrator flows, content updates, exports and sorting/searchin
 
 ## Requirement coverage
 
-- _Authentication_ — redirects unauthorized visitors to login, displaying correct login errors.
-- _Dashboard and Navigation_ — provides working navigation links between Words, Challenges and History dashboards.
-- _Words and Challenges CRUD_ — full end-to-end browser CRUD cycle (create, search, edit, verify changes, delete) on live PostgreSQL data.
-- _Test History & Export_ — verifies completed runs, searches by session ID, sorts table and handles secure JSON/CSV downloads in the browser.
+- _Authentication_ — redirects unauthorized visitors to login, displaying
+  correct login errors.
+- _Dashboard and Navigation_ — provides working navigation links between Words,
+  Challenges and History dashboards.
+- _Words and Challenges CRUD_ — full end-to-end browser CRUD cycle (create,
+  search, edit, verify changes, delete) on live PostgreSQL data.
+- _Test History & Export_ — verifies completed runs, searches by session ID,
+  sorts table and handles secure JSON/CSV downloads in the browser.

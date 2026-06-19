@@ -10,7 +10,9 @@ verifies:
 
 # Verification: Homepage and Healthcheck End-to-End Tests
 
-Covers home page rendering and start button navigation in a real browser against [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md) and [REQ-OBSERVABILITY](../requirements/REQ-OBSERVABILITY.md).
+Covers home page rendering and start button navigation in a real browser against
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md) and
+[REQ-OBSERVABILITY](../requirements/REQ-OBSERVABILITY.md).
 
 ## Code under verification
 
@@ -25,6 +27,9 @@ Covers home page rendering and start button navigation in a real browser against
 
 ## Requirement coverage
 
-- _Server rendering_ — browser successfully renders homepage titles and CTA button with correct CSS.
-- _GET/POST/302 flow_ — clicking the start button performs a redirection to `/stage/1`.
-- _Healthcheck_ — automated API clients can verify backend health status via `/health`.
+- _Server rendering_ — browser successfully renders homepage titles and CTA
+  button with correct CSS.
+- _GET/POST/302 flow_ — clicking the start button performs a redirection to
+  `/stage/1`.
+- _Healthcheck_ — automated API clients can verify backend health status via
+  `/health`.

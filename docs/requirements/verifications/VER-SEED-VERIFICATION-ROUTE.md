@@ -10,11 +10,14 @@ verifies:
 
 # Verification: Database Seed Verification Route Integration Tests
 
-Covers seed-verification routes against [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) and [REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md).
+Covers seed-verification routes against
+[REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) and
+[REQ-SSR-STAGE-FLOW](../requirements/REQ-SSR-STAGE-FLOW.md).
 
 ## Code under verification
 
-- `routes/seed_verification.ts` — contains route handlers for `/health/seeds/*` allowing monitoring and checking of database seed state.
+- `routes/seed_verification.ts` — contains route handlers for `/health/seeds/*`
+  allowing monitoring and checking of database seed state.
 
 ## Tests
 
@@ -27,4 +30,6 @@ Covers seed-verification routes against [REQ-QUESTION-BANK](../requirements/REQ-
 
 ## Requirement coverage
 
-- _Seeder scripts_ and _Offline question bank generation_ — ensures seeded words and optional stage challenges are correctly exposed for system diagnostic verification.
+- _Seeder scripts_ and _Offline question bank generation_ — ensures seeded words
+  and optional stage challenges are correctly exposed for system diagnostic
+  verification.

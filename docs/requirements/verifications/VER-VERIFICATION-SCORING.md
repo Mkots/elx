@@ -9,11 +9,14 @@ verifies:
 
 # Verification: Verification and Scoring Unit Tests
 
-Covers the server-side scoring and pseudoword penalty logic against [REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md).
+Covers the server-side scoring and pseudoword penalty logic against
+[REQ-VERIFICATION-SCORING](../requirements/REQ-VERIFICATION-SCORING.md).
 
 ## Code under verification
 
-- `scoring/lextale.ts` — contains the `computeScore` function, which implements the LexTALE scoring algorithm including accuracy/truthfulness and pseudoword penalty calculations.
+- `scoring/lextale.ts` — contains the `computeScore` function, which implements
+  the LexTALE scoring algorithm including accuracy/truthfulness and pseudoword
+  penalty calculations.
 
 ## Tests
 
@@ -27,4 +30,6 @@ Covers the server-side scoring and pseudoword penalty logic against [REQ-VERIFIC
 
 ## Requirement coverage
 
-- _Truthfulness score_ and _Scoring algorithm_ — verified that claiming to know pseudowords decreases the truthfulness/reliability score and subtracts from the overall score. Empty/don't-know choices are safely ignored in scoring.
+- _Truthfulness score_ and _Scoring algorithm_ — verified that claiming to know
+  pseudowords decreases the truthfulness/reliability score and subtracts from
+  the overall score. Empty/don't-know choices are safely ignored in scoring.
