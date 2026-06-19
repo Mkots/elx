@@ -10,3 +10,4 @@ coverage.lcov
 node_modules/
 playwright-report/
 test-results/
+.claude/project-context.md
