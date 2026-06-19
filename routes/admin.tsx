@@ -16,6 +16,8 @@ import {
 } from "../ui/pages/AdminDashboardPage.tsx";
 import { AdminWordsPage } from "../ui/pages/AdminWordsPage.tsx";
 import { AdminWordEditPage } from "../ui/pages/AdminWordEditPage.tsx";
+import { AdminChallengesPage } from "../ui/pages/AdminChallengesPage.tsx";
+import { AdminChallengeEditPage } from "../ui/pages/AdminChallengeEditPage.tsx";
 import { getKv } from "../session.ts";
 
 export interface AdminDashboardLoader {
@@ -241,6 +243,216 @@ export const databaseAdminWordsLoader: AdminWordsLoader = {
   },
 };
 
+export interface AdminChallengesLoader {
+  listSynonyms(): Promise<(typeof synonyms.$inferSelect)[]>;
+  listSpelling(): Promise<(typeof spellingChallenges.$inferSelect)[]>;
+  listDefinitions(): Promise<(typeof definitions.$inferSelect)[]>;
+
+  getSynonym(id: number): Promise<typeof synonyms.$inferSelect | null>;
+  getSpelling(
+    id: number,
+  ): Promise<typeof spellingChallenges.$inferSelect | null>;
+  getDefinition(id: number): Promise<typeof definitions.$inferSelect | null>;
+
+  createSynonym(data: {
+    wordId: number;
+    targetId: number;
+    relationType: string;
+    distractors: number[];
+  }): Promise<void>;
+  createSpelling(data: {
+    contextSentence: string;
+    correctWordId: number;
+    distractors: number[];
+  }): Promise<void>;
+  createDefinition(data: {
+    wordId: number;
+    definitionText: string;
+    distractors: number[];
+  }): Promise<void>;
+
+  updateSynonym(
+    id: number,
+    data: {
+      wordId: number;
+      targetId: number;
+      relationType: string;
+      distractors: number[];
+    },
+  ): Promise<void>;
+  updateSpelling(
+    id: number,
+    data: {
+      contextSentence: string;
+      correctWordId: number;
+      distractors: number[];
+    },
+  ): Promise<void>;
+  updateDefinition(
+    id: number,
+    data: {
+      wordId: number;
+      definitionText: string;
+      distractors: number[];
+    },
+  ): Promise<void>;
+
+  deleteSynonym(id: number): Promise<void>;
+  deleteSpelling(id: number): Promise<void>;
+  deleteDefinition(id: number): Promise<void>;
+
+  getAllWords(): Promise<{ id: number; value: string }[]>;
+}
+
+export const databaseAdminChallengesLoader: AdminChallengesLoader = {
+  async listSynonyms() {
+    const { client, db } = createDatabase();
+    try {
+      return await db.select().from(synonyms).orderBy(synonyms.id);
+    } finally {
+      await client.end();
+    }
+  },
+  async listSpelling() {
+    const { client, db } = createDatabase();
+    try {
+      return await db.select().from(spellingChallenges).orderBy(
+        spellingChallenges.id,
+      );
+    } finally {
+      await client.end();
+    }
+  },
+  async listDefinitions() {
+    const { client, db } = createDatabase();
+    try {
+      return await db.select().from(definitions).orderBy(definitions.id);
+    } finally {
+      await client.end();
+    }
+  },
+
+  async getSynonym(id) {
+    const { client, db } = createDatabase();
+    try {
+      const result = await db.select().from(synonyms).where(eq(synonyms.id, id))
+        .limit(1);
+      return result[0] ?? null;
+    } finally {
+      await client.end();
+    }
+  },
+  async getSpelling(id) {
+    const { client, db } = createDatabase();
+    try {
+      const result = await db.select().from(spellingChallenges).where(
+        eq(spellingChallenges.id, id),
+      ).limit(1);
+      return result[0] ?? null;
+    } finally {
+      await client.end();
+    }
+  },
+  async getDefinition(id) {
+    const { client, db } = createDatabase();
+    try {
+      const result = await db.select().from(definitions).where(
+        eq(definitions.id, id),
+      ).limit(1);
+      return result[0] ?? null;
+    } finally {
+      await client.end();
+    }
+  },
+
+  async createSynonym(data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.insert(synonyms).values(data);
+    } finally {
+      await client.end();
+    }
+  },
+  async createSpelling(data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.insert(spellingChallenges).values(data);
+    } finally {
+      await client.end();
+    }
+  },
+  async createDefinition(data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.insert(definitions).values(data);
+    } finally {
+      await client.end();
+    }
+  },
+
+  async updateSynonym(id, data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.update(synonyms).set(data).where(eq(synonyms.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+  async updateSpelling(id, data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.update(spellingChallenges).set(data).where(
+        eq(spellingChallenges.id, id),
+      );
+    } finally {
+      await client.end();
+    }
+  },
+  async updateDefinition(id, data) {
+    const { client, db } = createDatabase();
+    try {
+      await db.update(definitions).set(data).where(eq(definitions.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+
+  async deleteSynonym(id) {
+    const { client, db } = createDatabase();
+    try {
+      await db.delete(synonyms).where(eq(synonyms.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+  async deleteSpelling(id) {
+    const { client, db } = createDatabase();
+    try {
+      await db.delete(spellingChallenges).where(eq(spellingChallenges.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+  async deleteDefinition(id) {
+    const { client, db } = createDatabase();
+    try {
+      await db.delete(definitions).where(eq(definitions.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+
+  async getAllWords() {
+    const { client, db } = createDatabase();
+    try {
+      return await db.select({ id: words.id, value: words.value }).from(words)
+        .orderBy(words.value);
+    } finally {
+      await client.end();
+    }
+  },
+};
+
 // Helper to check credentials from env
 function getAdminCredentials() {
   const username = Deno.env.get("ADMIN_USERNAME") || "admin";
@@ -280,6 +492,7 @@ export async function adminAuthMiddleware(
 export function createAdminRoute(
   dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
   wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
+  challengesLoader: AdminChallengesLoader = databaseAdminChallengesLoader,
 ) {
   const route = new Hono();
 
@@ -526,6 +739,480 @@ export function createAdminRoute(
       return context.redirect(
         "/admin/words?error=" +
           encodeURIComponent(res.error || "Failed to delete word."),
+      );
+    }
+  });
+
+  // GET /admin/challenges
+  route.get("/challenges", async (context) => {
+    const type = (context.req.query("type") || "synonyms") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(type)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const successMsg = context.req.query("success") || undefined;
+    const errorMsg = context.req.query("error") || undefined;
+
+    try {
+      const synonymsList = await challengesLoader.listSynonyms();
+      const spellingList = await challengesLoader.listSpelling();
+      const definitionsList = await challengesLoader.listDefinitions();
+      const allWords = await challengesLoader.getAllWords();
+
+      const wordsMap: Record<number, string> = {};
+      for (const w of allWords) {
+        wordsMap[w.id] = w.value;
+      }
+
+      return context.html(
+        AdminChallengesPage({
+          type,
+          synonyms: synonymsList,
+          spelling: spellingList,
+          definitions: definitionsList,
+          wordsMap,
+          success: successMsg,
+          error: errorMsg,
+        }),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.html(
+        AdminChallengesPage({
+          type,
+          synonyms: [],
+          spelling: [],
+          definitions: [],
+          wordsMap: {},
+          error: "Failed to load challenges: " + errMsg,
+        }),
+      );
+    }
+  });
+
+  // GET /admin/challenges/:challengeType/new
+  route.get("/challenges/:challengeType/new", async (context) => {
+    const challengeType = context.req.param("challengeType") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(challengeType)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const allWords = await challengesLoader.getAllWords();
+    return context.html(
+      AdminChallengeEditPage({
+        challengeType,
+        words: allWords,
+      }),
+    );
+  });
+
+  // POST /admin/challenges/:challengeType/new
+  route.post("/challenges/:challengeType/new", async (context) => {
+    const challengeType = context.req.param("challengeType") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(challengeType)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const body = await context.req.parseBody();
+    const distractorsInput = typeof body.distractors === "string"
+      ? body.distractors
+      : "";
+
+    const allWords = await challengesLoader.getAllWords();
+    const wordMapByValue: Record<string, number> = {};
+    for (const w of allWords) {
+      wordMapByValue[w.value.toLowerCase()] = w.id;
+    }
+
+    // Common parse & validation for distractors
+    const distractorWords = distractorsInput
+      .split(",")
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0);
+
+    if (distractorWords.length === 0) {
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: body,
+          distractorsString: distractorsInput,
+          error: "At least one distractor word is required.",
+        }),
+      );
+    }
+
+    const missingWords: string[] = [];
+    const distractorIds: number[] = [];
+    for (const w of distractorWords) {
+      const id = wordMapByValue[w.toLowerCase()];
+      if (id === undefined) {
+        missingWords.push(w);
+      } else {
+        distractorIds.push(id);
+      }
+    }
+
+    if (missingWords.length > 0) {
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: body,
+          distractorsString: distractorsInput,
+          error:
+            `The following distractor words do not exist in the database: ${
+              missingWords.join(", ")
+            }`,
+        }),
+      );
+    }
+
+    try {
+      if (challengeType === "synonyms") {
+        const wordId = Number(body.wordId);
+        const targetId = Number(body.targetId);
+        const relationType = typeof body.relationType === "string"
+          ? body.relationType.trim()
+          : "synonym";
+
+        if (isNaN(wordId) || isNaN(targetId)) {
+          throw new Error("Source and target words are required.");
+        }
+
+        await challengesLoader.createSynonym({
+          wordId,
+          targetId,
+          relationType,
+          distractors: distractorIds,
+        });
+      } else if (challengeType === "spelling") {
+        const contextSentence = typeof body.contextSentence === "string"
+          ? body.contextSentence.trim()
+          : "";
+        const correctWordId = Number(body.correctWordId);
+
+        if (!contextSentence) {
+          throw new Error("Context sentence is required.");
+        }
+        if (!contextSentence.includes("___")) {
+          throw new Error(
+            "Context sentence must contain `___` for the blank gap.",
+          );
+        }
+        if (isNaN(correctWordId)) {
+          throw new Error("Correct answer word is required.");
+        }
+
+        await challengesLoader.createSpelling({
+          contextSentence,
+          correctWordId,
+          distractors: distractorIds,
+        });
+      } else if (challengeType === "definitions") {
+        const wordId = Number(body.wordId);
+        const definitionText = typeof body.definitionText === "string"
+          ? body.definitionText.trim()
+          : "";
+
+        if (isNaN(wordId)) {
+          throw new Error("Target word is required.");
+        }
+        if (!definitionText) {
+          throw new Error("Definition text is required.");
+        }
+
+        await challengesLoader.createDefinition({
+          wordId,
+          definitionText,
+          distractors: distractorIds,
+        });
+      }
+
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&success=` +
+          encodeURIComponent("Challenge was successfully created."),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: body,
+          distractorsString: distractorsInput,
+          error: "Failed to create challenge: " + errMsg,
+        }),
+      );
+    }
+  });
+
+  // GET /admin/challenges/:challengeType/:id/edit
+  route.get("/challenges/:challengeType/:id/edit", async (context) => {
+    const challengeType = context.req.param("challengeType") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(challengeType)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const id = Number(context.req.param("id"));
+    if (isNaN(id)) {
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Invalid ID."),
+      );
+    }
+
+    const allWords = await challengesLoader.getAllWords();
+    const wordsMap: Record<number, string> = {};
+    for (const w of allWords) {
+      wordsMap[w.id] = w.value;
+    }
+
+    let challenge;
+    if (challengeType === "synonyms") {
+      challenge = await challengesLoader.getSynonym(id);
+    } else if (challengeType === "spelling") {
+      challenge = await challengesLoader.getSpelling(id);
+    } else {
+      challenge = await challengesLoader.getDefinition(id);
+    }
+
+    if (!challenge) {
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Challenge not found."),
+      );
+    }
+
+    const distractorsString = challenge.distractors.map((id: number) =>
+      wordsMap[id] || `#${id}`
+    ).join(", ");
+
+    return context.html(
+      AdminChallengeEditPage({
+        challengeType,
+        challenge,
+        words: allWords,
+        distractorsString,
+      }),
+    );
+  });
+
+  // POST /admin/challenges/:challengeType/:id/edit
+  route.post("/challenges/:challengeType/:id/edit", async (context) => {
+    const challengeType = context.req.param("challengeType") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(challengeType)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const id = Number(context.req.param("id"));
+    if (isNaN(id)) {
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Invalid ID."),
+      );
+    }
+
+    let challenge;
+    if (challengeType === "synonyms") {
+      challenge = await challengesLoader.getSynonym(id);
+    } else if (challengeType === "spelling") {
+      challenge = await challengesLoader.getSpelling(id);
+    } else {
+      challenge = await challengesLoader.getDefinition(id);
+    }
+
+    if (!challenge) {
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Challenge not found."),
+      );
+    }
+
+    const body = await context.req.parseBody();
+    const distractorsInput = typeof body.distractors === "string"
+      ? body.distractors
+      : "";
+
+    const allWords = await challengesLoader.getAllWords();
+    const wordMapByValue: Record<string, number> = {};
+    for (const w of allWords) {
+      wordMapByValue[w.value.toLowerCase()] = w.id;
+    }
+
+    // Common parse & validation for distractors
+    const distractorWords = distractorsInput
+      .split(",")
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0);
+
+    if (distractorWords.length === 0) {
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: { id, ...body },
+          distractorsString: distractorsInput,
+          error: "At least one distractor word is required.",
+        }),
+      );
+    }
+
+    const missingWords: string[] = [];
+    const distractorIds: number[] = [];
+    for (const w of distractorWords) {
+      const id = wordMapByValue[w.toLowerCase()];
+      if (id === undefined) {
+        missingWords.push(w);
+      } else {
+        distractorIds.push(id);
+      }
+    }
+
+    if (missingWords.length > 0) {
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: { id, ...body },
+          distractorsString: distractorsInput,
+          error:
+            `The following distractor words do not exist in the database: ${
+              missingWords.join(", ")
+            }`,
+        }),
+      );
+    }
+
+    try {
+      if (challengeType === "synonyms") {
+        const wordId = Number(body.wordId);
+        const targetId = Number(body.targetId);
+        const relationType = typeof body.relationType === "string"
+          ? body.relationType.trim()
+          : "synonym";
+
+        if (isNaN(wordId) || isNaN(targetId)) {
+          throw new Error("Source and target words are required.");
+        }
+
+        await challengesLoader.updateSynonym(id, {
+          wordId,
+          targetId,
+          relationType,
+          distractors: distractorIds,
+        });
+      } else if (challengeType === "spelling") {
+        const contextSentence = typeof body.contextSentence === "string"
+          ? body.contextSentence.trim()
+          : "";
+        const correctWordId = Number(body.correctWordId);
+
+        if (!contextSentence) {
+          throw new Error("Context sentence is required.");
+        }
+        if (!contextSentence.includes("___")) {
+          throw new Error(
+            "Context sentence must contain `___` for the blank gap.",
+          );
+        }
+        if (isNaN(correctWordId)) {
+          throw new Error("Correct answer word is required.");
+        }
+
+        await challengesLoader.updateSpelling(id, {
+          contextSentence,
+          correctWordId,
+          distractors: distractorIds,
+        });
+      } else if (challengeType === "definitions") {
+        const wordId = Number(body.wordId);
+        const definitionText = typeof body.definitionText === "string"
+          ? body.definitionText.trim()
+          : "";
+
+        if (isNaN(wordId)) {
+          throw new Error("Target word is required.");
+        }
+        if (!definitionText) {
+          throw new Error("Definition text is required.");
+        }
+
+        await challengesLoader.updateDefinition(id, {
+          wordId,
+          definitionText,
+          distractors: distractorIds,
+        });
+      }
+
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&success=` +
+          encodeURIComponent("Challenge was successfully updated."),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.html(
+        AdminChallengeEditPage({
+          challengeType,
+          words: allWords,
+          challenge: { id, ...body },
+          distractorsString: distractorsInput,
+          error: "Failed to update challenge: " + errMsg,
+        }),
+      );
+    }
+  });
+
+  // POST /admin/challenges/:challengeType/:id/delete
+  route.post("/challenges/:challengeType/:id/delete", async (context) => {
+    const challengeType = context.req.param("challengeType") as
+      | "synonyms"
+      | "spelling"
+      | "definitions";
+    if (!["synonyms", "spelling", "definitions"].includes(challengeType)) {
+      return context.redirect("/admin/challenges?type=synonyms");
+    }
+
+    const id = Number(context.req.param("id"));
+    if (isNaN(id)) {
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Invalid ID."),
+      );
+    }
+
+    try {
+      if (challengeType === "synonyms") {
+        await challengesLoader.deleteSynonym(id);
+      } else if (challengeType === "spelling") {
+        await challengesLoader.deleteSpelling(id);
+      } else {
+        await challengesLoader.deleteDefinition(id);
+      }
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&success=` +
+          encodeURIComponent("Challenge was successfully deleted."),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.redirect(
+        `/admin/challenges?type=${challengeType}&error=` +
+          encodeURIComponent("Failed to delete challenge: " + errMsg),
       );
     }
   });
