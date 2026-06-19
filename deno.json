@@ -46,7 +46,7 @@
     "dev": "deno run --watch --unstable-kv --allow-net --allow-env --allow-read=static,.data,/data/kv --allow-write=.data,/data/kv main.ts",
     "start": "deno run --unstable-kv --allow-net --allow-env --allow-read=static,/data/kv --allow-write=/data/kv main.ts",
     "start:e2e": "deno run --unstable-kv --allow-net --allow-env --allow-read=static,.data --allow-write=.data main.ts",
-    "check": "deno check main.ts app.ts session.ts deps.ts drizzle.config.ts playwright.config.ts routes/*.ts ui/components/*.tsx ui/pages/*.tsx db/*.ts scripts/*.ts tests/*.ts tests/e2e/*.ts",
+    "check": "deno check main.ts app.ts session.ts deps.ts drizzle.config.ts playwright.config.ts routes/*.ts ui/components/*.tsx ui/pages/*.tsx db/*.ts scripts/*.ts scoring/*.ts tests/*.ts tests/e2e/*.ts",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",

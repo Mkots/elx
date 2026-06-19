@@ -3,6 +3,7 @@ import { serveStatic } from "@hono/hono/deno";
 import { healthRoute } from "./routes/health.ts";
 import { homeRoute } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
+import { createResultRoute, type ResultSessionStore } from "./routes/result.ts";
 import {
   createSeedVerificationRoute,
   type SeedVerificationLoader,
@@ -12,11 +13,19 @@ import {
   type Stage1SessionStore,
   type Stage1WordLoader,
 } from "./routes/stage1.ts";
+import {
+  createStage2Route,
+  type Stage2SessionStore,
+  type Stage2WordLoader,
+} from "./routes/stage2.ts";
 
 interface CreateAppOptions {
   seedVerificationLoader?: SeedVerificationLoader;
   stage1WordLoader?: Stage1WordLoader;
   stage1SessionStore?: Stage1SessionStore;
+  stage2WordLoader?: Stage2WordLoader;
+  stage2SessionStore?: Stage2SessionStore;
+  resultSessionStore?: ResultSessionStore;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -34,6 +43,11 @@ export function createApp(options: CreateAppOptions = {}) {
     "/stage/1",
     createStage1Route(options.stage1WordLoader, options.stage1SessionStore),
   );
+  app.route(
+    "/stage/2",
+    createStage2Route(options.stage2WordLoader, options.stage2SessionStore),
+  );
+  app.route("/result", createResultRoute(options.resultSessionStore));
 
   app.notFound((context) => context.json({ error: "Not found" }, 404));
 

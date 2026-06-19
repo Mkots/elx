@@ -50,3 +50,28 @@ export async function loadWordSelection(
   const result = await kv.get<number[]>(wordSelectionKey(sessionId));
   return result.value ?? [];
 }
+
+export interface Stage2Result {
+  score: number;
+  truthfulness: number;
+}
+
+function stage2ResultKey(sessionId: string): Deno.KvKey {
+  return ["session", sessionId, "stage2_result"];
+}
+
+export async function saveStage2Result(
+  kv: Deno.Kv,
+  sessionId: string,
+  result: Stage2Result,
+): Promise<void> {
+  await kv.set(stage2ResultKey(sessionId), result);
+}
+
+export async function loadStage2Result(
+  kv: Deno.Kv,
+  sessionId: string,
+): Promise<Stage2Result | null> {
+  const entry = await kv.get<Stage2Result>(stage2ResultKey(sessionId));
+  return entry.value;
+}
