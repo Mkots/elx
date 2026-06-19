@@ -312,3 +312,141 @@
         min-height: auto;
     }
 }
+
+/* ── Admin Login & Layout ── */
+
+.login-body {
+    background-color: var(--pico-background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card {
+    padding: 2rem;
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(242, 239, 250, 0.08);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.admin-body {
+    background-color: var(--pico-background-color);
+    min-height: 100vh;
+    margin: 0;
+}
+
+.admin-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    background-color: var(--color-panel-strong);
+    border-right: 1px solid rgba(242, 239, 250, 0.08);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.admin-logo {
+    font-size: 1.25rem;
+    color: var(--pico-primary);
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(242, 239, 250, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.admin-nav {
+    flex-grow: 1;
+}
+
+.admin-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-nav li {
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-muted-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav a:hover {
+    background: rgba(242, 239, 250, 0.05);
+    color: var(--pico-color);
+}
+
+.admin-nav a.active {
+    background: var(--pico-primary);
+    color: #2d2839;
+    font-weight: 700;
+}
+
+.admin-sidebar-footer {
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(242, 239, 250, 0.08);
+}
+
+.admin-main-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.admin-header {
+    background-color: var(--color-panel-strong);
+    border-bottom: 1px solid rgba(242, 239, 250, 0.08);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.admin-content {
+    padding: 2rem;
+    flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+    .admin-sidebar {
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid rgba(242, 239, 250, 0.08);
+    }
+}
