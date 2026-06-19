@@ -1,7 +1,7 @@
 import { Hono } from "@hono/hono";
 import { inArray } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
-import { words } from "../db/schema.ts";
+import { testHistory, words } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
 import {
   getKv,
@@ -66,6 +66,17 @@ export const kvStage2SessionStore: Stage2SessionStore = {
   async saveStage2Result(sessionId, result) {
     const kv = await getKv();
     await saveStage2Result(kv, sessionId, result);
+
+    const { client, db } = createDatabase();
+    try {
+      await db.insert(testHistory).values({
+        sessionId,
+        score: result.score,
+        truthfulness: result.truthfulness,
+      });
+    } finally {
+      await client.end();
+    }
   },
 };
 
