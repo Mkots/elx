@@ -6,6 +6,7 @@ export type TestRun = {
   score: number;
   truthfulness: number;
   completedAt: Date;
+  ticketId: number | null;
 };
 
 type AdminDashboardProps = {
