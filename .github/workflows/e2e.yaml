@@ -27,7 +27,7 @@ jobs:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
       DENO_KV_PATH: .data/elx.sqlite3
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Cache Deno
         uses: actions/cache@v5
