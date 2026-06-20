@@ -64,11 +64,10 @@ export function AdminLayout(
               </ul>
             </nav>
             <div class="admin-sidebar-footer">
-              <form action="/admin/logout" method="post" style="margin: 0;">
+              <form action="/admin/logout" method="post" class="m-0">
                 <button
                   type="submit"
-                  class="outline contrast logout-btn"
-                  style="margin: 0; width: 100%;"
+                  class="outline contrast logout-btn m-0 w-100"
                 >
                   Logout
                 </button>
@@ -77,13 +76,9 @@ export function AdminLayout(
           </aside>
           <div class="admin-main-wrapper">
             <header class="admin-header">
-              <h2 style="margin: 0; font-size: 1.5rem;">{title}</h2>
-              <div
-                class="admin-user-info"
-                style="font-size: 0.875rem; color: var(--pico-muted-color);"
-              >
-                Logged in as{" "}
-                <strong style="color: var(--pico-color);">Admin</strong>
+              <h2 class="m-0 fs-15">{title}</h2>
+              <div class="admin-user-info fs-0875 color-muted">
+                Logged in as <strong class="color-pico-color">Admin</strong>
               </div>
             </header>
             <main class="admin-content">

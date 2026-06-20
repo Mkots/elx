@@ -17,25 +17,19 @@ export function LoginPage({ error }: LoginPageProps = {}) {
         <main class="login-container">
           <article class="login-card">
             <header class="login-header">
-              <h2 style="margin: 0; font-size: 1.5rem;">ELX Admin Portal</h2>
-              <p style="margin: 0; font-size: 0.875rem; color: var(--pico-muted-color);">
+              <h2 class="m-0 fs-15">ELX Admin Portal</h2>
+              <p class="m-0 fs-0875 color-muted">
                 Please sign in to continue
               </p>
             </header>
             <form action="/admin/login" method="post">
               {error && (
-                <div
-                  class="login-error"
-                  style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1rem; font-size: 0.875rem;"
-                >
+                <div class="login-error alert alert-error mb-1">
                   {error}
                 </div>
               )}
-              <div class="form-group" style="margin-bottom: 1rem;">
-                <label
-                  for="username"
-                  style="font-size: 0.875rem; font-weight: 600;"
-                >
+              <div class="form-group mb-1">
+                <label for="username" class="fs-0875 fw-600">
                   Username
                 </label>
                 <input
@@ -44,14 +38,11 @@ export function LoginPage({ error }: LoginPageProps = {}) {
                   name="username"
                   placeholder="Enter username"
                   required
-                  style="margin-bottom: 0;"
+                  class="mb-0"
                 />
               </div>
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label
-                  for="password"
-                  style="font-size: 0.875rem; font-weight: 600;"
-                >
+              <div class="form-group mb-15">
+                <label for="password" class="fs-0875 fw-600">
                   Password
                 </label>
                 <input
@@ -60,21 +51,18 @@ export function LoginPage({ error }: LoginPageProps = {}) {
                   name="password"
                   placeholder="Enter password"
                   required
-                  style="margin-bottom: 0;"
+                  class="mb-0"
                 />
               </div>
               <button
                 type="submit"
-                style="width: 100%; margin: 0; background: var(--pico-primary); color: #2d2839; font-weight: 700;"
+                class="admin-btn-primary btn-full"
               >
                 Sign In
               </button>
             </form>
-            <footer style="text-align: center; font-size: 0.75rem; color: var(--pico-muted-color); padding-top: 1rem; border-top: 1px solid rgba(242, 239, 250, 0.08); margin-top: 1rem;">
-              <a
-                href="/"
-                style="color: var(--pico-muted-color); text-decoration: underline;"
-              >
+            <footer class="login-footer">
+              <a href="/" class="color-muted decoration-underline">
                 Back to home
               </a>
             </footer>

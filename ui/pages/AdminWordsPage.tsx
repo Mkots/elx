@@ -47,47 +47,39 @@ export function AdminWordsPage({
     <AdminLayout title="Words Manager" activeTab="words">
       <div class="words-shell">
         {error && (
-          <div
-            class="alert alert-error"
-            style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-error">
             ⚠️ {error}
           </div>
         )}
         {success && (
-          <div
-            class="alert alert-success"
-            style="color: var(--color-positive); background: rgba(139, 213, 202, 0.1); border: 1px solid rgba(139, 213, 202, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-success">
             ✅ {success}
           </div>
         )}
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-          <h3 style="margin: 0; font-size: 1.25rem;">
+        <div class="flex-between mb-15 flex-wrap gap-1">
+          <h3 class="m-0 fs-125">
             Vocabulary Words ({totalCount})
           </h3>
-          <div style="display: inline-flex; gap: 0.5rem;">
+          <div class="d-inline-flex gap-05">
             <a
               href="/admin/words/review"
               role="button"
-              class="outline"
-              style="margin: 0; font-weight: 700; border-color: #ffb86c; color: #ffb86c;"
+              class="outline btn-outline-orange fw-700 m-0"
             >
               🔍 Review Queue
             </a>
             <a
               href="/admin/words/import"
               role="button"
-              class="outline"
-              style="margin: 0; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+              class="outline btn-outline-muted fw-700 m-0"
             >
               📥 Import Words
             </a>
             <a
               href="/admin/words/new"
               role="button"
-              style="margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839;"
+              class="admin-btn-primary m-0"
             >
               ➕ Add Word
             </a>
@@ -95,17 +87,14 @@ export function AdminWordsPage({
         </div>
 
         {/* Filter bar */}
-        <article style="padding: 1.25rem; margin-bottom: 1.5rem; background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08);">
+        <article class="admin-panel admin-panel-strong p-125 mb-15">
           <form
             method="get"
             action="/admin/words"
-            style="margin: 0; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 1rem; align-items: end;"
+            class="filter-form filter-form-words"
           >
-            <div style="margin: 0;">
-              <label
-                for="q"
-                style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="q" class="admin-label fs-075">
                 Search
               </label>
               <input
@@ -114,20 +103,17 @@ export function AdminWordsPage({
                 name="q"
                 value={search}
                 placeholder="Search word value..."
-                style="margin: 0; font-size: 0.875rem;"
+                class="m-0 fs-0875"
               />
             </div>
-            <div style="margin: 0;">
-              <label
-                for="difficulty"
-                style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="difficulty" class="admin-label fs-075">
                 Difficulty
               </label>
               <select
                 id="difficulty"
                 name="difficulty"
-                style="margin: 0; font-size: 0.875rem;"
+                class="m-0 fs-0875"
               >
                 <option value="">All</option>
                 {[1, 2, 3, 4, 5].map((d) => (
@@ -137,17 +123,14 @@ export function AdminWordsPage({
                 ))}
               </select>
             </div>
-            <div style="margin: 0;">
-              <label
-                for="isReal"
-                style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="isReal" class="admin-label fs-075">
                 Type
               </label>
               <select
                 id="isReal"
                 name="isReal"
-                style="margin: 0; font-size: 0.875rem;"
+                class="m-0 fs-0875"
               >
                 <option value="">All</option>
                 <option value="true" selected={isReal === true}>
@@ -158,17 +141,14 @@ export function AdminWordsPage({
                 </option>
               </select>
             </div>
-            <div style="margin: 0;">
-              <label
-                for="reviewed"
-                style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="reviewed" class="admin-label fs-075">
                 Reviewed
               </label>
               <select
                 id="reviewed"
                 name="reviewed"
-                style="margin: 0; font-size: 0.875rem;"
+                class="m-0 fs-0875"
               >
                 <option value="">All</option>
                 <option value="true" selected={reviewed === true}>
@@ -181,7 +161,7 @@ export function AdminWordsPage({
             </div>
             <button
               type="submit"
-              style="margin: 0; padding: 0 1.5rem; font-weight: 700; height: 100%;"
+              class="m-0 px-15 fw-700 h-100"
             >
               Filter
             </button>
@@ -191,7 +171,7 @@ export function AdminWordsPage({
         {/* Table list */}
         {words.length === 0
           ? (
-            <article style="padding: 3rem; text-align: center; color: var(--pico-muted-color); background: rgba(242, 239, 250, 0.03); border: 1px dashed rgba(242, 239, 250, 0.16); border-radius: var(--pico-border-radius);">
+            <article class="empty-state empty-state-large">
               No words match the specified filters.
             </article>
           )
@@ -206,7 +186,7 @@ export function AdminWordsPage({
                 id="bulkForm"
                 method="post"
                 action="/admin/words/bulk"
-                style="margin: 0 0 1rem;"
+                class="m-0 mb-1"
               >
                 <input type="hidden" name="q" value={search} />
                 {difficulty !== undefined && (
@@ -227,16 +207,15 @@ export function AdminWordsPage({
                   />
                 )}
 
-                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08); border-radius: var(--pico-border-radius);">
-                  <span style="font-size: 0.75rem; font-weight: 700; color: var(--pico-muted-color); text-transform: uppercase; letter-spacing: 0.05em;">
+                <div class="bulk-bar flex-wrap-center gap-05 admin-panel admin-panel-strong">
+                  <span class="fs-075 fw-700 color-muted uppercase letter-spacing-05">
                     Bulk
                   </span>
                   <button
                     type="submit"
                     name="action"
                     value="mark_reviewed"
-                    class="outline"
-                    style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem;"
+                    class="outline btn-mini"
                   >
                     ✓ Mark reviewed
                   </button>
@@ -244,8 +223,7 @@ export function AdminWordsPage({
                     type="submit"
                     name="action"
                     value="mark_unreviewed"
-                    class="outline"
-                    style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem;"
+                    class="outline btn-mini"
                   >
                     Mark pending
                   </button>
@@ -253,8 +231,7 @@ export function AdminWordsPage({
                     type="submit"
                     name="action"
                     value="set_real"
-                    class="outline"
-                    style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-color: var(--color-positive); color: var(--color-positive);"
+                    class="outline btn-mini btn-outline-positive"
                   >
                     Set Real
                   </button>
@@ -262,8 +239,7 @@ export function AdminWordsPage({
                     type="submit"
                     name="action"
                     value="set_pseudo"
-                    class="outline"
-                    style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-color: var(--color-caution); color: var(--color-caution);"
+                    class="outline btn-mini btn-outline-caution"
                   >
                     Set Pseudoword
                   </button>
@@ -271,123 +247,113 @@ export function AdminWordsPage({
                     type="submit"
                     name="action"
                     value="delete"
-                    class="outline contrast"
-                    style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-color: #ff7675; color: #ff7675;"
+                    class="outline contrast btn-mini btn-outline-danger"
                     onclick="return confirm('Delete the selected words? This cannot be undone.')"
                   >
                     Delete
                   </button>
-                  <label style="margin: 0 0 0 auto; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--pico-muted-color);">
+                  <label class="m-0 ms-auto inline-flex-center gap-04 fs-075 color-muted">
                     <input
                       type="checkbox"
                       name="selectAllMatching"
                       value="true"
-                      style="margin: 0;"
+                      class="m-0"
                     />
                     Apply to all {totalCount} matching this filter
                   </label>
                 </div>
               </form>
 
-              <div
-                class="overflow-auto"
-                style="border: 1px solid rgba(242, 239, 250, 0.08); border-radius: var(--pico-border-radius); background: var(--color-panel-strong); margin-bottom: 1.5rem;"
-              >
-                <table style="margin: 0; width: 100%;">
+              <div class="table-wrapper">
+                <table class="admin-table">
                   <thead>
                     <tr>
-                      <th style="padding: 1rem; width: 1%;">
+                      <th class="w-1">
                         <input
                           type="checkbox"
                           aria-label="Select all rows"
-                          style="margin: 0;"
+                          class="m-0"
                           onclick="var on=this.checked;document.querySelectorAll('.row-check').forEach(function(c){c.checked=on});"
                         />
                       </th>
-                      <th style="padding: 1rem;">ID</th>
-                      <th style="padding: 1rem;">Word Value</th>
-                      <th style="padding: 1rem; text-align: center;">Type</th>
-                      <th style="padding: 1rem; text-align: center;">
+                      <th>ID</th>
+                      <th>Word Value</th>
+                      <th class="text-center">Type</th>
+                      <th class="text-center">
                         Difficulty
                       </th>
-                      <th style="padding: 1rem; text-align: center;">
+                      <th class="text-center">
                         Reviewed
                       </th>
-                      <th style="padding: 1rem; text-align: right;">Actions</th>
+                      <th class="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {words.map((w) => (
-                      <tr
-                        key={w.id}
-                        style="border-bottom: 1px solid rgba(242, 239, 250, 0.04);"
-                      >
-                        <td style="padding: 1rem;">
+                      <tr key={w.id} class="border-bottom-row">
+                        <td>
                           <input
                             type="checkbox"
-                            class="row-check"
+                            class="row-check m-0"
                             form="bulkForm"
                             name="ids"
                             value={String(w.id)}
                             aria-label={`Select word ${w.value}`}
-                            style="margin: 0;"
                           />
                         </td>
-                        <td style="padding: 1rem; font-size: 0.875rem; color: var(--pico-muted-color);">
+                        <td class="fs-0875 color-muted">
                           {w.id}
                         </td>
-                        <td style="padding: 1rem; font-family: var(--pico-font-family-monospace); font-weight: 700; font-size: 1.125rem;">
+                        <td class="admin-monospace fw-700 fs-1125">
                           {w.value}
                         </td>
-                        <td style="padding: 1rem; text-align: center;">
+                        <td class="text-center">
                           {w.isReal
                             ? (
-                              <span style="display: inline-block; padding: 0.15rem 0.5rem; background: rgba(139, 213, 202, 0.15); color: var(--color-positive); font-size: 0.75rem; font-weight: 700; border-radius: 999px;">
+                              <span class="badge badge-positive">
                                 Real
                               </span>
                             )
                             : (
-                              <span style="display: inline-block; padding: 0.15rem 0.5rem; background: rgba(242, 193, 119, 0.15); color: var(--color-caution); font-size: 0.75rem; font-weight: 700; border-radius: 999px;">
+                              <span class="badge badge-caution">
                                 Fake
                               </span>
                             )}
                         </td>
-                        <td style="padding: 1rem; text-align: center; font-weight: 600; font-size: 0.875rem;">
+                        <td class="text-center fw-600 fs-0875">
                           Lvl {w.difficulty}
                         </td>
-                        <td style="padding: 1rem; text-align: center;">
+                        <td class="text-center">
                           {w.reviewed
                             ? (
-                              <span style="display: inline-block; padding: 0.15rem 0.5rem; background: rgba(139, 213, 202, 0.15); color: var(--color-positive); font-size: 0.75rem; font-weight: 700; border-radius: 999px;">
+                              <span class="badge badge-positive">
                                 ✓ Reviewed
                               </span>
                             )
                             : (
-                              <span style="display: inline-block; padding: 0.15rem 0.5rem; background: rgba(242, 239, 250, 0.06); color: var(--pico-muted-color); font-size: 0.75rem; font-weight: 700; border-radius: 999px;">
+                              <span class="badge badge-pending">
                                 — Pending
                               </span>
                             )}
                         </td>
-                        <td style="padding: 1rem; text-align: right;">
-                          <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                        <td class="text-right">
+                          <div class="inline-flex-center gap-05">
                             <a
                               href={`/admin/words/${w.id}/edit`}
                               role="button"
-                              class="outline"
-                              style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-color: var(--pico-muted-color); color: var(--pico-color);"
+                              class="outline btn-mini btn-outline-muted"
                             >
                               Edit
                             </a>
                             <form
                               method="post"
                               action={`/admin/words/${w.id}/delete`}
-                              style="margin: 0;"
+                              class="m-0"
                               onsubmit="return confirm('Are you sure you want to delete this word?')"
                             >
                               <button
                                 type="submit"
-                                class="outline contrast"
-                                style="margin: 0; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-color: #ff7675; color: #ff7675;"
+                                class="outline contrast btn-mini btn-outline-danger"
                               >
                                 Delete
                               </button>
@@ -402,43 +368,43 @@ export function AdminWordsPage({
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <nav style="display: flex; justify-content: center; gap: 0.5rem; align-items: center; margin-top: 1.5rem;">
+                <nav class="flex-center gap-05 mt-15">
                   <a
                     href={buildUrl(1)}
                     role="button"
-                    class={`outline secondary ${page === 1 ? "disabled" : ""}`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
+                    class={`outline secondary btn-mini ${
+                      page === 1 ? "disabled" : ""
+                    }`}
                   >
                     ⏮ First
                   </a>
                   <a
                     href={buildUrl(page - 1)}
                     role="button"
-                    class={`outline secondary ${page === 1 ? "disabled" : ""}`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
+                    class={`outline secondary btn-mini ${
+                      page === 1 ? "disabled" : ""
+                    }`}
                   >
                     ◀ Prev
                   </a>
-                  <span style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 600;">
+                  <span class="fs-0875 color-muted fw-600">
                     Page {page} of {totalPages}
                   </span>
                   <a
                     href={buildUrl(page + 1)}
                     role="button"
-                    class={`outline secondary ${
+                    class={`outline secondary btn-mini ${
                       page === totalPages ? "disabled" : ""
                     }`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
                   >
                     Next ▶
                   </a>
                   <a
                     href={buildUrl(totalPages)}
                     role="button"
-                    class={`outline secondary ${
+                    class={`outline secondary btn-mini ${
                       page === totalPages ? "disabled" : ""
                     }`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
                   >
                     Last ⏭
                   </a>

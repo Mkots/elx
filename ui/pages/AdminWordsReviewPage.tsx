@@ -18,25 +18,24 @@ type ReviewCardProps = {
 
 export function AdminWordsReviewEmpty() {
   return (
-    <section id="review-card-shell" style="text-align: center; padding: 2rem;">
-      <article style="background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08); padding: 2.5rem;">
-        <h4 style="margin-bottom: 1rem;">All words reviewed 🎉</h4>
-        <p style="color: var(--pico-muted-color); margin-bottom: 2rem;">
+    <section id="review-card-shell" class="text-center p-2">
+      <article class="admin-panel admin-panel-strong p-25">
+        <h4 class="mb-1">All words reviewed 🎉</h4>
+        <p class="color-muted mb-2">
           There are no more unreviewed words in the queue.
         </p>
-        <div style="display: flex; justify-content: center; gap: 1rem;">
+        <div class="flex-center gap-1">
           <a
             href="/admin/words"
             role="button"
-            class="outline"
-            style="margin: 0; font-weight: 700;"
+            class="outline m-0 fw-700"
           >
             Back to Words Manager
           </a>
           <a
             href="/admin"
             role="button"
-            style="margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839; border: none;"
+            class="admin-btn-primary m-0"
           >
             Go to Dashboard
           </a>
@@ -67,26 +66,23 @@ export function AdminWordsReviewCard({
 
   return (
     <section id="review-card-shell">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <span style="font-size: 0.875rem; font-weight: 600; color: var(--pico-muted-color);">
+      <div class="flex-between mb-05">
+        <span class="fs-0875 fw-600 color-muted">
           Progress: {reviewed} of {total} reviewed ({remaining} remaining)
         </span>
-        <span style="font-size: 0.875rem; font-weight: 600; color: var(--pico-muted-color);">
+        <span class="fs-0875 fw-600 color-muted">
           {percent}%
         </span>
       </div>
-      <progress value={reviewed} max={total} style="margin-bottom: 1.5rem;" />
+      <progress value={reviewed} max={total} class="mb-15" />
 
       {error && (
-        <div
-          class="alert alert-error"
-          style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-        >
+        <div class="alert alert-error">
           ⚠️ {error}
         </div>
       )}
 
-      <article style="background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08); padding: 2rem; position: relative;">
+      <article class="admin-panel admin-panel-strong p-2 position-relative">
         <form
           id="review-form"
           method="post"
@@ -94,15 +90,12 @@ export function AdminWordsReviewCard({
           hx-post={`/admin/words/review/${word.id}`}
           hx-target="#review-card-shell"
           hx-swap="outerHTML"
-          style="margin: 0;"
+          class="m-0"
         >
-          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem; align-items: end; margin-bottom: 1.5rem;">
+          <div class="review-form-grid">
             {/* Word Value Field */}
-            <div style="margin: 0;">
-              <label
-                for="review-word-value"
-                style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="review-word-value" class="admin-label mb-05">
                 Word Value
               </label>
               <input
@@ -111,43 +104,37 @@ export function AdminWordsReviewCard({
                 name="value"
                 value={word.value}
                 required
-                style="margin: 0;"
+                class="m-0"
               />
             </div>
 
             {/* Is Real (Switch toggle) */}
-            <div style="margin: 0; display: flex; flex-direction: column; justify-content: center; height: 100%;">
-              <label
-                for="is-real-switch"
-                style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;"
-              >
+            <div class="m-0 d-flex flex-column justify-center h-100">
+              <label for="is-real-switch" class="admin-label mb-05">
                 Word Status
               </label>
-              <label style="margin: 0; display: flex; align-items: center; cursor: pointer; user-select: none;">
+              <label class="m-0 d-flex align-items-center cursor-pointer user-select-none">
                 <input
                   type="checkbox"
                   id="is-real-switch"
                   name="isReal"
                   role="switch"
                   checked={word.isReal}
-                  style="margin: 0 0.5rem 0 0;"
+                  class="me-05"
                 />
-                <span style="font-size: 0.875rem;">Real Word</span>
+                <span class="fs-0875">Real Word</span>
               </label>
             </div>
 
             {/* Difficulty Select */}
-            <div style="margin: 0;">
-              <label
-                for="difficulty-select"
-                style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="difficulty-select" class="admin-label mb-05">
                 Difficulty
               </label>
               <select
                 id="difficulty-select"
                 name="difficulty"
-                style="margin: 0;"
+                class="m-0"
               >
                 <option value="1" selected={word.difficulty === 1}>
                   1 (Very Easy)
@@ -168,12 +155,12 @@ export function AdminWordsReviewCard({
             </div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; gap: 0.75rem;">
+          <div class="flex-between flex-wrap gap-1">
+            <div class="d-flex gap-075">
               <button
                 type="submit"
                 id="confirm-btn"
-                style="margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839; border: none; padding: 0.5rem 1.5rem;"
+                class="admin-btn-primary py-05 px-15"
               >
                 Confirm & Next ⏎
               </button>
@@ -183,14 +170,13 @@ export function AdminWordsReviewCard({
                 hx-post={`/admin/words/review/${word.id}/skip`}
                 hx-target="#review-card-shell"
                 hx-swap="outerHTML"
-                class="outline contrast"
-                style="margin: 0; font-weight: 700; padding: 0.5rem 1.5rem;"
+                class="outline contrast fw-700 py-05 px-15 m-0"
               >
                 Skip ➔
               </button>
             </div>
 
-            <div style="font-size: 0.75rem; color: var(--pico-muted-color); text-align: right; line-height: 1.4;">
+            <div class="fs-075 color-muted text-right lh-14">
               <strong>Keyboard shortcuts:</strong>
               <br />
               <kbd>⏎ Enter</kbd> Confirm & Next (outside text box) &nbsp;|&nbsp;
@@ -219,7 +205,7 @@ export function AdminWordsReviewCard({
                 }
                 return;
               }
-
+ 
               if (e.key === 'Enter') {
                 e.preventDefault();
                 document.getElementById('confirm-btn')?.click();
@@ -256,12 +242,12 @@ type AdminWordsReviewPageProps = {
 export function AdminWordsReviewPage({ cardHtml }: AdminWordsReviewPageProps) {
   return (
     <AdminLayout title="Word Review & Refinement" activeTab="words" htmx>
-      <div style="max-width: 800px; margin: 0 auto; padding-top: 1rem;">
-        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-          <p style="margin: 0; color: var(--pico-muted-color); font-size: 0.95rem;">
+      <div class="admin-container admin-container-lg pt-1">
+        <div class="mb-2 flex-between">
+          <p class="m-0 color-muted fs-095">
             Refine attributes and confirm imported/unreviewed vocabulary words.
           </p>
-          <a href="/admin/words" style="font-size: 0.875rem; font-weight: 600;">
+          <a href="/admin/words" class="fs-0875 fw-600">
             ← Back to Words List
           </a>
         </div>

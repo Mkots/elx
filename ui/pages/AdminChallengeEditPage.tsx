@@ -39,23 +39,20 @@ export function AdminChallengeEditPage({
 
   return (
     <AdminLayout title={title} activeTab="challenges">
-      <div style="max-width: 36rem; margin: 0 auto;">
-        <div style="margin-bottom: 1.5rem;">
+      <div class="admin-container admin-container-md">
+        <div class="mb-15">
           <a
             href={`/admin/challenges?type=${challengeType}`}
-            style="font-size: 0.875rem; color: var(--pico-muted-color); text-decoration: underline;"
+            class="fs-0875 color-muted decoration-underline"
           >
             ◀ Back to Challenges list
           </a>
         </div>
 
-        <article style="padding: 2rem; background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08);">
+        <article class="admin-panel admin-panel-card admin-panel-padding">
           <form method="post" action={actionUrl}>
             {error && (
-              <div
-                class="alert alert-error"
-                style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-              >
+              <div class="alert alert-error">
                 ⚠️ {error}
               </div>
             )}
@@ -63,14 +60,11 @@ export function AdminChallengeEditPage({
             {/* SYNONYMS FORM FIELDS */}
             {challengeType === "synonyms" && (
               <div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="wordId"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="wordId" class="admin-label">
                     Source Word
                   </label>
-                  <select id="wordId" name="wordId" required style="margin: 0;">
+                  <select id="wordId" name="wordId" required class="m-0">
                     <option value="">-- Select Word --</option>
                     {sortedWords.map((w) => (
                       <option
@@ -83,18 +77,15 @@ export function AdminChallengeEditPage({
                   </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="targetId"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="targetId" class="admin-label">
                     Target Synonym Word
                   </label>
                   <select
                     id="targetId"
                     name="targetId"
                     required
-                    style="margin: 0;"
+                    class="m-0"
                   >
                     <option value="">-- Select Synonym --</option>
                     {sortedWords.map((w) => (
@@ -108,11 +99,8 @@ export function AdminChallengeEditPage({
                   </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="relationType"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="relationType" class="admin-label">
                     Relation Type
                   </label>
                   <input
@@ -122,7 +110,7 @@ export function AdminChallengeEditPage({
                     value={challenge?.relationType ?? "synonym"}
                     placeholder="e.g., synonym"
                     required
-                    style="margin: 0;"
+                    class="m-0"
                   />
                 </div>
               </div>
@@ -131,11 +119,8 @@ export function AdminChallengeEditPage({
             {/* SPELLING FORM FIELDS */}
             {challengeType === "spelling" && (
               <div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="contextSentence"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="contextSentence" class="admin-label">
                     Context Sentence (use `___` for the blank gap)
                   </label>
                   <input
@@ -145,22 +130,19 @@ export function AdminChallengeEditPage({
                     value={challenge?.contextSentence ?? ""}
                     placeholder="e.g., She planted a single red ___ in the garden."
                     required
-                    style="margin: 0;"
+                    class="m-0"
                   />
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="correctWordId"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="correctWordId" class="admin-label">
                     Correct Answer Word
                   </label>
                   <select
                     id="correctWordId"
                     name="correctWordId"
                     required
-                    style="margin: 0;"
+                    class="m-0"
                   >
                     <option value="">-- Select Correct Word --</option>
                     {sortedWords.map((w) => (
@@ -179,14 +161,11 @@ export function AdminChallengeEditPage({
             {/* DEFINITIONS FORM FIELDS */}
             {challengeType === "definitions" && (
               <div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="wordId"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="wordId" class="admin-label">
                     Target Word
                   </label>
-                  <select id="wordId" name="wordId" required style="margin: 0;">
+                  <select id="wordId" name="wordId" required class="m-0">
                     <option value="">-- Select Word --</option>
                     {sortedWords.map((w) => (
                       <option
@@ -199,11 +178,8 @@ export function AdminChallengeEditPage({
                   </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label
-                    for="definitionText"
-                    style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-                  >
+                <div class="form-group mb-15">
+                  <label for="definitionText" class="admin-label">
                     Definition Text
                   </label>
                   <textarea
@@ -211,7 +187,7 @@ export function AdminChallengeEditPage({
                     name="definitionText"
                     placeholder="Enter the dictionary definition text..."
                     required
-                    style="margin: 0; min-height: 5rem;"
+                    class="m-0 min-h-5"
                   >
                     {challenge?.definitionText ?? ""}
                   </textarea>
@@ -220,11 +196,8 @@ export function AdminChallengeEditPage({
             )}
 
             {/* DISTRACTORS FIELD (SHARED BY ALL CHALLENGES) */}
-            <div class="form-group" style="margin-bottom: 2rem;">
-              <label
-                for="distractors"
-                style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="form-group mb-2">
+              <label for="distractors" class="admin-label">
                 Distractor Words (comma-separated list of word values)
               </label>
               <input
@@ -234,16 +207,16 @@ export function AdminChallengeEditPage({
                 value={distractorsString}
                 placeholder="e.g., orange, banana, cherry"
                 required
-                style="margin: 0;"
+                class="m-0"
               />
-              <small style="color: var(--pico-muted-color); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+              <small class="color-muted fs-075 mt-025 d-block">
                 Each word value must exist in the Words database.
               </small>
             </div>
 
             <button
               type="submit"
-              style="width: 100%; margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839;"
+              class="admin-btn-primary btn-full"
             >
               {isEdit ? "Update Challenge" : "Create Challenge"}
             </button>

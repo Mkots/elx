@@ -69,39 +69,32 @@ export function AdminHistoryPage({
     <AdminLayout title="Test History" activeTab="history">
       <div class="history-shell">
         {error && (
-          <div
-            class="alert alert-error"
-            style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-error">
             ⚠️ {error}
           </div>
         )}
         {success && (
-          <div
-            class="alert alert-success"
-            style="color: var(--color-positive); background: rgba(139, 213, 202, 0.1); border: 1px solid rgba(139, 213, 202, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-success">
             ✅ {success}
           </div>
         )}
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-          <h3 style="margin: 0; font-size: 1.25rem;">
+        <div class="flex-between mb-15 flex-wrap gap-1">
+          <h3 class="m-0 fs-125">
             Test Session History ({totalCount})
           </h3>
-          <div style="display: inline-flex; gap: 0.5rem;">
+          <div class="d-inline-flex gap-05">
             <a
               href="/admin/history/export?format=csv"
               role="button"
-              style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; background: var(--pico-primary); color: #2d2839; font-weight: 700;"
+              class="admin-btn-primary btn-mini fs-0875"
             >
               📥 Export CSV
             </a>
             <a
               href="/admin/history/export?format=json"
               role="button"
-              class="outline"
-              style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+              class="outline btn-mini btn-outline-muted fw-700 fs-0875"
             >
               📥 Export JSON
             </a>
@@ -109,19 +102,16 @@ export function AdminHistoryPage({
         </div>
 
         {/* Filter / Search bar */}
-        <article style="padding: 1.25rem; margin-bottom: 1.5rem; background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08);">
+        <article class="admin-panel admin-panel-strong p-125 mb-15">
           <form
             method="get"
             action="/admin/history"
-            style="margin: 0; display: grid; grid-template-columns: 3fr auto auto; gap: 1rem; align-items: end;"
+            class="filter-form filter-form-history"
           >
             <input type="hidden" name="orderBy" value={orderBy} />
             <input type="hidden" name="orderDir" value={orderDir} />
-            <div style="margin: 0;">
-              <label
-                for="q"
-                style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="m-0">
+              <label for="q" class="admin-label fs-075">
                 Search Session ID
               </label>
               <input
@@ -130,12 +120,12 @@ export function AdminHistoryPage({
                 name="q"
                 value={search}
                 placeholder="Search by Session ID..."
-                style="margin: 0; font-size: 0.875rem;"
+                class="m-0 fs-0875"
               />
             </div>
             <button
               type="submit"
-              style="margin: 0; padding: 0 1.5rem; font-weight: 700; height: 100%;"
+              class="m-0 px-15 fw-700 h-100"
             >
               Search
             </button>
@@ -143,8 +133,7 @@ export function AdminHistoryPage({
               <a
                 href={`/admin/history?orderBy=${orderBy}&orderDir=${orderDir}`}
                 role="button"
-                class="outline secondary"
-                style="margin: 0; padding: 0 1.5rem; font-weight: 700; height: 100%; display: flex; align-items: center; justify-content: center;"
+                class="outline secondary m-0 px-15 fw-700 h-100 flex-center"
               >
                 Clear
               </a>
@@ -155,38 +144,35 @@ export function AdminHistoryPage({
         {/* Table list */}
         {history.length === 0
           ? (
-            <article style="padding: 3rem; text-align: center; color: var(--pico-muted-color); background: rgba(242, 239, 250, 0.03); border: 1px dashed rgba(242, 239, 250, 0.16); border-radius: var(--pico-border-radius);">
+            <article class="empty-state empty-state-large">
               No test sessions recorded yet.
             </article>
           )
           : (
             <div>
-              <div
-                class="overflow-auto"
-                style="border: 1px solid rgba(242, 239, 250, 0.08); border-radius: var(--pico-border-radius); background: var(--color-panel-strong); margin-bottom: 1.5rem;"
-              >
-                <table style="margin: 0; width: 100%;">
+              <div class="table-wrapper">
+                <table class="admin-table">
                   <thead>
                     <tr>
-                      <th style="padding: 1rem;">ID</th>
-                      <th style="padding: 1rem;">Session ID</th>
-                      <th style="padding: 1rem; text-align: center;">
+                      <th>ID</th>
+                      <th>Session ID</th>
+                      <th class="text-center">
                         <a
                           href={buildSortUrl("score")}
-                          style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; width: 100%;"
+                          class="sort-anchor sort-anchor-center"
                         >
                           Score {orderBy === "score"
                             ? (orderDir === "asc" ? "▲" : "▼")
                             : ""}
                         </a>
                       </th>
-                      <th style="padding: 1rem; text-align: center;">
+                      <th class="text-center">
                         Truthfulness
                       </th>
-                      <th style="padding: 1rem; text-align: right;">
+                      <th class="text-right">
                         <a
                           href={buildSortUrl("completedAt")}
-                          style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; justify-content: right; gap: 0.25rem; width: 100%;"
+                          class="sort-anchor sort-anchor-right"
                         >
                           Completed At {orderBy === "completedAt"
                             ? (orderDir === "asc" ? "▲" : "▼")
@@ -199,21 +185,21 @@ export function AdminHistoryPage({
                     {history.map((run) => (
                       <tr
                         key={run.id}
-                        style="border-bottom: 1px solid rgba(242, 239, 250, 0.04);"
+                        class="border-bottom-row"
                       >
-                        <td style="padding: 1rem; font-size: 0.875rem; color: var(--pico-muted-color);">
+                        <td class="fs-0875 color-muted">
                           {run.id}
                         </td>
-                        <td style="padding: 1rem; font-family: var(--pico-font-family-monospace); font-weight: 700;">
+                        <td class="admin-monospace fw-700">
                           {run.sessionId}
                         </td>
-                        <td style="padding: 1rem; text-align: center; font-weight: 600;">
+                        <td class="text-center fw-600">
                           {run.score}%
                         </td>
-                        <td style="padding: 1rem; text-align: center; font-weight: 600;">
+                        <td class="text-center fw-600">
                           {run.truthfulness}%
                         </td>
-                        <td style="padding: 1rem; text-align: right; color: var(--pico-muted-color); font-size: 0.875rem;">
+                        <td class="text-right color-muted fs-0875">
                           {formatDate(run.completedAt)}
                         </td>
                       </tr>
@@ -224,43 +210,43 @@ export function AdminHistoryPage({
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <nav style="display: flex; justify-content: center; gap: 0.5rem; align-items: center; margin-top: 1.5rem;">
+                <nav class="flex-center gap-05 mt-15">
                   <a
                     href={buildPageUrl(1)}
                     role="button"
-                    class={`outline secondary ${page === 1 ? "disabled" : ""}`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
+                    class={`outline secondary btn-mini ${
+                      page === 1 ? "disabled" : ""
+                    }`}
                   >
                     ⏮ First
                   </a>
                   <a
                     href={buildPageUrl(page - 1)}
                     role="button"
-                    class={`outline secondary ${page === 1 ? "disabled" : ""}`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
+                    class={`outline secondary btn-mini ${
+                      page === 1 ? "disabled" : ""
+                    }`}
                   >
                     ◀ Prev
                   </a>
-                  <span style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 600;">
+                  <span class="fs-0875 color-muted fw-600">
                     Page {page} of {totalPages}
                   </span>
                   <a
                     href={buildPageUrl(page + 1)}
                     role="button"
-                    class={`outline secondary ${
+                    class={`outline secondary btn-mini ${
                       page === totalPages ? "disabled" : ""
                     }`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
                   >
                     Next ▶
                   </a>
                   <a
                     href={buildPageUrl(totalPages)}
                     role="button"
-                    class={`outline secondary ${
+                    class={`outline secondary btn-mini ${
                       page === totalPages ? "disabled" : ""
                     }`}
-                    style="margin: 0; padding: 0.35rem 0.75rem; font-size: 0.75rem;"
                   >
                     Last ⏭
                   </a>
