@@ -43,6 +43,13 @@
       "when": 1781988309887,
       "tag": "0005_colorful_obadiah_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781988789273,
+      "tag": "0006_stiff_multiple_man",
+      "breakpoints": true
     }
   ]
 }

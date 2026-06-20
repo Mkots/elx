@@ -4,6 +4,7 @@ import { registerDashboardRoutes } from "./dashboard.ts";
 import { registerWordsRoutes } from "./words.ts";
 import { registerReviewRoutes } from "./review.ts";
 import { registerHistoryRoutes } from "./history.ts";
+import { registerTicketConfigRoutes } from "./ticket_config.ts";
 import {
   type AdminDashboardLoader,
   databaseAdminDashboardLoader,
@@ -20,6 +21,10 @@ import {
   type AdminHistoryLoader,
   databaseAdminHistoryLoader,
 } from "./loaders/history.ts";
+import {
+  type AdminTicketConfigLoader,
+  databaseAdminTicketConfigLoader,
+} from "./loaders/ticket_config.ts";
 
 // Re-export the admin public surface so `app.ts` and tests have a single
 // import entry point.
@@ -28,12 +33,14 @@ export type {
   AdminDashboardLoader,
   AdminHistoryLoader,
   AdminReviewLoader,
+  AdminTicketConfigLoader,
   AdminWordsLoader,
 };
 export {
   databaseAdminDashboardLoader,
   databaseAdminHistoryLoader,
   databaseAdminReviewLoader,
+  databaseAdminTicketConfigLoader,
   databaseAdminWordsLoader,
 };
 
@@ -47,6 +54,7 @@ export function createAdminRoute(
   wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
   historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
   reviewLoader: AdminReviewLoader = databaseAdminReviewLoader,
+  ticketConfigLoader: AdminTicketConfigLoader = databaseAdminTicketConfigLoader,
 ) {
   const route = new Hono();
 
@@ -58,6 +66,7 @@ export function createAdminRoute(
   registerWordsRoutes(route, wordsLoader);
   registerReviewRoutes(route, reviewLoader, wordsLoader);
   registerHistoryRoutes(route, historyLoader);
+  registerTicketConfigRoutes(route, ticketConfigLoader);
 
   return route;
 }
