@@ -288,4 +288,29 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     await page.getByRole("button", { name: /skip/i }).click();
     await expect(wordInput).not.toHaveValue(nextValue);
   });
+
+  test("Ticket Composition Config edit flow", async ({ page }) => {
+    // 1. Login
+    await page.goto("/admin/login");
+    await page.locator('input[name="username"]').fill(username);
+    await page.locator('input[name="password"]').fill(password);
+    await page.getByRole("button", { name: /sign in/i }).click();
+
+    // 2. Go to ticket-config
+    await page.goto("/admin/ticket-config");
+    await expect(page.locator("h2")).toContainText("Ticket Composition Config");
+
+    // 3. Fill in settings
+    await page.locator('input[name="synonymsCount"]').fill("5");
+    await page.locator('input[name="spellingCount"]').fill("5");
+    await page.locator('input[name="definitionCount"]').fill("5");
+
+    // 4. Submit form
+    await page.getByRole("button", { name: /save configuration/i }).click();
+
+    // 5. Verify success alert is shown
+    await expect(page.locator(".alert-success")).toContainText(
+      "Configuration saved successfully",
+    );
+  });
 });

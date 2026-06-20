@@ -22,6 +22,7 @@ import {
   type AdminDashboardLoader,
   type AdminHistoryLoader,
   type AdminReviewLoader,
+  type AdminTicketConfigLoader,
   type AdminWordsLoader,
   createAdminRoute,
 } from "./routes/admin/index.ts";
@@ -37,6 +38,7 @@ interface CreateAppOptions {
   adminWordsLoader?: AdminWordsLoader;
   adminHistoryLoader?: AdminHistoryLoader;
   adminReviewLoader?: AdminReviewLoader;
+  adminTicketConfigLoader?: AdminTicketConfigLoader;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -66,6 +68,7 @@ export function createApp(options: CreateAppOptions = {}) {
       options.adminWordsLoader,
       options.adminHistoryLoader,
       options.adminReviewLoader,
+      options.adminTicketConfigLoader,
     ),
   );
 

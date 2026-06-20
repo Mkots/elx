@@ -84,3 +84,22 @@ export const testHistory = pgTable("test_history", {
   completedAt: timestamp("completed_at").notNull().defaultNow(),
   ticketId: integer("ticket_id").references(() => tickets.id),
 });
+
+export const ticketConfigs = pgTable("ticket_configs", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  isActive: boolean("is_active").notNull().default(false),
+  difficulty1Count: integer("difficulty_1_count").notNull().default(12),
+  difficulty2Count: integer("difficulty_2_count").notNull().default(12),
+  difficulty3Count: integer("difficulty_3_count").notNull().default(12),
+  difficulty4Count: integer("difficulty_4_count").notNull().default(12),
+  difficulty5Count: integer("difficulty_5_count").notNull().default(12),
+  realCount: integer("real_count").notNull().default(40),
+  pseudoCount: integer("pseudo_count").notNull().default(20),
+  synonymsCount: integer("synonyms_count").notNull().default(10),
+  spellingCount: integer("spelling_count").notNull().default(10),
+  definitionCount: integer("definition_count").notNull().default(10),
+  randomizeOrder: boolean("randomize_order").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
