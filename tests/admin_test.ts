@@ -47,6 +47,9 @@ const mockWordsList = [
     difficulty: 2,
     reviewed: false,
     reviewedAt: null as Date | null,
+    synonyms: [] as string[],
+    antonyms: [] as string[],
+    definition: null as string | null,
   },
   {
     id: 2,
@@ -55,6 +58,9 @@ const mockWordsList = [
     difficulty: 3,
     reviewed: false,
     reviewedAt: null as Date | null,
+    synonyms: [] as string[],
+    antonyms: [] as string[],
+    definition: null as string | null,
   },
   {
     id: 3,
@@ -63,6 +69,9 @@ const mockWordsList = [
     difficulty: 1,
     reviewed: false,
     reviewedAt: null as Date | null,
+    synonyms: [] as string[],
+    antonyms: [] as string[],
+    definition: null as string | null,
   },
 ];
 
@@ -164,6 +173,9 @@ const mockWordsLoader: AdminWordsLoader = {
       difficulty,
       reviewed: false,
       reviewedAt: null,
+      synonyms: [],
+      antonyms: [],
+      definition: null,
     });
   },
 
@@ -267,6 +279,9 @@ const mockWordsLoader: AdminWordsLoader = {
                     difficulty: data.difficulty,
                     reviewed: false,
                     reviewedAt: null as Date | null,
+                    synonyms: [] as string[],
+                    antonyms: [] as string[],
+                    definition: null as string | null,
                   };
                   mockWordsList.push(newWord);
                   return [{ id: nextId }];
@@ -342,6 +357,9 @@ function resetMockData() {
       difficulty: 2,
       reviewed: false,
       reviewedAt: null as Date | null,
+      synonyms: [] as string[],
+      antonyms: [] as string[],
+      definition: null as string | null,
     },
     {
       id: 2,
@@ -350,6 +368,9 @@ function resetMockData() {
       difficulty: 3,
       reviewed: false,
       reviewedAt: null as Date | null,
+      synonyms: [] as string[],
+      antonyms: [] as string[],
+      definition: null as string | null,
     },
     {
       id: 3,
@@ -358,6 +379,9 @@ function resetMockData() {
       difficulty: 1,
       reviewed: false,
       reviewedAt: null as Date | null,
+      synonyms: [] as string[],
+      antonyms: [] as string[],
+      definition: null as string | null,
     },
   );
 
