@@ -114,7 +114,7 @@ const mockReviewLoader: AdminReviewLoader = {
 };
 
 const mockWordsLoader: AdminWordsLoader = {
-  async listWords({ search, difficulty, isReal, page, limit }) {
+  async listWords({ search, difficulty, isReal, reviewed, page, limit }) {
     await Promise.resolve();
     let filtered = [...mockWordsList];
     if (search) {
@@ -126,10 +126,23 @@ const mockWordsLoader: AdminWordsLoader = {
     if (isReal !== undefined) {
       filtered = filtered.filter((w) => w.isReal === isReal);
     }
+    if (reviewed !== undefined) {
+      filtered = filtered.filter((w) => w.reviewed === reviewed);
+    }
     const totalCount = filtered.length;
     const offset = (page - 1) * limit;
     const paginated = filtered.slice(offset, offset + limit);
     return { words: paginated, totalCount };
+  },
+
+  async findWordIds({ search, difficulty, isReal, reviewed }) {
+    await Promise.resolve();
+    return mockWordsList
+      .filter((w) => !search || w.value.includes(search))
+      .filter((w) => difficulty === undefined || w.difficulty === difficulty)
+      .filter((w) => isReal === undefined || w.isReal === isReal)
+      .filter((w) => reviewed === undefined || w.reviewed === reviewed)
+      .map((w) => w.id);
   },
 
   async getWord(id) {
@@ -180,6 +193,50 @@ const mockWordsLoader: AdminWordsLoader = {
       return { success: true };
     }
     return { success: false, error: "Word not found." };
+  },
+
+  async bulkSetReviewed(ids, reviewed) {
+    await Promise.resolve();
+    let count = 0;
+    for (const w of mockWordsList) {
+      if (ids.includes(w.id)) {
+        w.reviewed = reviewed;
+        w.reviewedAt = reviewed ? new Date() : null;
+        count++;
+      }
+    }
+    return count;
+  },
+
+  async bulkSetIsReal(ids, isReal) {
+    await Promise.resolve();
+    let count = 0;
+    for (const w of mockWordsList) {
+      if (ids.includes(w.id)) {
+        w.isReal = isReal;
+        count++;
+      }
+    }
+    return count;
+  },
+
+  async bulkDelete(ids) {
+    await Promise.resolve();
+    const skipped: { id: number; reason: string }[] = [];
+    let deleted = 0;
+    for (const id of ids) {
+      // Simulate ref check for word ID 1 (mirrors deleteWord)
+      if (id === 1) {
+        skipped.push({ id, reason: "Word is referenced in synonyms." });
+        continue;
+      }
+      const index = mockWordsList.findIndex((w) => w.id === id);
+      if (index !== -1) {
+        mockWordsList.splice(index, 1);
+        deleted++;
+      }
+    }
+    return { deleted, skipped };
   },
 
   async importWords(fileContent, configJson, dryRun) {
@@ -1144,4 +1201,144 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/review and skip routes", a
   const errBody = await errRes.text();
   assertEquals(errRes.status, 200);
   assertStringIncludes(errBody, "Word value cannot be empty");
+});
+
+async function createWordViaApi(
+  sessionId: string,
+  value: string,
+  isReal = true,
+  difficulty = 3,
+) {
+  const form = new URLSearchParams();
+  form.append("value", value);
+  form.append("difficulty", String(difficulty));
+  form.append("isReal", String(isReal));
+  await app.request("/admin/words/new", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: form.toString(),
+  });
+}
+
+function bulkRequest(sessionId: string, fields: Record<string, string>) {
+  const form = new URLSearchParams(fields);
+  return app.request("/admin/words/bulk", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: form.toString(),
+    redirect: "manual",
+  });
+}
+
+Deno.test("VER-ADMIN-ROUTE: words list shows Reviewed column and filters by reviewed", async () => {
+  const sessionId = await createAdminSession();
+  await createWordViaApi(sessionId, "revfiltw");
+
+  // List renders the Reviewed column header.
+  const listRes = await app.request("/admin/words", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const listBody = await listRes.text();
+  assertEquals(listRes.status, 200);
+  assertStringIncludes(listBody, "Reviewed");
+  assertStringIncludes(listBody, "Pending");
+
+  // New word is pending: it appears under reviewed=false (populated table)
+  // and is absent under reviewed=true (empty result). The search box echoes
+  // the query, so assert on the table state rather than the raw substring.
+  const pendingRes = await app.request(
+    "/admin/words?q=revfiltw&reviewed=false",
+    {
+      headers: { "Cookie": `admin_session=${sessionId}` },
+    },
+  );
+  const pendingBody = await pendingRes.text();
+  assertStringIncludes(pendingBody, "revfiltw");
+  assertEquals(pendingBody.includes("No words match"), false);
+
+  const reviewedRes = await app.request(
+    "/admin/words?q=revfiltw&reviewed=true",
+    {
+      headers: { "Cookie": `admin_session=${sessionId}` },
+    },
+  );
+  assertStringIncludes(await reviewedRes.text(), "No words match");
+});
+
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/bulk mark_reviewed via selectAllMatching", async () => {
+  const sessionId = await createAdminSession();
+  await createWordViaApi(sessionId, "bulkrev");
+
+  const res = await bulkRequest(sessionId, {
+    action: "mark_reviewed",
+    selectAllMatching: "true",
+    q: "bulkrev",
+  });
+  assertEquals(res.status, 302);
+  const location = res.headers.get("location") ?? "";
+  assertStringIncludes(location, "success=");
+  assertStringIncludes(location, "q=bulkrev");
+
+  // It now appears under reviewed=true.
+  const reviewedRes = await app.request(
+    "/admin/words?q=bulkrev&reviewed=true",
+    {
+      headers: { "Cookie": `admin_session=${sessionId}` },
+    },
+  );
+  assertStringIncludes(await reviewedRes.text(), "bulkrev");
+});
+
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/bulk set_pseudo changes type", async () => {
+  const sessionId = await createAdminSession();
+  await createWordViaApi(sessionId, "bulkpseudo", true);
+
+  const res = await bulkRequest(sessionId, {
+    action: "set_pseudo",
+    selectAllMatching: "true",
+    q: "bulkpseudo",
+  });
+  assertEquals(res.status, 302);
+
+  const pseudoRes = await app.request(
+    "/admin/words?q=bulkpseudo&isReal=false",
+    {
+      headers: { "Cookie": `admin_session=${sessionId}` },
+    },
+  );
+  assertStringIncludes(await pseudoRes.text(), "bulkpseudo");
+});
+
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/bulk delete removes matching words", async () => {
+  const sessionId = await createAdminSession();
+  await createWordViaApi(sessionId, "bulkdelme");
+
+  const res = await bulkRequest(sessionId, {
+    action: "delete",
+    selectAllMatching: "true",
+    q: "bulkdelme",
+  });
+  assertEquals(res.status, 302);
+  assertStringIncludes(res.headers.get("location") ?? "", "Deleted");
+
+  const gone = await app.request("/admin/words?q=bulkdelme", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  assertStringIncludes(await gone.text(), "No words match");
+});
+
+Deno.test("VER-ADMIN-ROUTE: POST /admin/words/bulk with no selection redirects with error", async () => {
+  const sessionId = await createAdminSession();
+  const res = await bulkRequest(sessionId, { action: "mark_reviewed" });
+  assertEquals(res.status, 302);
+  const location = res.headers.get("location") ?? "";
+  assertStringIncludes(location, "error=");
+  // URLSearchParams encodes spaces as "+", which decodeURIComponent keeps.
+  assertStringIncludes(location.replaceAll("+", " "), "No words selected.");
 });
