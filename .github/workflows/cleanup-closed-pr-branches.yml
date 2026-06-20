@@ -1,0 +1,58 @@
+name: Cleanup closed-PR branches
+
+on:
+  schedule:
+    # 23:00 Europe/Kyiv. GitHub Actions cron is in UTC.
+    # Summer (EEST, UTC+3) -> 20:00 UTC. In winter (EET, UTC+2) change to "0 21 * * *".
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only list branches, do not delete"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete branches of closed PRs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          # scheduled runs delete; manual runs honor dry_run (default: true)
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: |
+          set -uo pipefail
+
+          closed=$(gh pr list --state closed --limit 1000 \
+            --json headRefName,headRepositoryOwner \
+            --jq ".[] | select(.headRepositoryOwner.login==\"$OWNER\") | .headRefName" | sort -u)
+
+          open=$(gh pr list --state open --limit 1000 \
+            --json headRefName,headRepositoryOwner \
+            --jq ".[] | select(.headRepositoryOwner.login==\"$OWNER\") | .headRefName" | sort -u)
+
+          protected=$(printf '%s\n' "$DEFAULT_BRANCH" main master develop | sort -u)
+
+          # closed-PR branches, minus open-PR branches, minus protected names
+          candidates=$(comm -23 <(printf '%s\n' "$closed") <(printf '%s\n' "$open"))
+          candidates=$(comm -23 <(printf '%s\n' "$candidates" | sort -u) <(printf '%s\n' "$protected"))
+
+          printf '%s\n' "$candidates" | while read -r br; do
+            [ -z "$br" ] && continue
+            git ls-remote --exit-code --heads origin "$br" >/dev/null 2>&1 || continue
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "[dry-run] would delete: $br"
+            else
+              git push origin --delete "$br" && echo "deleted: $br" || echo "failed: $br"
+            fi
+          done
