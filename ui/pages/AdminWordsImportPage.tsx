@@ -23,69 +23,63 @@ export function AdminWordsImportPage({
 }: AdminWordsImportPageProps) {
   return (
     <AdminLayout title="Import Words" activeTab="words">
-      <div style="max-width: 44rem; margin: 0 auto;">
-        <div style="margin-bottom: 1.5rem;">
+      <div class="admin-container max-w-44">
+        <div class="mb-15">
           <a
             href="/admin/words"
-            style="font-size: 0.875rem; color: var(--pico-muted-color); text-decoration: underline;"
+            class="fs-0875 color-muted decoration-underline"
           >
             ◀ Back to Words Manager
           </a>
         </div>
 
         {error && (
-          <div
-            class="alert alert-error"
-            style="color: #ff7675; background: rgba(255, 118, 117, 0.1); border: 1px solid rgba(255, 118, 117, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-error">
             ⚠️ {error}
           </div>
         )}
 
         {success && (
-          <div
-            class="alert alert-success"
-            style="color: var(--color-positive); background: rgba(139, 213, 202, 0.1); border: 1px solid rgba(139, 213, 202, 0.2); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; font-size: 0.875rem;"
-          >
+          <div class="alert alert-success">
             ✅ {success}
           </div>
         )}
 
         {result && (
-          <article style="padding: 1.5rem; background: var(--color-panel-strong); border: 1px solid rgba(242, 239, 250, 0.08); margin-bottom: 2rem;">
-            <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.125rem;">
+          <article class="admin-panel admin-panel-strong p-15 mb-2">
+            <h4 class="mt-0 mb-1 fs-1125">
               Import Results
             </h4>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; margin-bottom: 1.5rem;">
-              <div style="padding: 0.75rem; background: rgba(139, 213, 202, 0.08); border-radius: var(--pico-border-radius);">
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-positive);">
+            <div class="import-summary-grid mb-15">
+              <div class="import-card-positive">
+                <div class="fs-15 fw-700 color-positive">
                   {result.inserted}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--pico-muted-color);">
+                <div class="fs-075 color-muted">
                   Inserted
                 </div>
               </div>
-              <div style="padding: 0.75rem; background: rgba(242, 239, 250, 0.04); border-radius: var(--pico-border-radius);">
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">
+              <div class="import-card-primary">
+                <div class="fs-15 fw-700 color-primary">
                   {result.updated}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--pico-muted-color);">
+                <div class="fs-075 color-muted">
                   Updated
                 </div>
               </div>
-              <div style="padding: 0.75rem; background: rgba(242, 239, 250, 0.02); border-radius: var(--pico-border-radius);">
-                <div style="font-size: 1.5rem; font-weight: 700; color: var(--pico-muted-color);">
+              <div class="import-card-muted">
+                <div class="fs-15 fw-700 color-muted">
                   {result.skipped}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--pico-muted-color);">
+                <div class="fs-075 color-muted">
                   Skipped
                 </div>
               </div>
-              <div style="padding: 0.75rem; background: rgba(255, 118, 117, 0.08); border-radius: var(--pico-border-radius);">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #ff7675;">
+              <div class="import-card-danger">
+                <div class="fs-15 fw-700 color-danger">
                   {result.failed}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--pico-muted-color);">
+                <div class="fs-075 color-muted">
                   Failed
                 </div>
               </div>
@@ -93,12 +87,12 @@ export function AdminWordsImportPage({
 
             {result.errors.length > 0 && (
               <div>
-                <h5 style="font-size: 0.875rem; font-weight: 700; color: #ff7675; margin-bottom: 0.5rem;">
+                <h5 class="fs-0875 fw-700 color-danger mb-05">
                   Errors & Warnings
                 </h5>
-                <div style="max-height: 12rem; overflow-y: auto; font-family: var(--pico-font-family-monospace); font-size: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--pico-border-radius); border: 1px solid rgba(242, 239, 250, 0.04);">
+                <div class="import-log-box">
                   {result.errors.map((err) => (
-                    <div style="margin-bottom: 0.25rem; color: #ff7675;">
+                    <div class="mb-025 color-danger">
                       Line {err.line}: {err.reason}
                     </div>
                   ))}
@@ -108,17 +102,14 @@ export function AdminWordsImportPage({
           </article>
         )}
 
-        <article style="padding: 2rem; background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08);">
+        <article class="admin-panel admin-panel-card p-2">
           <form
             method="post"
             action="/admin/words/import"
             enctype="multipart/form-data"
           >
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label
-                for="file"
-                style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="form-group mb-15">
+              <label for="file" class="admin-label">
                 Source File (CSV or JSON)
               </label>
               <input
@@ -126,18 +117,15 @@ export function AdminWordsImportPage({
                 id="file"
                 name="file"
                 required
-                style="margin: 0;"
+                class="m-0"
               />
-              <small style="color: var(--pico-muted-color); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+              <small class="color-muted fs-075 mt-025 d-block">
                 Maximum file size: 5MB
               </small>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label
-                for="config"
-                style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; display: block;"
-              >
+            <div class="form-group mb-15">
+              <label for="config" class="admin-label">
                 Mapping Configuration (JSON)
               </label>
               <textarea
@@ -145,28 +133,28 @@ export function AdminWordsImportPage({
                 name="config"
                 placeholder='e.g., {"format":"csv","delimiter":",","hasHeader":true,"fields":{"value":{"from":"term"}}}'
                 required
-                style="margin: 0; min-height: 12rem; font-family: var(--pico-font-family-monospace); font-size: 0.875rem;"
+                class="m-0 min-h-12 admin-monospace fs-0875"
               >
                 {configString}
               </textarea>
-              <small style="color: var(--pico-muted-color); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+              <small class="color-muted fs-075 mt-025 d-block">
                 JSON mapping config specifying format, fields, and target schema
                 mappings.
               </small>
             </div>
 
-            <div class="form-group" style="margin-bottom: 2rem;">
-              <fieldset style="border: none; padding: 0; margin: 0;">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <div class="form-group mb-2">
+              <fieldset class="border-none p-0 m-0">
+                <label class="d-flex align-items-center gap-05 cursor-pointer">
                   <input
                     type="checkbox"
                     id="dryRun"
                     name="dryRun"
                     value="true"
                     checked
-                    style="margin: 0; width: auto;"
+                    class="m-0 w-auto"
                   />
-                  <span style="font-size: 0.875rem; font-weight: 600;">
+                  <span class="fs-0875 fw-600">
                     Dry run (preview changes only, do not write to database)
                   </span>
                 </label>
@@ -175,7 +163,7 @@ export function AdminWordsImportPage({
 
             <button
               type="submit"
-              style="width: 100%; margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839;"
+              class="admin-btn-primary btn-full"
             >
               🚀 Run Import / Preview
             </button>

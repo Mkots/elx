@@ -26,83 +26,44 @@ export function AdminDashboardPage({
   return (
     <AdminLayout title="Dashboard" activeTab="dashboard">
       <div class="dashboard-shell">
-        <section
-          class="metrics-grid"
-          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;"
-        >
-          <article
-            class="metric-card"
-            style="margin: 0; padding: 1.5rem; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08); display: flex; flex-direction: column; gap: 0.5rem;"
-          >
-            <span
-              class="metric-label"
-              style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 700; text-transform: uppercase;"
-            >
+        <section class="metrics-grid">
+          <article class="metric-card admin-panel admin-panel-card">
+            <span class="metric-label fs-0875 color-muted fw-700 uppercase">
               Total Runs
             </span>
-            <span
-              class="metric-value"
-              style="font-size: 2.5rem; font-weight: 800; color: var(--pico-color);"
-            >
+            <span class="metric-value fs-25 fw-800">
               {totalRuns}
             </span>
           </article>
-          <article
-            class="metric-card"
-            style="margin: 0; padding: 1.5rem; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08); display: flex; flex-direction: column; gap: 0.5rem;"
-          >
-            <span
-              class="metric-label"
-              style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 700; text-transform: uppercase;"
-            >
+          <article class="metric-card admin-panel admin-panel-card">
+            <span class="metric-label fs-0875 color-muted fw-700 uppercase">
               Average Score
             </span>
-            <span
-              class="metric-value"
-              style="font-size: 2.5rem; font-weight: 800; color: var(--pico-primary);"
-            >
+            <span class="metric-value fs-25 fw-800 color-primary">
               {avgScore}%
             </span>
           </article>
-          <article
-            class="metric-card"
-            style="margin: 0; padding: 1.5rem; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08); display: flex; flex-direction: column; gap: 0.5rem;"
-          >
-            <span
-              class="metric-label"
-              style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 700; text-transform: uppercase;"
-            >
+          <article class="metric-card admin-panel admin-panel-card">
+            <span class="metric-label fs-0875 color-muted fw-700 uppercase">
               Avg Truthfulness
             </span>
-            <span
-              class="metric-value"
-              style="font-size: 2.5rem; font-weight: 800; color: var(--color-positive);"
-            >
+            <span class="metric-value fs-25 fw-800 color-positive">
               {avgTruthfulness}%
             </span>
           </article>
-          <article
-            class="metric-card"
-            style="margin: 0; padding: 1.5rem; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08); display: flex; flex-direction: column; gap: 0.5rem;"
-          >
-            <span
-              class="metric-label"
-              style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 700; text-transform: uppercase;"
-            >
+          <article class="metric-card admin-panel admin-panel-card">
+            <span class="metric-label fs-0875 color-muted fw-700 uppercase">
               Unreviewed Words
             </span>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span
-                class="metric-value"
-                style="font-size: 2.5rem; font-weight: 800; color: #ffb86c;"
-              >
+            <div class="flex-baseline">
+              <span class="metric-value fs-25 fw-800 color-orange">
                 {unreviewedCount}
               </span>
               {unreviewedCount > 0 && (
                 <a
                   href="/admin/words/review"
                   role="button"
-                  style="margin: 0; font-size: 0.75rem; padding: 0.25rem 0.5rem; background: #ffb86c; color: #2d2839; font-weight: 700; border: none;"
+                  class="btn-mini btn-orange"
                 >
                   Review ➔
                 </a>
@@ -112,23 +73,22 @@ export function AdminDashboardPage({
         </section>
 
         <section class="activity-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-            <h3 style="margin: 0; font-size: 1.25rem;">
+          <div class="flex-between mb-1 flex-wrap-center gap-1">
+            <h3 class="m-0 fs-125">
               Recent Test Activity
             </h3>
-            <div style="display: inline-flex; gap: 0.5rem;">
+            <div class="d-inline-flex gap-05">
               <a
                 href="/admin/history/export?format=csv"
                 role="button"
-                style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; background: var(--pico-primary); color: #2d2839; font-weight: 700;"
+                class="btn-mini admin-btn-primary"
               >
                 📥 Export CSV
               </a>
               <a
                 href="/admin/history/export?format=json"
                 role="button"
-                class="outline"
-                style="margin: 0; font-size: 0.875rem; padding: 0.35rem 0.75rem; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+                class="outline btn-mini btn-outline-muted"
               >
                 📥 Export JSON
               </a>
@@ -136,24 +96,21 @@ export function AdminDashboardPage({
           </div>
           {recentRuns.length === 0
             ? (
-              <article style="padding: 2rem; text-align: center; color: var(--pico-muted-color); background: rgba(242, 239, 250, 0.03); border: 1px dashed rgba(242, 239, 250, 0.16); border-radius: var(--pico-border-radius);">
+              <article class="empty-state">
                 No vocabulary tests have been completed yet.
               </article>
             )
             : (
-              <div
-                class="overflow-auto"
-                style="border: 1px solid rgba(242, 239, 250, 0.08); border-radius: var(--pico-border-radius); background: var(--color-panel-strong);"
-              >
-                <table style="margin: 0; width: 100%;">
+              <div class="table-wrapper">
+                <table class="admin-table">
                   <thead>
                     <tr>
-                      <th style="padding: 1rem;">Session ID</th>
-                      <th style="padding: 1rem; text-align: center;">Score</th>
-                      <th style="padding: 1rem; text-align: center;">
+                      <th>Session ID</th>
+                      <th class="text-center">Score</th>
+                      <th class="text-center">
                         Truthfulness
                       </th>
-                      <th style="padding: 1rem; text-align: right;">
+                      <th class="text-right">
                         Completed At
                       </th>
                     </tr>
@@ -162,18 +119,18 @@ export function AdminDashboardPage({
                     {recentRuns.map((run) => (
                       <tr
                         key={run.id}
-                        style="border-bottom: 1px solid rgba(242, 239, 250, 0.04);"
+                        class="border-bottom-row"
                       >
-                        <td style="padding: 1rem; font-family: var(--pico-font-family-monospace); font-size: 0.875rem;">
+                        <td class="admin-monospace fs-0875">
                           {run.sessionId}
                         </td>
-                        <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--pico-primary);">
+                        <td class="text-center fw-700 color-primary">
                           {run.score}%
                         </td>
-                        <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--color-positive);">
+                        <td class="text-center fw-700 color-positive">
                           {run.truthfulness}%
                         </td>
-                        <td style="padding: 1rem; text-align: right; font-size: 0.875rem; color: var(--pico-muted-color);">
+                        <td class="text-right fs-0875 color-muted">
                           {new Date(run.completedAt).toLocaleString("en-US", {
                             dateStyle: "medium",
                             timeStyle: "short",
