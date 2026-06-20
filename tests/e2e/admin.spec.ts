@@ -308,9 +308,9 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     await page.locator('input[name="difficulty3Count"]').fill("10");
     await page.locator('input[name="difficulty4Count"]').fill("9");
     await page.locator('input[name="difficulty5Count"]').fill("8");
-    await page.locator('input[name="synonymsCount"]').fill("5");
-    await page.locator('input[name="spellingCount"]').fill("5");
-    await page.locator('input[name="definitionCount"]').fill("5");
+    await page.locator('input[name="synonymsCount"]').fill("1");
+    await page.locator('input[name="spellingCount"]').fill("1");
+    await page.locator('input[name="definitionCount"]').fill("1");
 
     // 4. Submit form
     await page.getByRole("button", { name: /save configuration/i }).click();
@@ -325,6 +325,74 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     // 5. Verify success alert is shown
     await expect(page.locator(".alert-success")).toContainText(
       "Configuration saved successfully",
+    );
+  });
+
+  test("Ticket Builder Curation E2E flow", async ({ page }) => {
+    // 1. Login
+    await page.goto("/admin/login");
+    await page.locator('input[name="username"]').fill(username);
+    await page.locator('input[name="password"]').fill(password);
+    await page.getByRole("button", { name: /sign in/i }).click();
+
+    // 2. Go to Ticket Builder
+    await page.goto("/admin/tickets");
+    await expect(page.locator("h2")).toContainText("Ticket Builder & Curation");
+
+    // 3. Generate a base ticket
+    await page.locator('input[name="title"]').fill("E2E Test Ticket");
+    await page.locator('textarea[name="notes"]').fill("E2E curation check");
+    await page.getByRole("button", { name: /generate base ticket/i }).click();
+
+    await expect(page.locator(".alert-success")).toContainText(
+      "Base ticket generated successfully",
+    );
+
+    // Verify it appeared in the table under base status
+    const firstRow = page.locator("table tbody tr").first();
+    await expect(firstRow.locator("td").nth(1)).toContainText(
+      "E2E Test Ticket",
+    );
+    await expect(firstRow.locator("span.badge-warning")).toContainText("base");
+
+    // 4. Click Enrich
+    await firstRow.getByRole("link", { name: /enrich/i }).click();
+    await expect(page.locator("h2")).toContainText("Edit Ticket: ELX-T-");
+
+    // 5. Loop through unverified challenge questions and verify them
+    const cards = page.locator('article[id^="q-card-"]');
+    const count = await cards.count();
+    expect(count).toBe(3); // 1 synonym, 1 spelling, 1 definition
+
+    for (let i = 0; i < count; i++) {
+      const card = cards.nth(i);
+
+      // Fill context sentence if it is a spelling question
+      const sentenceInput = card.locator('input[name="contextSentence"]');
+      if (await sentenceInput.isVisible()) {
+        await sentenceInput.fill("Please spell the word ___ here.");
+      }
+
+      // Distractor inputs are pre-populated, click save/verify
+      await card.getByRole("button", { name: /verify/i }).click();
+
+      // Wait for success alert/state check
+      await expect(page.locator(".alert-success")).toContainText(
+        "Question verified and saved successfully",
+      );
+    }
+
+    // 6. Publish the ticket
+    await page.getByRole("button", { name: /publish ticket/i }).click();
+
+    // 7. Verify back on tickets page and published status
+    await expect(page.locator(".alert-success")).toContainText(
+      "Ticket successfully published and made active!",
+    );
+
+    const updatedRow = page.locator("table tbody tr").first();
+    await expect(updatedRow.locator("span.badge-success")).toContainText(
+      "published",
     );
   });
 });
