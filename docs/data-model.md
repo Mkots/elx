@@ -222,3 +222,107 @@ implemented in `[DB refactor 2]`):
    - Keep the old `synonyms`, `definitions`, and `spelling_challenges` tables in
      the database until the Admin CRUD interfaces are updated to edit the new
      schema in `[DB refactor 3]`.
+
+---
+
+## 5. Test Ticket & Questions Snapshot Entity Specification
+
+This section describes the design for the persisted, reusable **Test Ticket**
+(`tickets`) entity and its snapshot questions, which enables serving identical,
+immutable tests to users and recording exactly which questions they answered in
+their test history.
+
+### Rationale: JSONB Array for Snapshot Questions
+
+Instead of a separate `ticket_questions` table with multiple joins and foreign
+keys, we store questions as a **`jsonb` array** directly on the `tickets` table.
+
+- **Immutability & Snapshotting**: A ticket, once published, is immutable.
+  Storing questions as a single document guarantees that dictionary edits do not
+  affect past tests.
+- **Zero Joins**: Loading a ticket and all its questions requires only a single
+  `SELECT` on `tickets`.
+- **Discriminated Types**: Each question in the JSONB array has a `type`
+  discriminator, allowing easy polymorphic handling in TypeScript/Hono.
+- **Decoupled from Words**: Storing raw strings instead of word ID foreign keys
+  ensures scoring can run purely from the snapshot without querying the `words`
+  table.
+
+### Table: `tickets`
+
+| Column Name  | Database Type | Drizzle/TS Type                                  | Nullability  | Default             | Description                                                                            |
+| :----------- | :------------ | :----------------------------------------------- | :----------- | :------------------ | :------------------------------------------------------------------------------------- |
+| `id`         | `integer`     | `number`                                         | **NOT NULL** | _Identity (Always)_ | Primary key, auto-incrementing identifier.                                             |
+| `code`       | `text`        | `string`                                         | **NOT NULL** |                     | Human-readable code (must be unique, e.g. `ELX-T-0001`).                               |
+| `status`     | `text`        | `'draft' \| 'base' \| 'complete' \| 'published'` | **NOT NULL** | `'draft'`           | Ticket lifecycle status.                                                               |
+| `title`      | `text`        | `string`                                         | _NULLABLE_   | `null`              | Optional title/label for the ticket.                                                   |
+| `notes`      | `text`        | `string`                                         | _NULLABLE_   | `null`              | Optional notes or curation comments.                                                   |
+| `questions`  | `jsonb`       | `SnapshotQuestion[]`                             | **NOT NULL** | `'[]'`              | Array of JSON snapshot questions containing prompts, correct answers, and distractors. |
+| `created_at` | `timestamp`   | `Date`                                           | **NOT NULL** | `now()`             | Timestamp when the ticket was created.                                                 |
+| `updated_at` | `timestamp`   | `Date`                                           | **NOT NULL** | `now()`             | Timestamp when the ticket was last updated.                                            |
+
+### Schema updates for `test_history`
+
+To link a test attempt to the exact ticket served:
+
+- Add a nullable column `ticket_id` (`integer`) referencing `tickets.id`. It is
+  nullable to preserve history for older tests completed prior to ticket
+  introduction.
+
+### TypeScript Definition for `SnapshotQuestion`
+
+```typescript
+export type QuestionType =
+  | "verification"
+  | "synonym"
+  | "spelling"
+  | "definition";
+
+export interface BaseSnapshotQuestion {
+  type: QuestionType;
+}
+
+export interface VerificationSnapshotQuestion extends BaseSnapshotQuestion {
+  type: "verification";
+  wordText: string;
+  isReal: boolean;
+}
+
+export interface SynonymSnapshotQuestion extends BaseSnapshotQuestion {
+  type: "synonym";
+  promptText: string;
+  correctText: string;
+  distractors: string[];
+}
+
+export interface SpellingSnapshotQuestion extends BaseSnapshotQuestion {
+  type: "spelling";
+  contextSentence: string;
+  correctText: string;
+  distractors: string[];
+}
+
+export interface DefinitionSnapshotQuestion extends BaseSnapshotQuestion {
+  type: "definition";
+  definitionText: string;
+  correctText: string;
+  distractors: string[];
+}
+
+export type SnapshotQuestion =
+  | VerificationSnapshotQuestion
+  | SynonymSnapshotQuestion
+  | SpellingSnapshotQuestion
+  | DefinitionSnapshotQuestion;
+```
+
+### Ticket Status Lifecycle
+
+1. **`draft`**: The ticket has just been created or is being edited. It is not
+   ready to be served or fully populated yet.
+2. **`base`**: The ticket is populated with the base set of words (Stage 1) but
+   lacks distractors or Stage 2 question metadata.
+3. **`complete`**: The questions are fully populated with distractors and Stage
+   2 metadata.
+4. **`published`**: The ticket is active and ready to be served. Only tickets in
+   this status can be retrieved for normal testing by users.

@@ -20,6 +20,7 @@ const mockDashboardLoader: AdminDashboardLoader = {
         score: 80,
         truthfulness: 90,
         completedAt: new Date("2026-06-19T12:00:00Z"),
+        ticketId: null,
       },
       {
         id: 2,
@@ -27,6 +28,7 @@ const mockDashboardLoader: AdminDashboardLoader = {
         score: 60,
         truthfulness: 80,
         completedAt: new Date("2026-06-19T13:00:00Z"),
+        ticketId: null,
       },
     ];
     return {
@@ -375,6 +377,7 @@ function resetMockData() {
       score: 80,
       truthfulness: 90,
       completedAt: new Date("2026-06-19T10:00:00Z"),
+      ticketId: null,
     },
     {
       id: 2,
@@ -382,6 +385,7 @@ function resetMockData() {
       score: 70,
       truthfulness: 85,
       completedAt: new Date("2026-06-19T11:00:00Z"),
+      ticketId: null,
     },
     {
       id: 3,
@@ -389,6 +393,7 @@ function resetMockData() {
       score: 95,
       truthfulness: 100,
       completedAt: new Date("2026-06-19T12:00:00Z"),
+      ticketId: null,
     },
   );
 }
