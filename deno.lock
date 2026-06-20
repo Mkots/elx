@@ -3,10 +3,13 @@
   "specifiers": {
     "jsr:@hono/hono@4.12.24": "4.12.24",
     "jsr:@std/assert@1.0.19": "1.0.19",
+    "jsr:@std/bytes@^1.0.6": "1.0.6",
     "jsr:@std/cli@1.0.21": "1.0.21",
     "jsr:@std/collections@^1.1.3": "1.2.0",
+    "jsr:@std/csv@1.0.2": "1.0.2",
     "jsr:@std/front-matter@1.0.9": "1.0.9",
     "jsr:@std/internal@^1.0.12": "1.0.14",
+    "jsr:@std/streams@^1.0.3": "1.1.1",
     "jsr:@std/toml@^1.0.3": "1.0.11",
     "jsr:@std/yaml@^1.0.5": "1.1.1",
     "npm:@playwright/test@1.61.0": "1.61.0",
@@ -25,11 +28,20 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/bytes@1.0.6": {
+      "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
+    },
     "@std/cli@1.0.21": {
       "integrity": "cd25b050bdf6282e321854e3822bee624f07aca7636a3a76d95f77a3a919ca2a"
     },
     "@std/collections@1.2.0": {
       "integrity": "47627a21d3a13138b77fd0e4d790ba9d2e603c3510b686cde6b132fe9aa98a88"
+    },
+    "@std/csv@1.0.2": {
+      "integrity": "357ad0042834a93da15e902857d767dee31ba0ca253e82068a5bc760ceb858d4",
+      "dependencies": [
+        "jsr:@std/streams"
+      ]
     },
     "@std/front-matter@1.0.9": {
       "integrity": "ee6201d06674cbef137dda2252f62477450b48249e7d8d9ab57a30f85ff6f051",
@@ -40,6 +52,12 @@
     },
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
+    },
+    "@std/streams@1.1.1": {
+      "integrity": "92556d350e537e9dce527a6d08f6f15be3ff65e656079dea69d15252187c7613",
+      "dependencies": [
+        "jsr:@std/bytes"
+      ]
     },
     "@std/toml@1.0.11": {
       "integrity": "e084988b872ca4bad6aedfb7350f6eeed0e8ba88e9ee5e1590621c5b5bb8f715",
@@ -627,6 +645,7 @@
       "jsr:@hono/hono@4.12.24",
       "jsr:@std/assert@1.0.19",
       "jsr:@std/cli@1.0.21",
+      "jsr:@std/csv@1.0.2",
       "jsr:@std/front-matter@1.0.9",
       "npm:@playwright/test@1.61.0",
       "npm:drizzle-kit@0.31.10",

@@ -19,6 +19,8 @@ import { AdminWordEditPage } from "../ui/pages/AdminWordEditPage.tsx";
 import { AdminChallengesPage } from "../ui/pages/AdminChallengesPage.tsx";
 import { AdminChallengeEditPage } from "../ui/pages/AdminChallengeEditPage.tsx";
 import { AdminHistoryPage } from "../ui/pages/AdminHistoryPage.tsx";
+import { AdminWordsImportPage } from "../ui/pages/AdminWordsImportPage.tsx";
+import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import { getKv } from "../session.ts";
 
 export interface AdminDashboardLoader {
@@ -89,6 +91,17 @@ export interface AdminWordsLoader {
     data: { value: string; isReal: boolean; difficulty: number },
   ): Promise<void>;
   deleteWord(id: number): Promise<{ success: boolean; error?: string }>;
+  importWords(
+    fileContent: string,
+    configJson: string,
+    dryRun: boolean,
+  ): Promise<{
+    inserted: number;
+    updated: number;
+    skipped: number;
+    failed: number;
+    errors: { line: number; reason: string }[];
+  }>;
 }
 
 export const databaseAdminWordsLoader: AdminWordsLoader = {
@@ -238,6 +251,23 @@ export const databaseAdminWordsLoader: AdminWordsLoader = {
 
       await db.delete(words).where(eq(words.id, id));
       return { success: true };
+    } finally {
+      await client.end();
+    }
+  },
+
+  async importWords(fileContent, configJson, dryRun) {
+    const { client, db } = createDatabase();
+    try {
+      let rawConfig: unknown;
+      try {
+        rawConfig = JSON.parse(configJson);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        throw new Error("Invalid configuration JSON: " + errMsg);
+      }
+      const config = validateConfig(rawConfig);
+      return await executeImport(db, fileContent, config, dryRun);
     } finally {
       await client.end();
     }
@@ -710,6 +740,59 @@ export function createAdminRoute(
       }
       return context.html(
         AdminWordEditPage({ error: "Failed to create word: " + errMsg }),
+      );
+    }
+  });
+
+  // GET /admin/words/import
+  route.get("/words/import", (context) => {
+    return context.html(AdminWordsImportPage({}));
+  });
+
+  // POST /admin/words/import
+  route.post("/words/import", async (context) => {
+    let configStr = "";
+    try {
+      const body = await context.req.parseBody();
+      configStr = (body.config || "") as string;
+      const fileObj = body.file;
+      const dryRun = body.dryRun === "true";
+
+      if (!fileObj || !(fileObj instanceof File)) {
+        return context.html(
+          AdminWordsImportPage({
+            error: "Please upload a valid CSV or JSON file.",
+            configString: configStr,
+          }),
+        );
+      }
+
+      const fileContent = await fileObj.text();
+
+      const result = await wordsLoader.importWords(
+        fileContent,
+        configStr,
+        dryRun,
+      );
+
+      const successMsg = dryRun
+        ? "Dry run completed successfully. View the preview summary below."
+        : "Import completed successfully.";
+
+      return context.html(
+        AdminWordsImportPage({
+          result,
+          success: successMsg,
+          configString: configStr,
+        }),
+      );
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return context.html(
+        AdminWordsImportPage({
+          error: errMsg,
+          configString: configStr,
+        }),
       );
     }
   });

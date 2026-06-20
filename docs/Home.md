@@ -17,6 +17,8 @@ offline-generated question bank (PostgreSQL), minimal client JavaScript.
 - [Project Idea](idea.md) — what ELX does and how it works
 - [Technology Stack](tech-details/tech-stack.md) — Deno + Hono + PostgreSQL
   architecture
+- [Word Import Configuration](import-config.md) — mapping configuration guide
+  for importing words
 - [Requirements Index](requirements/README.md) — SARA-managed requirements with
   traceability
 
