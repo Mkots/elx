@@ -1,13 +1,33 @@
+# OS
 .DS_Store
-.data/
-.deno-cache/
-.wiki-build/
+Thumbs.db
+
+# Environment
 .env
 .env.*
 !.env.example
+
+# Deno
+.deno-cache/
+
+# Build artifacts
+.wiki-build/
 coverage/
 coverage.lcov
-node_modules/
+
+# Docker data
+.data/
+
+# Test artifacts
 playwright-report/
 test-results/
+
+# Dependencies
+node_modules/
+
+# Editor / AI
 .claude/project-context.md
+*.swp
+*.swo
+*~
+.vscode/settings.json
