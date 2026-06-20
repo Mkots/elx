@@ -1,11 +1,6 @@
-import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, sql } from "drizzle-orm";
 import { type Database, withDb } from "../../../db/client.ts";
-import {
-  definitions,
-  spellingChallenges,
-  synonyms,
-  words,
-} from "../../../db/schema.ts";
+import { words } from "../../../db/schema.ts";
 import {
   executeImport,
   validateConfig,
@@ -19,9 +14,11 @@ export interface WordFilter {
   reviewed?: boolean;
 }
 
-function buildWordFilter({ search, difficulty, isReal, reviewed }: WordFilter) {
+function buildWordFilter(filter: WordFilter) {
   // deno-lint-ignore no-explicit-any
   const conditions: any[] = [];
+  const { search, difficulty, isReal, reviewed } = filter;
+
   if (search) {
     conditions.push(ilike(words.value, `%${search}%`));
   }
@@ -42,60 +39,12 @@ function buildWordFilter({ search, difficulty, isReal, reviewed }: WordFilter) {
  * cannot be safely deleted), or null when deletion is safe. Shared by
  * `deleteWord` and `bulkDelete`.
  */
-async function findWordReference(
-  db: Database,
-  id: number,
+function findWordReference(
+  _db: Database,
+  _id: number,
 ): Promise<string | null> {
-  const synCount = await db
-    .select({ count: sql<number>`count(${synonyms.id})::integer` })
-    .from(synonyms)
-    .where(or(eq(synonyms.wordId, id), eq(synonyms.targetId, id)));
-  if ((synCount[0]?.count ?? 0) > 0) {
-    return "Word is referenced in synonyms.";
-  }
-
-  const spellCount = await db
-    .select({ count: sql<number>`count(${spellingChallenges.id})::integer` })
-    .from(spellingChallenges)
-    .where(eq(spellingChallenges.correctWordId, id));
-  if ((spellCount[0]?.count ?? 0) > 0) {
-    return "Word is referenced in spelling challenges.";
-  }
-
-  const defCount = await db
-    .select({ count: sql<number>`count(${definitions.id})::integer` })
-    .from(definitions)
-    .where(eq(definitions.wordId, id));
-  if ((defCount[0]?.count ?? 0) > 0) {
-    return "Word is referenced in definitions.";
-  }
-
-  // Distractor checking (integer arrays):
-  const synDistractors = await db
-    .select({ count: sql<number>`count(${synonyms.id})::integer` })
-    .from(synonyms)
-    .where(sql`${id} = any(${synonyms.distractors})`);
-  if ((synDistractors[0]?.count ?? 0) > 0) {
-    return "Word is referenced as a distractor in synonyms.";
-  }
-
-  const spellDistractors = await db
-    .select({ count: sql<number>`count(${spellingChallenges.id})::integer` })
-    .from(spellingChallenges)
-    .where(sql`${id} = any(${spellingChallenges.distractors})`);
-  if ((spellDistractors[0]?.count ?? 0) > 0) {
-    return "Word is referenced as a distractor in spelling challenges.";
-  }
-
-  const defDistractors = await db
-    .select({ count: sql<number>`count(${definitions.id})::integer` })
-    .from(definitions)
-    .where(sql`${id} = any(${definitions.distractors})`);
-  if ((defDistractors[0]?.count ?? 0) > 0) {
-    return "Word is referenced as a distractor in definitions.";
-  }
-
-  return null;
+  // All old challenge tables are retired, so words are no longer foreign-keyed/referenced.
+  return Promise.resolve(null);
 }
 
 export interface AdminWordsLoader {
@@ -111,10 +60,20 @@ export interface AdminWordsLoader {
     value: string;
     isReal: boolean;
     difficulty: number;
+    synonyms?: string[];
+    antonyms?: string[];
+    definition?: string | null;
   }): Promise<void>;
   updateWord(
     id: number,
-    data: { value: string; isReal: boolean; difficulty: number },
+    data: {
+      value: string;
+      isReal: boolean;
+      difficulty: number;
+      synonyms?: string[];
+      antonyms?: string[];
+      definition?: string | null;
+    },
   ): Promise<void>;
   deleteWord(id: number): Promise<{ success: boolean; error?: string }>;
   bulkSetReviewed(ids: number[], reviewed: boolean): Promise<number>;
@@ -186,17 +145,34 @@ export const databaseAdminWordsLoader: AdminWordsLoader = {
     });
   },
 
-  createWord({ value, isReal, difficulty }) {
+  createWord({ value, isReal, difficulty, synonyms, antonyms, definition }) {
     return withDb(async (db) => {
-      await db.insert(words).values({ value, isReal, difficulty });
+      await db.insert(words).values({
+        value,
+        isReal,
+        difficulty,
+        synonyms: synonyms ?? [],
+        antonyms: antonyms ?? [],
+        definition: definition ?? null,
+      });
     });
   },
 
-  updateWord(id, { value, isReal, difficulty }) {
+  updateWord(
+    id,
+    { value, isReal, difficulty, synonyms, antonyms, definition },
+  ) {
     return withDb(async (db) => {
       await db
         .update(words)
-        .set({ value, isReal, difficulty })
+        .set({
+          value,
+          isReal,
+          difficulty,
+          synonyms: synonyms ?? [],
+          antonyms: antonyms ?? [],
+          definition: definition ?? null,
+        })
         .where(eq(words.id, id));
     });
   },

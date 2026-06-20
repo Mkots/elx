@@ -155,19 +155,51 @@ export function registerWordsRoutes(
     const difficulty = Number(body.difficulty);
     const isReal = body.isReal === "true";
 
+    const rawSynonyms = typeof body.synonyms === "string" ? body.synonyms : "";
+    const synonyms = rawSynonyms
+      .split(/[;,]/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const rawAntonyms = typeof body.antonyms === "string" ? body.antonyms : "";
+    const antonyms = rawAntonyms
+      .split(/[;,]/)
+      .map((a) => a.trim().toLowerCase())
+      .filter(Boolean);
+
+    const rawDefinition = typeof body.definition === "string"
+      ? body.definition.trim()
+      : "";
+    const definition = rawDefinition !== "" ? rawDefinition : null;
+
+    const wordData = {
+      value,
+      isReal,
+      difficulty,
+      synonyms,
+      antonyms,
+      definition,
+    };
+
     if (!value) {
       return context.html(
-        AdminWordEditPage({ error: "Word value is required." }),
+        AdminWordEditPage({
+          word: wordData,
+          error: "Word value is required.",
+        }),
       );
     }
     if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
       return context.html(
-        AdminWordEditPage({ error: "Difficulty must be between 1 and 5." }),
+        AdminWordEditPage({
+          word: wordData,
+          error: "Difficulty must be between 1 and 5.",
+        }),
       );
     }
 
     try {
-      await wordsLoader.createWord({ value, isReal, difficulty });
+      await wordsLoader.createWord(wordData);
       return context.redirect(
         "/admin/words?success=" +
           encodeURIComponent(`Word "${value}" was successfully created.`),
@@ -176,11 +208,17 @@ export function registerWordsRoutes(
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes("unique") || errMsg.includes("duplicate")) {
         return context.html(
-          AdminWordEditPage({ error: `The word "${value}" already exists.` }),
+          AdminWordEditPage({
+            word: wordData,
+            error: `The word "${value}" already exists.`,
+          }),
         );
       }
       return context.html(
-        AdminWordEditPage({ error: "Failed to create word: " + errMsg }),
+        AdminWordEditPage({
+          word: wordData,
+          error: "Failed to create word: " + errMsg,
+        }),
       );
     }
   });
@@ -276,10 +314,37 @@ export function registerWordsRoutes(
     const difficulty = Number(body.difficulty);
     const isReal = body.isReal === "true";
 
+    const rawSynonyms = typeof body.synonyms === "string" ? body.synonyms : "";
+    const synonyms = rawSynonyms
+      .split(/[;,]/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const rawAntonyms = typeof body.antonyms === "string" ? body.antonyms : "";
+    const antonyms = rawAntonyms
+      .split(/[;,]/)
+      .map((a) => a.trim().toLowerCase())
+      .filter(Boolean);
+
+    const rawDefinition = typeof body.definition === "string"
+      ? body.definition.trim()
+      : "";
+    const definition = rawDefinition !== "" ? rawDefinition : null;
+
+    const wordData = {
+      id,
+      value,
+      isReal,
+      difficulty,
+      synonyms,
+      antonyms,
+      definition,
+    };
+
     if (!value) {
       return context.html(
         AdminWordEditPage({
-          word: { id, value, isReal, difficulty },
+          word: wordData,
           error: "Word value is required.",
         }),
       );
@@ -287,14 +352,14 @@ export function registerWordsRoutes(
     if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
       return context.html(
         AdminWordEditPage({
-          word: { id, value, isReal, difficulty },
+          word: wordData,
           error: "Difficulty must be between 1 and 5.",
         }),
       );
     }
 
     try {
-      await wordsLoader.updateWord(id, { value, isReal, difficulty });
+      await wordsLoader.updateWord(id, wordData);
       return context.redirect(
         "/admin/words?success=" +
           encodeURIComponent(`Word "${value}" was successfully updated.`),
@@ -304,14 +369,14 @@ export function registerWordsRoutes(
       if (errMsg.includes("unique") || errMsg.includes("duplicate")) {
         return context.html(
           AdminWordEditPage({
-            word: { id, value, isReal, difficulty },
+            word: wordData,
             error: `The word "${value}" already exists.`,
           }),
         );
       }
       return context.html(
         AdminWordEditPage({
-          word: { id, value, isReal, difficulty },
+          word: wordData,
           error: "Failed to update word: " + errMsg,
         }),
       );

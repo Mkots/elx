@@ -47,14 +47,6 @@ export function AdminLayout(
                 </li>
                 <li>
                   <a
-                    href="/admin/challenges"
-                    class={activeTab === "challenges" ? "active" : ""}
-                  >
-                    🧩 Challenges
-                  </a>
-                </li>
-                <li>
-                  <a
                     href="/admin/history"
                     class={activeTab === "history" ? "active" : ""}
                   >

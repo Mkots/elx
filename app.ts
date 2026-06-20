@@ -19,7 +19,6 @@ import {
   type Stage2WordLoader,
 } from "./routes/stage2.ts";
 import {
-  type AdminChallengesLoader,
   type AdminDashboardLoader,
   type AdminHistoryLoader,
   type AdminReviewLoader,
@@ -36,7 +35,6 @@ interface CreateAppOptions {
   resultSessionStore?: ResultSessionStore;
   adminDashboardLoader?: AdminDashboardLoader;
   adminWordsLoader?: AdminWordsLoader;
-  adminChallengesLoader?: AdminChallengesLoader;
   adminHistoryLoader?: AdminHistoryLoader;
   adminReviewLoader?: AdminReviewLoader;
 }
@@ -66,7 +64,6 @@ export function createApp(options: CreateAppOptions = {}) {
     createAdminRoute(
       options.adminDashboardLoader,
       options.adminWordsLoader,
-      options.adminChallengesLoader,
       options.adminHistoryLoader,
       options.adminReviewLoader,
     ),

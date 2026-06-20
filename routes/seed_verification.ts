@@ -1,11 +1,6 @@
 import { Hono } from "@hono/hono";
 import { createDatabase } from "../db/client.ts";
-import {
-  definitions,
-  spellingChallenges,
-  synonyms,
-  words,
-} from "../db/schema.ts";
+import { words } from "../db/schema.ts";
 
 type Database = ReturnType<typeof createDatabase>["db"];
 
@@ -57,35 +52,6 @@ async function withDatabase<T>(
   }
 }
 
-function requireWordValue(
-  byId: Map<number, string>,
-  wordId: number,
-  source: string,
-): string {
-  const value = byId.get(wordId);
-  if (!value) {
-    throw new Error(`Missing word ${wordId} referenced by ${source}`);
-  }
-  return value;
-}
-
-function mapWordIdsToValues(
-  byId: Map<number, string>,
-  wordIds: number[],
-  source: string,
-): string[] {
-  return wordIds.map((wordId) => requireWordValue(byId, wordId, source));
-}
-
-async function loadWordMap(db: Database): Promise<Map<number, string>> {
-  const allWords = await db.select({
-    id: words.id,
-    value: words.value,
-  }).from(words);
-
-  return new Map(allWords.map((word) => [word.id, word.value]));
-}
-
 export const databaseSeedVerificationLoader: SeedVerificationLoader = {
   async loadWords() {
     const items = await withDatabase((db) =>
@@ -102,100 +68,68 @@ export const databaseSeedVerificationLoader: SeedVerificationLoader = {
 
   async loadSynonyms() {
     return await withDatabase(async (db) => {
-      const [items, wordById] = await Promise.all([
-        db.select({
-          id: synonyms.id,
-          wordId: synonyms.wordId,
-          targetId: synonyms.targetId,
-          relationType: synonyms.relationType,
-          distractors: synonyms.distractors,
-        }).from(synonyms),
-        loadWordMap(db),
-      ]);
+      const allWords = await db.select({
+        id: words.id,
+        value: words.value,
+        isReal: words.isReal,
+        synonyms: words.synonyms,
+        antonyms: words.antonyms,
+      }).from(words);
 
-      return items
-        .map((item) => ({
-          id: item.id,
-          prompt: requireWordValue(
-            wordById,
-            item.wordId,
-            `synonyms.${item.id}`,
-          ),
-          target: requireWordValue(
-            wordById,
-            item.targetId,
-            `synonyms.${item.id}`,
-          ),
-          relationType: item.relationType,
-          distractors: mapWordIdsToValues(
-            wordById,
-            item.distractors,
-            `synonyms.${item.id}`,
-          ),
-        }))
-        .sort((left, right) => left.id - right.id);
+      const result: SeedSynonymVerificationItem[] = [];
+      let counter = 1;
+      for (const word of allWords) {
+        if (!word.isReal) continue;
+        for (const syn of word.synonyms) {
+          result.push({
+            id: counter++,
+            prompt: word.value,
+            target: syn,
+            relationType: "synonym",
+            distractors: [],
+          });
+        }
+        for (const ant of word.antonyms) {
+          result.push({
+            id: counter++,
+            prompt: word.value,
+            target: ant,
+            relationType: "antonym",
+            distractors: [],
+          });
+        }
+      }
+      return result;
     });
   },
 
   async loadSpelling() {
-    return await withDatabase(async (db) => {
-      const [items, wordById] = await Promise.all([
-        db.select({
-          id: spellingChallenges.id,
-          contextSentence: spellingChallenges.contextSentence,
-          correctWordId: spellingChallenges.correctWordId,
-          distractors: spellingChallenges.distractors,
-        }).from(spellingChallenges),
-        loadWordMap(db),
-      ]);
-
-      return items
-        .map((item) => ({
-          id: item.id,
-          contextSentence: item.contextSentence,
-          correctWord: requireWordValue(
-            wordById,
-            item.correctWordId,
-            `spelling_challenges.${item.id}`,
-          ),
-          distractors: mapWordIdsToValues(
-            wordById,
-            item.distractors,
-            `spelling_challenges.${item.id}`,
-          ),
-        }))
-        .sort((left, right) => left.id - right.id);
-    });
+    // Spelling challenges are retired, return empty
+    await Promise.resolve();
+    return [];
   },
 
   async loadMeanings() {
     return await withDatabase(async (db) => {
-      const [items, wordById] = await Promise.all([
-        db.select({
-          id: definitions.id,
-          wordId: definitions.wordId,
-          definitionText: definitions.definitionText,
-          distractors: definitions.distractors,
-        }).from(definitions),
-        loadWordMap(db),
-      ]);
+      const allWords = await db.select({
+        id: words.id,
+        value: words.value,
+        isReal: words.isReal,
+        definition: words.definition,
+      }).from(words);
 
-      return items
-        .map((item) => ({
-          id: item.id,
-          word: requireWordValue(
-            wordById,
-            item.wordId,
-            `definitions.${item.id}`,
-          ),
-          definitionText: item.definitionText,
-          distractors: mapWordIdsToValues(
-            wordById,
-            item.distractors,
-            `definitions.${item.id}`,
-          ),
-        }))
-        .sort((left, right) => left.id - right.id);
+      const result: SeedMeaningVerificationItem[] = [];
+      let counter = 1;
+      for (const word of allWords) {
+        if (!word.isReal || !word.definition) continue;
+        result.push({
+          id: counter++,
+          word: word.value,
+          definitionText: word.definition,
+          distractors: [],
+        });
+      }
+      return result;
     });
   },
 };
