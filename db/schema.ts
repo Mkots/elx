@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -13,8 +14,12 @@ export const words = pgTable("words", {
   difficulty: integer().notNull(),
   reviewed: boolean().notNull().default(false),
   reviewedAt: timestamp("reviewed_at"),
+  synonyms: text("synonyms").array().notNull().default(sql`'{}'::text[]`),
+  antonyms: text("antonyms").array().notNull().default(sql`'{}'::text[]`),
+  definition: text("definition"),
 });
 
+/** @deprecated Use wide words columns instead. Will be dropped in [DB refactor 3]. */
 export const synonyms = pgTable("synonyms", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   wordId: integer("word_id")
@@ -27,6 +32,7 @@ export const synonyms = pgTable("synonyms", {
   distractors: integer("distractors").array().notNull(),
 });
 
+/** @deprecated Spelling moves to ticket generation per [DB refactor 6]. Will be dropped in [DB refactor 3]. */
 export const spellingChallenges = pgTable("spelling_challenges", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   contextSentence: text("context_sentence").notNull(),
@@ -36,6 +42,7 @@ export const spellingChallenges = pgTable("spelling_challenges", {
   distractors: integer("distractors").array().notNull(),
 });
 
+/** @deprecated Use wide words columns instead. Will be dropped in [DB refactor 3]. */
 export const definitions = pgTable("definitions", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   wordId: integer("word_id")

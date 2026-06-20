@@ -22,6 +22,13 @@
       "when": 1781953465672,
       "tag": "0002_medical_expediter",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781986885906,
+      "tag": "0003_new_vargas",
+      "breakpoints": true
     }
   ]
 }

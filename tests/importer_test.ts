@@ -94,6 +94,9 @@ Deno.test("IMPORTER-MAP-ROW: mappings, defaults, and type coercion", () => {
     value: "apple",
     isReal: true,
     difficulty: 5,
+    synonyms: [],
+    antonyms: [],
+    definition: null,
   });
 
   // Use defaults
@@ -102,6 +105,9 @@ Deno.test("IMPORTER-MAP-ROW: mappings, defaults, and type coercion", () => {
     value: "banana",
     isReal: true,
     difficulty: 3,
+    synonyms: [],
+    antonyms: [],
+    definition: null,
   });
 
   // Mapping fallback and coercion
@@ -118,6 +124,9 @@ Deno.test("IMPORTER-MAP-ROW: mappings, defaults, and type coercion", () => {
     value: "cherry",
     isReal: false,
     difficulty: 4,
+    synonyms: [],
+    antonyms: [],
+    definition: null,
   });
 });
 
@@ -211,4 +220,71 @@ Deno.test("IMPORTER-EXECUTE: conflict strategies: update, skip, error", async ()
     assertEquals(res.errors.length, 1);
     assert(res.errors[0].reason.includes("already exists"));
   }
+});
+
+Deno.test("IMPORTER-MAP-ROW: array splitting and definition loading", () => {
+  const config: ImportConfig = {
+    format: "csv",
+    fields: {
+      value: { from: "word" },
+      synonyms: { from: "syns", splitBy: ";" },
+      antonyms: { from: "ants", splitBy: ";" },
+      definition: { from: "def" },
+    },
+  };
+
+  const row = {
+    word: "morning",
+    syns: "sunrise;dawn",
+    ants: "night;dusk",
+    def: "The period of time between midnight and noon",
+  };
+
+  assertEquals(mapRow(row, config), {
+    value: "morning",
+    isReal: true,
+    difficulty: 1,
+    synonyms: ["sunrise", "dawn"],
+    antonyms: ["night", "dusk"],
+    definition: "The period of time between midnight and noon",
+  });
+});
+
+Deno.test("IMPORTER-EXECUTE: updates wide fields on conflict", async () => {
+  const config: ImportConfig = {
+    format: "json",
+    fields: {
+      value: { from: "word" },
+      synonyms: { from: "syns" },
+      antonyms: { from: "ants" },
+      definition: { from: "def" },
+    },
+    onConflict: "update",
+  };
+
+  const db = new MockDb([{
+    id: 1,
+    value: "morning",
+    isReal: true,
+    difficulty: 1,
+    synonyms: ["sunrise"],
+    antonyms: [],
+    definition: "old definition",
+  }]);
+
+  const file = JSON.stringify([
+    {
+      word: "morning",
+      syns: ["sunrise", "dawn"],
+      ants: ["night"],
+      def: "new definition",
+    },
+  ]);
+
+  const res = await executeImport(db, file, config);
+  assertEquals(res.updated, 1);
+  const updatedWord = db.data.find((w) => w.value === "morning");
+  assertEquals(updatedWord?.synonyms, ["sunrise", "dawn"]);
+  assertEquals(updatedWord?.antonyms, ["night"]);
+  assertEquals(updatedWord?.definition, "new definition");
 });

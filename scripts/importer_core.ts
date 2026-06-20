@@ -6,6 +6,7 @@ export interface FieldMapping {
   from: string | number;
   map?: Record<string, unknown>;
   default?: unknown;
+  splitBy?: string;
 }
 
 export interface ImportConfig {
@@ -16,6 +17,9 @@ export interface ImportConfig {
     value: FieldMapping;
     isReal?: FieldMapping;
     difficulty?: FieldMapping;
+    synonyms?: FieldMapping;
+    antonyms?: FieldMapping;
+    definition?: FieldMapping;
   };
   onConflict?: "update" | "skip" | "error";
 }
@@ -56,13 +60,47 @@ export function validateConfig(config: unknown): ImportConfig {
   ) {
     throw new Error("Config onConflict must be 'update', 'skip', or 'error'");
   }
+
+  const validateField = (name: string) => {
+    const fieldMapping = fields[name] as Record<string, unknown> | undefined;
+    if (fieldMapping !== undefined) {
+      if (typeof fieldMapping !== "object") {
+        throw new Error(`Config fields.${name} must be an object`);
+      }
+      if (
+        typeof fieldMapping.from !== "string" &&
+        typeof fieldMapping.from !== "number"
+      ) {
+        throw new Error(`fields.${name}.from must be a string or a number`);
+      }
+      if (
+        fieldMapping.splitBy !== undefined &&
+        typeof fieldMapping.splitBy !== "string"
+      ) {
+        throw new Error(`fields.${name}.splitBy must be a string`);
+      }
+    }
+  };
+  validateField("isReal");
+  validateField("difficulty");
+  validateField("synonyms");
+  validateField("antonyms");
+  validateField("definition");
+
   return config as ImportConfig;
 }
 
 export function mapRow(
   row: unknown,
   config: ImportConfig,
-): { value: string; isReal: boolean; difficulty: number } {
+): {
+  value: string;
+  isReal: boolean;
+  difficulty: number;
+  synonyms: string[];
+  antonyms: string[];
+  definition: string | null;
+} {
   const getFieldValue = (
     fieldConfig: FieldMapping | undefined,
     fieldName: string,
@@ -106,6 +144,67 @@ export function mapRow(
     }
 
     return rawVal;
+  };
+
+  const getArrayFieldValue = (
+    fieldConfig: FieldMapping | undefined,
+  ): string[] => {
+    if (!fieldConfig) {
+      return [];
+    }
+    const fromKey = fieldConfig.from;
+    let rawVal: unknown = undefined;
+
+    if (Array.isArray(row)) {
+      const idx = typeof fromKey === "number"
+        ? fromKey
+        : parseInt(String(fromKey), 10);
+      if (!isNaN(idx) && idx >= 0 && idx < row.length) {
+        rawVal = row[idx];
+      }
+    } else if (row && typeof row === "object") {
+      rawVal = (row as Record<string, unknown>)[String(fromKey)];
+    }
+
+    if (rawVal === undefined || rawVal === null) {
+      if (fieldConfig.default !== undefined) {
+        if (Array.isArray(fieldConfig.default)) {
+          return fieldConfig.default.map((v) => String(v).trim().toLowerCase())
+            .filter(Boolean);
+        }
+        return [String(fieldConfig.default).trim().toLowerCase()].filter(
+          Boolean,
+        );
+      }
+      return [];
+    }
+
+    if (Array.isArray(rawVal)) {
+      return rawVal.map((v) => String(v).trim().toLowerCase()).filter(Boolean);
+    }
+
+    const valStr = String(rawVal).trim();
+    if (valStr === "") {
+      if (fieldConfig.default !== undefined) {
+        if (Array.isArray(fieldConfig.default)) {
+          return fieldConfig.default.map((v) => String(v).trim().toLowerCase())
+            .filter(Boolean);
+        }
+        return [String(fieldConfig.default).trim().toLowerCase()].filter(
+          Boolean,
+        );
+      }
+      return [];
+    }
+
+    if (fieldConfig.splitBy) {
+      return valStr
+        .split(fieldConfig.splitBy)
+        .map((v) => v.trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    return [valStr.toLowerCase()];
   };
 
   // 1. Resolve 'value'
@@ -156,7 +255,23 @@ export function mapRow(
     );
   }
 
-  return { value, isReal, difficulty };
+  // 4. Resolve 'synonyms'
+  const synonyms = getArrayFieldValue(config.fields.synonyms);
+
+  // 5. Resolve 'antonyms'
+  const antonyms = getArrayFieldValue(config.fields.antonyms);
+
+  // 6. Resolve 'definition'
+  const rawDefinition = getFieldValue(
+    config.fields.definition,
+    "definition",
+    null,
+  );
+  const definition = rawDefinition !== undefined && rawDefinition !== null
+    ? String(rawDefinition).trim()
+    : null;
+
+  return { value, isReal, difficulty, synonyms, antonyms, definition };
 }
 
 export function parseRows(
@@ -221,6 +336,16 @@ export async function executeImport(
     existingWordsList.map((w: typeof words.$inferSelect) => [w.value, w]),
   );
 
+  const arraysEqual = (a: string[] | undefined, b: string[] | undefined) => {
+    const arrA = a || [];
+    const arrB = b || [];
+    if (arrA.length !== arrB.length) return false;
+    for (let i = 0; i < arrA.length; i++) {
+      if (arrA[i] !== arrB[i]) return false;
+    }
+    return true;
+  };
+
   // Process rows one-by-one
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -229,7 +354,7 @@ export async function executeImport(
       ? (i + 1)
       : (hasHeader ? (i + 2) : (i + 1));
 
-    let mapped: { value: string; isReal: boolean; difficulty: number };
+    let mapped: ReturnType<typeof mapRow>;
     try {
       mapped = mapRow(row, config);
     } catch (err) {
@@ -256,20 +381,40 @@ export async function executeImport(
         // update
         const currentIsReal = existing.isReal;
         const currentDiff = existing.difficulty;
+        const currentSynonyms = existing.synonyms || [];
+        const currentAntonyms = existing.antonyms || [];
+        const currentDefinition = existing.definition;
+
+        const mappedSynonyms = mapped.synonyms;
+        const mappedAntonyms = mapped.antonyms;
+        const mappedDefinition = mapped.definition;
+
         if (
           currentIsReal !== mapped.isReal ||
-          currentDiff !== mapped.difficulty
+          currentDiff !== mapped.difficulty ||
+          !arraysEqual(currentSynonyms, mappedSynonyms) ||
+          !arraysEqual(currentAntonyms, mappedAntonyms) ||
+          currentDefinition !== mappedDefinition
         ) {
           if (!dryRun) {
             await db
               .update(words)
-              .set({ isReal: mapped.isReal, difficulty: mapped.difficulty })
+              .set({
+                isReal: mapped.isReal,
+                difficulty: mapped.difficulty,
+                synonyms: mappedSynonyms,
+                antonyms: mappedAntonyms,
+                definition: mappedDefinition,
+              })
               .where(eq(words.id, existing.id));
           }
           result.updated++;
           // Update in-memory map
           existing.isReal = mapped.isReal;
           existing.difficulty = mapped.difficulty;
+          existing.synonyms = mappedSynonyms;
+          existing.antonyms = mappedAntonyms;
+          existing.definition = mappedDefinition;
         } else {
           result.skipped++; // no changes needed, acts as skipped
         }
@@ -283,6 +428,9 @@ export async function executeImport(
             value: mapped.value,
             isReal: mapped.isReal,
             difficulty: mapped.difficulty,
+            synonyms: mapped.synonyms,
+            antonyms: mapped.antonyms,
+            definition: mapped.definition,
           })
           .returning({ id: words.id });
         existingMap.set(val, {
@@ -292,6 +440,9 @@ export async function executeImport(
           difficulty: mapped.difficulty,
           reviewed: false,
           reviewedAt: null,
+          synonyms: mapped.synonyms,
+          antonyms: mapped.antonyms,
+          definition: mapped.definition,
         });
       } else {
         // For dry-run, we also add to existingMap to simulate subsequent duplicates check
@@ -302,6 +453,9 @@ export async function executeImport(
           difficulty: mapped.difficulty,
           reviewed: false,
           reviewedAt: null,
+          synonyms: mapped.synonyms,
+          antonyms: mapped.antonyms,
+          definition: mapped.definition,
         });
       }
       result.inserted++;

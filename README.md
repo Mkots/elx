@@ -73,6 +73,43 @@ deno task --env-file=.env db:migrate  # apply migrations
 deno task e2e            # Playwright E2E
 ```
 
+## Word Import
+
+To import words from external CSV or JSON files, use the `import:words` task.
+
+Example config to import a CEFR vocabulary list with columns
+`headword,pos,CEFR,CoreInventory 1,CoreInventory 2,Threshold` (where `Threshold`
+is mapped to the definition):
+
+```json
+{
+  "format": "csv",
+  "delimiter": ",",
+  "hasHeader": true,
+  "fields": {
+    "value": { "from": "headword" },
+    "isReal": { "from": "pos", "default": true },
+    "difficulty": {
+      "from": "CEFR",
+      "map": {
+        "A1": 1,
+        "A2": 2,
+        "B1": 3,
+        "B2": 4,
+        "C1": 5,
+        "C2": 5
+      },
+      "default": 1
+    },
+    "definition": { "from": "Threshold" }
+  },
+  "onConflict": "update"
+}
+```
+
+For more details on mapping options and formats, see
+[Word Import Mapping Configuration](docs/import-config.md).
+
 ## Git Hooks
 
 Install hk to enable pre-commit and pre-push hooks:
