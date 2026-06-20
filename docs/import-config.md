@@ -121,3 +121,43 @@ The mapping configuration:
   }
 }
 ```
+
+### 4. CEFR Vocabulary List (with category/context as definition)
+
+Suppose we have a CSV file `cefr_words.csv`:
+
+```csv
+headword,pos,CEFR,CoreInventory 1,CoreInventory 2,Threshold
+action,noun,A1,,,
+activity,noun,A1,Leisure activities,,"Free time, entertainment"
+actor,noun,A1,Leisure activities,,"Free time, entertainment"
+```
+
+The mapping configuration to import this file, converting CEFR levels to
+difficulty integers (1-5) and mapping `Threshold` as the word's definition:
+
+```json
+{
+  "format": "csv",
+  "delimiter": ",",
+  "hasHeader": true,
+  "fields": {
+    "value": { "from": "headword" },
+    "isReal": { "from": "pos", "default": true },
+    "difficulty": {
+      "from": "CEFR",
+      "map": {
+        "A1": 1,
+        "A2": 2,
+        "B1": 3,
+        "B2": 4,
+        "C1": 5,
+        "C2": 5
+      },
+      "default": 1
+    },
+    "definition": { "from": "Threshold" }
+  },
+  "onConflict": "update"
+}
+```
