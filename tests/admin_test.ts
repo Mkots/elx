@@ -7,7 +7,7 @@ import type {
   AdminHistoryLoader,
   AdminReviewLoader,
   AdminWordsLoader,
-} from "../routes/admin.tsx";
+} from "../routes/admin/index.ts";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import type { TestRun } from "../ui/pages/AdminDashboardPage.tsx";
 
