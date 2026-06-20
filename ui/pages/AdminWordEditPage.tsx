@@ -5,6 +5,9 @@ type WordData = {
   value: string;
   isReal: boolean;
   difficulty: number;
+  synonyms?: string[];
+  antonyms?: string[];
+  definition?: string | null;
 };
 
 type AdminWordEditPageProps = {
@@ -70,6 +73,49 @@ export function AdminWordEditPage({ word, error }: AdminWordEditPageProps) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div class="form-group mb-15">
+              <label for="synonyms" class="admin-label">
+                Synonyms (comma or semicolon separated)
+              </label>
+              <input
+                type="text"
+                id="synonyms"
+                name="synonyms"
+                value={word?.synonyms ? word.synonyms.join(", ") : ""}
+                placeholder="e.g., sunrise, dawn"
+                class="m-0"
+              />
+            </div>
+
+            <div class="form-group mb-15">
+              <label for="antonyms" class="admin-label">
+                Antonyms (comma or semicolon separated)
+              </label>
+              <input
+                type="text"
+                id="antonyms"
+                name="antonyms"
+                value={word?.antonyms ? word.antonyms.join(", ") : ""}
+                placeholder="e.g., night, sunset"
+                class="m-0"
+              />
+            </div>
+
+            <div class="form-group mb-15">
+              <label for="definition" class="admin-label">
+                Definition
+              </label>
+              <textarea
+                id="definition"
+                name="definition"
+                placeholder="Enter word definition"
+                rows={3}
+                class="m-0"
+              >
+                {word?.definition ?? ""}
+              </textarea>
             </div>
 
             <div class="form-group mb-2">

@@ -3,7 +3,6 @@ import { adminAuthMiddleware, registerAuthRoutes } from "./auth.ts";
 import { registerDashboardRoutes } from "./dashboard.ts";
 import { registerWordsRoutes } from "./words.ts";
 import { registerReviewRoutes } from "./review.ts";
-import { registerChallengesRoutes } from "./challenges.ts";
 import { registerHistoryRoutes } from "./history.ts";
 import {
   type AdminDashboardLoader,
@@ -18,10 +17,6 @@ import {
   databaseAdminReviewLoader,
 } from "./loaders/review.ts";
 import {
-  type AdminChallengesLoader,
-  databaseAdminChallengesLoader,
-} from "./loaders/challenges.ts";
-import {
   type AdminHistoryLoader,
   databaseAdminHistoryLoader,
 } from "./loaders/history.ts";
@@ -30,14 +25,12 @@ import {
 // import entry point.
 export { adminAuthMiddleware };
 export type {
-  AdminChallengesLoader,
   AdminDashboardLoader,
   AdminHistoryLoader,
   AdminReviewLoader,
   AdminWordsLoader,
 };
 export {
-  databaseAdminChallengesLoader,
   databaseAdminDashboardLoader,
   databaseAdminHistoryLoader,
   databaseAdminReviewLoader,
@@ -52,7 +45,6 @@ export {
 export function createAdminRoute(
   dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
   wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
-  challengesLoader: AdminChallengesLoader = databaseAdminChallengesLoader,
   historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
   reviewLoader: AdminReviewLoader = databaseAdminReviewLoader,
 ) {
@@ -65,7 +57,6 @@ export function createAdminRoute(
   registerDashboardRoutes(route, dashboardLoader, reviewLoader);
   registerWordsRoutes(route, wordsLoader);
   registerReviewRoutes(route, reviewLoader, wordsLoader);
-  registerChallengesRoutes(route, challengesLoader);
   registerHistoryRoutes(route, historyLoader);
 
   return route;

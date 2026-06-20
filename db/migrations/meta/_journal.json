@@ -29,6 +29,13 @@
       "when": 1781986885906,
       "tag": "0003_new_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781987611184,
+      "tag": "0004_curved_black_queen",
+      "breakpoints": true
     }
   ]
 }

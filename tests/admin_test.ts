@@ -2,7 +2,6 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
 import type {
-  AdminChallengesLoader,
   AdminDashboardLoader,
   AdminHistoryLoader,
   AdminReviewLoader,
@@ -328,23 +327,6 @@ const mockWordsLoader: AdminWordsLoader = {
   },
 };
 
-const mockSynonymsList = [
-  { id: 1, wordId: 1, targetId: 2, relationType: "synonym", distractors: [3] },
-];
-
-const mockSpellingList = [
-  {
-    id: 1,
-    contextSentence: "I like to eat ___.",
-    correctWordId: 1,
-    distractors: [2, 3],
-  },
-];
-
-const mockDefinitionsList = [
-  { id: 1, wordId: 2, definitionText: "A yellow fruit.", distractors: [1, 3] },
-];
-
 const mockHistoryList: TestRun[] = [];
 
 function resetMockData() {
@@ -385,37 +367,6 @@ function resetMockData() {
     },
   );
 
-  mockSynonymsList.length = 0;
-  mockSynonymsList.push(
-    {
-      id: 1,
-      wordId: 1,
-      targetId: 2,
-      relationType: "synonym",
-      distractors: [3],
-    },
-  );
-
-  mockSpellingList.length = 0;
-  mockSpellingList.push(
-    {
-      id: 1,
-      contextSentence: "I like to eat ___.",
-      correctWordId: 1,
-      distractors: [2, 3],
-    },
-  );
-
-  mockDefinitionsList.length = 0;
-  mockDefinitionsList.push(
-    {
-      id: 1,
-      wordId: 2,
-      definitionText: "A yellow fruit.",
-      distractors: [1, 3],
-    },
-  );
-
   mockHistoryList.length = 0;
   mockHistoryList.push(
     {
@@ -441,102 +392,6 @@ function resetMockData() {
     },
   );
 }
-
-const mockChallengesLoader: AdminChallengesLoader = {
-  async listSynonyms() {
-    await Promise.resolve();
-    return [...mockSynonymsList];
-  },
-  async listSpelling() {
-    await Promise.resolve();
-    return [...mockSpellingList];
-  },
-  async listDefinitions() {
-    await Promise.resolve();
-    return [...mockDefinitionsList];
-  },
-
-  async getSynonym(id) {
-    await Promise.resolve();
-    return mockSynonymsList.find((s) => s.id === id) ?? null;
-  },
-  async getSpelling(id) {
-    await Promise.resolve();
-    return mockSpellingList.find((s) => s.id === id) ?? null;
-  },
-  async getDefinition(id) {
-    await Promise.resolve();
-    return mockDefinitionsList.find((s) => s.id === id) ?? null;
-  },
-
-  async createSynonym(data) {
-    await Promise.resolve();
-    const nextId =
-      mockSynonymsList.reduce((max, s) => (s.id > max ? s.id : max), 0) + 1;
-    mockSynonymsList.push({ id: nextId, ...data });
-  },
-  async createSpelling(data) {
-    await Promise.resolve();
-    const nextId =
-      mockSpellingList.reduce((max, s) => (s.id > max ? s.id : max), 0) + 1;
-    mockSpellingList.push({ id: nextId, ...data });
-  },
-  async createDefinition(data) {
-    await Promise.resolve();
-    const nextId =
-      mockDefinitionsList.reduce((max, s) => (s.id > max ? s.id : max), 0) + 1;
-    mockDefinitionsList.push({ id: nextId, ...data });
-  },
-
-  async updateSynonym(id, data) {
-    await Promise.resolve();
-    const idx = mockSynonymsList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockSynonymsList[idx] = { id, ...data };
-    }
-  },
-  async updateSpelling(id, data) {
-    await Promise.resolve();
-    const idx = mockSpellingList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockSpellingList[idx] = { id, ...data };
-    }
-  },
-  async updateDefinition(id, data) {
-    await Promise.resolve();
-    const idx = mockDefinitionsList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockDefinitionsList[idx] = { id, ...data };
-    }
-  },
-
-  async deleteSynonym(id) {
-    await Promise.resolve();
-    const idx = mockSynonymsList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockSynonymsList.splice(idx, 1);
-    }
-  },
-  async deleteSpelling(id) {
-    await Promise.resolve();
-    const idx = mockSpellingList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockSpellingList.splice(idx, 1);
-    }
-  },
-  async deleteDefinition(id) {
-    await Promise.resolve();
-    const idx = mockDefinitionsList.findIndex((s) => s.id === id);
-    if (idx !== -1) {
-      mockDefinitionsList.splice(idx, 1);
-    }
-  },
-
-  async getAllWords() {
-    await Promise.resolve();
-    return mockWordsList.map((w) => ({ id: w.id, value: w.value }));
-  },
-};
 
 const mockHistoryLoader: AdminHistoryLoader = {
   async listHistory({ search, orderBy, orderDir, page, limit }) {
@@ -575,7 +430,6 @@ const mockHistoryLoader: AdminHistoryLoader = {
 const app = createApp({
   adminDashboardLoader: mockDashboardLoader,
   adminWordsLoader: mockWordsLoader,
-  adminChallengesLoader: mockChallengesLoader,
   adminHistoryLoader: mockHistoryLoader,
   adminReviewLoader: mockReviewLoader,
 });
@@ -842,189 +696,6 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/:id/delete safe checks", async () 
   });
   const listBody = await listRes.text();
   assertEquals(listBody.includes("blarg"), false);
-});
-
-Deno.test("VER-ADMIN-ROUTE: GET /admin/challenges lists synonyms, spelling, and definitions", async () => {
-  resetMockData();
-  const sessionId = await createAdminSession();
-
-  // Test synonyms type
-  const synRes = await app.request("/admin/challenges?type=synonyms", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const synBody = await synRes.text();
-  assertEquals(synRes.status, 200);
-  assertStringIncludes(synBody, "Synonym Challenges");
-  assertStringIncludes(synBody, "apple"); // word value for wordId 1
-  assertStringIncludes(synBody, "banana"); // target synonym value for targetId 2
-
-  // Test spelling type
-  const spellRes = await app.request("/admin/challenges?type=spelling", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const spellBody = await spellRes.text();
-  assertEquals(spellRes.status, 200);
-  assertStringIncludes(spellBody, "Spelling Challenges");
-  assertStringIncludes(spellBody, "I like to eat ___");
-  assertStringIncludes(spellBody, "apple"); // correct word
-
-  // Test definitions type
-  const defRes = await app.request("/admin/challenges?type=definitions", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const defBody = await defRes.text();
-  assertEquals(defRes.status, 200);
-  assertStringIncludes(defBody, "Definition Challenges");
-  assertStringIncludes(defBody, "A yellow fruit.");
-  assertStringIncludes(defBody, "banana"); // target word
-});
-
-Deno.test("VER-ADMIN-ROUTE: GET /admin/challenges/:type/new renders edit form", async () => {
-  resetMockData();
-  const sessionId = await createAdminSession();
-
-  const response = await app.request("/admin/challenges/synonyms/new", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const body = await response.text();
-  assertEquals(response.status, 200);
-  assertStringIncludes(body, "Add New Synonyms Challenge");
-  assertStringIncludes(body, "Source Word");
-  assertStringIncludes(body, "Target Synonym Word");
-});
-
-Deno.test("VER-ADMIN-ROUTE: POST /admin/challenges/:type/new validation and creation", async () => {
-  resetMockData();
-  const sessionId = await createAdminSession();
-
-  // 1. Missing distractor validation
-  const emptyDistForm = new URLSearchParams();
-  emptyDistForm.append("wordId", "1");
-  emptyDistForm.append("targetId", "2");
-  emptyDistForm.append("relationType", "synonym");
-  emptyDistForm.append("distractors", "");
-
-  const failRes1 = await app.request("/admin/challenges/synonyms/new", {
-    method: "POST",
-    headers: {
-      "Cookie": `admin_session=${sessionId}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: emptyDistForm.toString(),
-  });
-  const failBody1 = await failRes1.text();
-  assertEquals(failRes1.status, 200);
-  assertStringIncludes(failBody1, "At least one distractor word is required.");
-
-  // 2. Non-existent distractor validation
-  const invalidDistForm = new URLSearchParams();
-  invalidDistForm.append("wordId", "1");
-  invalidDistForm.append("targetId", "2");
-  invalidDistForm.append("relationType", "synonym");
-  invalidDistForm.append("distractors", "apple, non_existent_word");
-
-  const failRes2 = await app.request("/admin/challenges/synonyms/new", {
-    method: "POST",
-    headers: {
-      "Cookie": `admin_session=${sessionId}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: invalidDistForm.toString(),
-  });
-  const failBody2 = await failRes2.text();
-  assertEquals(failRes2.status, 200);
-  assertStringIncludes(
-    failBody2,
-    "The following distractor words do not exist in the database: non_existent_word",
-  );
-
-  // 3. Successful synonym creation
-  const successForm = new URLSearchParams();
-  successForm.append("wordId", "1");
-  successForm.append("targetId", "2");
-  successForm.append("relationType", "synonym");
-  successForm.append("distractors", "blarg");
-
-  const successRes = await app.request("/admin/challenges/synonyms/new", {
-    method: "POST",
-    headers: {
-      "Cookie": `admin_session=${sessionId}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: successForm.toString(),
-  });
-  assertEquals(successRes.status, 302);
-  assertStringIncludes(
-    successRes.headers.get("location") ?? "",
-    "/admin/challenges?type=synonyms",
-  );
-
-  // Verify creation in list
-  const listRes = await app.request("/admin/challenges?type=synonyms", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const listBody = await listRes.text();
-  assertStringIncludes(listBody, "blarg");
-});
-
-Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/challenges/:type/:id/edit prefill and update", async () => {
-  resetMockData();
-  const sessionId = await createAdminSession();
-
-  // Prefill form
-  const editRes = await app.request("/admin/challenges/synonyms/1/edit", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const editBody = await editRes.text();
-  assertEquals(editRes.status, 200);
-  assertStringIncludes(editBody, "Edit Synonyms Challenge #1");
-
-  // Post update
-  const updateForm = new URLSearchParams();
-  updateForm.append("wordId", "1");
-  updateForm.append("targetId", "3"); // change target synonym
-  updateForm.append("relationType", "synonym");
-  updateForm.append("distractors", "banana");
-
-  const updateRes = await app.request("/admin/challenges/synonyms/1/edit", {
-    method: "POST",
-    headers: {
-      "Cookie": `admin_session=${sessionId}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: updateForm.toString(),
-  });
-  assertEquals(updateRes.status, 302);
-
-  // Check update in list
-  const listRes = await app.request("/admin/challenges?type=synonyms", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const listBody = await listRes.text();
-  assertStringIncludes(listBody, "banana");
-});
-
-Deno.test("VER-ADMIN-ROUTE: POST /admin/challenges/:type/:id/delete deletes challenges", async () => {
-  resetMockData();
-  const sessionId = await createAdminSession();
-
-  const deleteRes = await app.request("/admin/challenges/synonyms/1/delete", {
-    method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  assertEquals(deleteRes.status, 302);
-  assertStringIncludes(
-    deleteRes.headers.get("location") ?? "",
-    "/admin/challenges?type=synonyms&success=",
-  );
-
-  // Verify deletion
-  const listRes = await app.request("/admin/challenges?type=synonyms", {
-    headers: { "Cookie": `admin_session=${sessionId}` },
-  });
-  const listBody = await listRes.text();
-  // Expecting list list body to not contain distractors or IDs we deleted
-  assertEquals(listBody.includes("/admin/challenges/synonyms/1/edit"), false);
 });
 
 Deno.test("VER-ADMIN-ROUTE: GET /admin/history lists and sorts/filters test sessions", async () => {
