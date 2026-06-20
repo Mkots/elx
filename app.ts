@@ -25,7 +25,7 @@ import {
   type AdminReviewLoader,
   type AdminWordsLoader,
   createAdminRoute,
-} from "./routes/admin.tsx";
+} from "./routes/admin/index.ts";
 
 interface CreateAppOptions {
   seedVerificationLoader?: SeedVerificationLoader;

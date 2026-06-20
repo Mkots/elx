@@ -1,0 +1,74 @@
+import { Hono } from "@hono/hono";
+import { adminAuthMiddleware, registerAuthRoutes } from "./auth.ts";
+import { registerDashboardRoutes } from "./dashboard.ts";
+import { registerWordsRoutes } from "./words.ts";
+import { registerReviewRoutes } from "./review.ts";
+import { registerChallengesRoutes } from "./challenges.ts";
+import { registerHistoryRoutes } from "./history.ts";
+import {
+  type AdminDashboardLoader,
+  databaseAdminDashboardLoader,
+} from "./loaders/dashboard.ts";
+import {
+  type AdminWordsLoader,
+  databaseAdminWordsLoader,
+} from "./loaders/words.ts";
+import {
+  type AdminReviewLoader,
+  databaseAdminReviewLoader,
+} from "./loaders/review.ts";
+import {
+  type AdminChallengesLoader,
+  databaseAdminChallengesLoader,
+} from "./loaders/challenges.ts";
+import {
+  type AdminHistoryLoader,
+  databaseAdminHistoryLoader,
+} from "./loaders/history.ts";
+
+// Re-export the admin public surface so `app.ts` and tests have a single
+// import entry point.
+export { adminAuthMiddleware };
+export type {
+  AdminChallengesLoader,
+  AdminDashboardLoader,
+  AdminHistoryLoader,
+  AdminReviewLoader,
+  AdminWordsLoader,
+};
+export {
+  databaseAdminChallengesLoader,
+  databaseAdminDashboardLoader,
+  databaseAdminHistoryLoader,
+  databaseAdminReviewLoader,
+  databaseAdminWordsLoader,
+};
+
+/**
+ * Composition root for the admin panel. Each concern (auth, dashboard, words,
+ * review, challenges, history) lives in its own module and registers its
+ * handlers onto a single shared Hono router, behind the auth middleware.
+ */
+export function createAdminRoute(
+  dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
+  wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
+  challengesLoader: AdminChallengesLoader = databaseAdminChallengesLoader,
+  historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
+  reviewLoader: AdminReviewLoader = databaseAdminReviewLoader,
+) {
+  const route = new Hono();
+
+  // Apply middleware to all /admin routes
+  route.use("*", adminAuthMiddleware);
+
+  registerAuthRoutes(route);
+  registerDashboardRoutes(route, dashboardLoader, reviewLoader);
+  registerWordsRoutes(route, wordsLoader);
+  registerReviewRoutes(route, reviewLoader, wordsLoader);
+  registerChallengesRoutes(route, challengesLoader);
+  registerHistoryRoutes(route, historyLoader);
+
+  return route;
+}
+
+export const adminRoute = createAdminRoute();
