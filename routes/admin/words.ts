@@ -4,6 +4,13 @@ import { AdminWordEditPage } from "../../ui/pages/AdminWordEditPage.tsx";
 import { AdminWordsImportPage } from "../../ui/pages/AdminWordsImportPage.tsx";
 import type { AdminWordsLoader } from "./loaders/words.ts";
 
+/** Parses a `"true" | "false" | undefined` query/form value into a boolean. */
+function parseTriState(value: string | undefined): boolean | undefined {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return undefined;
+}
+
 /** Registers the words CRUD + import routes. */
 export function registerWordsRoutes(
   route: Hono,
@@ -14,20 +21,17 @@ export function registerWordsRoutes(
     const page = Number(context.req.query("page") || 1);
     const search = context.req.query("q") || "";
     const difficultyStr = context.req.query("difficulty");
-    const isRealStr = context.req.query("isReal");
 
     const difficulty = difficultyStr ? Number(difficultyStr) : undefined;
-    const isReal = isRealStr === "true"
-      ? true
-      : isRealStr === "false"
-      ? false
-      : undefined;
+    const isReal = parseTriState(context.req.query("isReal"));
+    const reviewed = parseTriState(context.req.query("reviewed"));
 
     const limit = 20;
     const { words: wordList, totalCount } = await wordsLoader.listWords({
       search,
       difficulty,
       isReal,
+      reviewed,
       page,
       limit,
     });
@@ -46,10 +50,97 @@ export function registerWordsRoutes(
         search,
         difficulty,
         isReal,
+        reviewed,
         success: successMsg,
         error: errorMsg,
       }),
     );
+  });
+
+  // POST /admin/words/bulk
+  route.post("/words/bulk", async (context) => {
+    const body = await context.req.parseBody({ all: true });
+
+    const search = typeof body.q === "string" ? body.q : "";
+    const difficultyStr = typeof body.difficulty === "string"
+      ? body.difficulty
+      : undefined;
+    const difficulty = difficultyStr ? Number(difficultyStr) : undefined;
+    const isReal = parseTriState(
+      typeof body.isReal === "string" ? body.isReal : undefined,
+    );
+    const reviewed = parseTriState(
+      typeof body.reviewed === "string" ? body.reviewed : undefined,
+    );
+    const filter = { search, difficulty, isReal, reviewed };
+
+    // Preserve the active filter on the redirect back to the list.
+    const redirectParams = new URLSearchParams();
+    if (search) redirectParams.set("q", search);
+    if (difficulty !== undefined) {
+      redirectParams.set("difficulty", String(difficulty));
+    }
+    if (isReal !== undefined) redirectParams.set("isReal", String(isReal));
+    if (reviewed !== undefined) {
+      redirectParams.set("reviewed", String(reviewed));
+    }
+    const backTo = (key: "success" | "error", message: string) => {
+      redirectParams.set(key, message);
+      return context.redirect("/admin/words?" + redirectParams.toString());
+    };
+
+    const action = typeof body.action === "string" ? body.action : "";
+
+    // Resolve target ids: either every word matching the filter, or the
+    // explicitly checked rows.
+    let ids: number[];
+    if (body.selectAllMatching === "true") {
+      ids = await wordsLoader.findWordIds(filter);
+    } else {
+      const raw = body.ids;
+      const rawList = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
+      ids = rawList
+        .map((v) => Number(v))
+        .filter((n) => Number.isInteger(n));
+    }
+
+    if (ids.length === 0) {
+      return backTo("error", "No words selected.");
+    }
+
+    try {
+      switch (action) {
+        case "delete": {
+          const { deleted, skipped } = await wordsLoader.bulkDelete(ids);
+          let msg = `Deleted ${deleted} word(s).`;
+          if (skipped.length > 0) {
+            msg += ` Skipped ${skipped.length} still referenced elsewhere.`;
+          }
+          return backTo("success", msg);
+        }
+        case "set_real": {
+          const n = await wordsLoader.bulkSetIsReal(ids, true);
+          return backTo("success", `Marked ${n} word(s) as Real.`);
+        }
+        case "set_pseudo": {
+          const n = await wordsLoader.bulkSetIsReal(ids, false);
+          return backTo("success", `Marked ${n} word(s) as Pseudoword.`);
+        }
+        case "mark_reviewed": {
+          const n = await wordsLoader.bulkSetReviewed(ids, true);
+          return backTo("success", `Marked ${n} word(s) as reviewed.`);
+        }
+        case "mark_unreviewed": {
+          const n = await wordsLoader.bulkSetReviewed(ids, false);
+          return backTo("success", `Marked ${n} word(s) as unreviewed.`);
+        }
+        default:
+          return backTo("error", "Unknown bulk action.");
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return backTo("error", "Bulk action failed: " + errMsg);
+    }
   });
 
   // GET /admin/words/new

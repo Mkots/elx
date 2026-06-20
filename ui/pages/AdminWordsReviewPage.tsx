@@ -112,7 +112,6 @@ export function AdminWordsReviewCard({
                 value={word.value}
                 required
                 style="margin: 0;"
-                autofocus
               />
             </div>
 
