@@ -5,6 +5,7 @@ import type {
   AdminChallengesLoader,
   AdminDashboardLoader,
   AdminHistoryLoader,
+  AdminReviewLoader,
   AdminWordsLoader,
 } from "../routes/admin.tsx";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
@@ -39,10 +40,78 @@ const mockDashboardLoader: AdminDashboardLoader = {
 };
 
 const mockWordsList = [
-  { id: 1, value: "apple", isReal: true, difficulty: 2 },
-  { id: 2, value: "banana", isReal: true, difficulty: 3 },
-  { id: 3, value: "blarg", isReal: false, difficulty: 1 },
+  {
+    id: 1,
+    value: "apple",
+    isReal: true,
+    difficulty: 2,
+    reviewed: false,
+    reviewedAt: null as Date | null,
+  },
+  {
+    id: 2,
+    value: "banana",
+    isReal: true,
+    difficulty: 3,
+    reviewed: false,
+    reviewedAt: null as Date | null,
+  },
+  {
+    id: 3,
+    value: "blarg",
+    isReal: false,
+    difficulty: 1,
+    reviewed: false,
+    reviewedAt: null as Date | null,
+  },
 ];
+
+const mockReviewLoader: AdminReviewLoader = {
+  async getNextUnreviewed(afterId?: number) {
+    await Promise.resolve();
+    if (afterId !== undefined) {
+      const nextWord = mockWordsList.find((w) =>
+        w.reviewed === false && w.id > afterId
+      );
+      if (nextWord) return nextWord;
+    }
+    return mockWordsList.find((w) => w.reviewed === false) ?? null;
+  },
+
+  async skipWord(id: number) {
+    return await this.getNextUnreviewed(id);
+  },
+
+  async reviewWord(id, { value, isReal, difficulty }) {
+    await Promise.resolve();
+    const trimmed = value.trim().toLowerCase();
+    if (!trimmed) throw new Error("Word value cannot be empty");
+    if (difficulty < 1 || difficulty > 5) {
+      throw new Error("Difficulty must be between 1 and 5");
+    }
+
+    if (mockWordsList.some((w) => w.value === trimmed && w.id !== id)) {
+      throw new Error(`Word '${trimmed}' already exists`);
+    }
+
+    const word = mockWordsList.find((w) => w.id === id);
+    if (word) {
+      word.value = trimmed;
+      word.isReal = isReal;
+      word.difficulty = difficulty;
+      word.reviewed = true;
+      word.reviewedAt = new Date();
+    }
+  },
+
+  async progress() {
+    await Promise.resolve();
+    const total = mockWordsList.length;
+    const reviewed = mockWordsList.filter((w) => w.reviewed).length;
+    const remaining = total - reviewed;
+    return { reviewed, total, remaining };
+  },
+};
 
 const mockWordsLoader: AdminWordsLoader = {
   async listWords({ search, difficulty, isReal, page, limit }) {
@@ -75,14 +144,27 @@ const mockWordsLoader: AdminWordsLoader = {
     }
     const nextId =
       mockWordsList.reduce((max, w) => (w.id > max ? w.id : max), 0) + 1;
-    mockWordsList.push({ id: nextId, value, isReal, difficulty });
+    mockWordsList.push({
+      id: nextId,
+      value,
+      isReal,
+      difficulty,
+      reviewed: false,
+      reviewedAt: null,
+    });
   },
 
   async updateWord(id, { value, isReal, difficulty }) {
     await Promise.resolve();
     const index = mockWordsList.findIndex((w) => w.id === id);
     if (index !== -1) {
-      mockWordsList[index] = { id, value, isReal, difficulty };
+      const existing = mockWordsList[index];
+      mockWordsList[index] = {
+        ...existing,
+        value,
+        isReal,
+        difficulty,
+      };
     }
   },
 
@@ -126,6 +208,8 @@ const mockWordsLoader: AdminWordsLoader = {
                     value: data.value,
                     isReal: data.isReal,
                     difficulty: data.difficulty,
+                    reviewed: false,
+                    reviewedAt: null as Date | null,
                   };
                   mockWordsList.push(newWord);
                   return [{ id: nextId }];
@@ -194,9 +278,30 @@ const mockHistoryList: TestRun[] = [];
 function resetMockData() {
   mockWordsList.length = 0;
   mockWordsList.push(
-    { id: 1, value: "apple", isReal: true, difficulty: 2 },
-    { id: 2, value: "banana", isReal: true, difficulty: 3 },
-    { id: 3, value: "blarg", isReal: false, difficulty: 1 },
+    {
+      id: 1,
+      value: "apple",
+      isReal: true,
+      difficulty: 2,
+      reviewed: false,
+      reviewedAt: null as Date | null,
+    },
+    {
+      id: 2,
+      value: "banana",
+      isReal: true,
+      difficulty: 3,
+      reviewed: false,
+      reviewedAt: null as Date | null,
+    },
+    {
+      id: 3,
+      value: "blarg",
+      isReal: false,
+      difficulty: 1,
+      reviewed: false,
+      reviewedAt: null as Date | null,
+    },
   );
 
   mockSynonymsList.length = 0;
@@ -391,6 +496,7 @@ const app = createApp({
   adminWordsLoader: mockWordsLoader,
   adminChallengesLoader: mockChallengesLoader,
   adminHistoryLoader: mockHistoryLoader,
+  adminReviewLoader: mockReviewLoader,
 });
 
 // Setup helper for authenticated session
@@ -972,4 +1078,70 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/import routes", async () =
   assertStringIncludes(postBody, "Import Results");
   // Check count "2" is shown in inserted result block
   assertStringIncludes(postBody, "2");
+});
+
+Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/review and skip routes", async () => {
+  resetMockData();
+  const sessionId = await createAdminSession();
+
+  // 1. GET /admin/words/review loads first unreviewed word
+  const getRes = await app.request("/admin/words/review", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const getBody = await getRes.text();
+  assertEquals(getRes.status, 200);
+  assertStringIncludes(getBody, "Word Review &amp; Refinement");
+  assertStringIncludes(getBody, "apple"); // first unreviewed word
+  assertStringIncludes(getBody, "Progress: 0 of 3 reviewed");
+
+  // 2. POST /admin/words/review/:id submits edit and marks reviewed, returns next word card
+  const formData = new FormData();
+  formData.append("value", "apple-refined");
+  formData.append("isReal", "true");
+  formData.append("difficulty", "3");
+
+  const postRes = await app.request("/admin/words/review/1", {
+    method: "POST",
+    headers: { "Cookie": `admin_session=${sessionId}` },
+    body: formData,
+  });
+  const postBody = await postRes.text();
+  assertEquals(postRes.status, 200);
+  // Word 1 (apple) is now reviewed, so it should load word 2 (banana)
+  assertStringIncludes(postBody, "banana");
+  assertStringIncludes(postBody, "Progress: 1 of 3 reviewed");
+
+  // Verify DB state updated
+  const updatedWord = mockWordsList.find((w) => w.id === 1);
+  assertEquals(updatedWord?.value, "apple-refined");
+  assertEquals(updatedWord?.reviewed, true);
+
+  // 3. POST /admin/words/review/:id/skip skips the word without marking reviewed, returns next card
+  const skipRes = await app.request("/admin/words/review/2/skip", {
+    method: "POST",
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const skipBody = await skipRes.text();
+  assertEquals(skipRes.status, 200);
+  // Skipped word 2 (banana), should return next card word 3 (blarg)
+  assertStringIncludes(skipBody, "blarg");
+
+  // Verify banana (id: 2) was NOT marked reviewed
+  const bananaWord = mockWordsList.find((w) => w.id === 2);
+  assertEquals(bananaWord?.reviewed, false);
+
+  // 4. POST /admin/words/review/:id handles validation errors and re-renders card with error
+  const invalidForm = new FormData();
+  invalidForm.append("value", ""); // empty value
+  invalidForm.append("isReal", "false");
+  invalidForm.append("difficulty", "6"); // out of bounds
+
+  const errRes = await app.request("/admin/words/review/3", {
+    method: "POST",
+    headers: { "Cookie": `admin_session=${sessionId}` },
+    body: invalidForm,
+  });
+  const errBody = await errRes.text();
+  assertEquals(errRes.status, 200);
+  assertStringIncludes(errBody, "Word value cannot be empty");
 });

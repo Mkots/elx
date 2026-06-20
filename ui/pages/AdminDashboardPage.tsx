@@ -13,6 +13,7 @@ type AdminDashboardProps = {
   avgScore: number;
   avgTruthfulness: number;
   recentRuns: TestRun[];
+  unreviewedCount: number;
 };
 
 export function AdminDashboardPage({
@@ -20,13 +21,14 @@ export function AdminDashboardPage({
   avgScore,
   avgTruthfulness,
   recentRuns,
+  unreviewedCount,
 }: AdminDashboardProps) {
   return (
     <AdminLayout title="Dashboard" activeTab="dashboard">
       <div class="dashboard-shell">
         <section
           class="metrics-grid"
-          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;"
         >
           <article
             class="metric-card"
@@ -78,6 +80,34 @@ export function AdminDashboardPage({
             >
               {avgTruthfulness}%
             </span>
+          </article>
+          <article
+            class="metric-card"
+            style="margin: 0; padding: 1.5rem; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); border: 1px solid rgba(242, 239, 250, 0.08); display: flex; flex-direction: column; gap: 0.5rem;"
+          >
+            <span
+              class="metric-label"
+              style="font-size: 0.875rem; color: var(--pico-muted-color); font-weight: 700; text-transform: uppercase;"
+            >
+              Unreviewed Words
+            </span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span
+                class="metric-value"
+                style="font-size: 2.5rem; font-weight: 800; color: #ffb86c;"
+              >
+                {unreviewedCount}
+              </span>
+              {unreviewedCount > 0 && (
+                <a
+                  href="/admin/words/review"
+                  role="button"
+                  style="margin: 0; font-size: 0.75rem; padding: 0.25rem 0.5rem; background: #ffb86c; color: #2d2839; font-weight: 700; border: none;"
+                >
+                  Review ➔
+                </a>
+              )}
+            </div>
           </article>
         </section>
 

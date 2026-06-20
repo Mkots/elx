@@ -65,6 +65,14 @@ export function AdminWordsPage({
           </h3>
           <div style="display: inline-flex; gap: 0.5rem;">
             <a
+              href="/admin/words/review"
+              role="button"
+              class="outline"
+              style="margin: 0; font-weight: 700; border-color: #ffb86c; color: #ffb86c;"
+            >
+              🔍 Review Queue
+            </a>
+            <a
               href="/admin/words/import"
               role="button"
               class="outline"

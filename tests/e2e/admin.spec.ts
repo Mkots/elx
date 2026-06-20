@@ -32,7 +32,7 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
 
     await expect(page).toHaveURL("/admin");
     await expect(page.locator("h2")).toContainText("Dashboard");
-    await expect(page.locator(".metric-card")).toHaveCount(3);
+    await expect(page.locator(".metric-card")).toHaveCount(4);
 
     // 2. Sidebar Navigation
     await page.getByRole("link", { name: /words manager/i }).click();
@@ -403,5 +403,45 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
         // ignore if already removed
       }
     }
+  });
+
+  test("Word Review & Refinement Flow (Confirm & Skip)", async ({ page }) => {
+    // 1. Login
+    await page.goto("/admin/login");
+    await page.locator('input[name="username"]').fill(username);
+    await page.locator('input[name="password"]').fill(password);
+    await page.getByRole("button", { name: /sign in/i }).click();
+
+    // 2. Go to words manager and check "Review Queue" button is present and click it
+    await page.goto("/admin/words");
+    await page.getByRole("button", { name: /review queue/i }).click();
+    await expect(page).toHaveURL("/admin/words/review");
+    await expect(page.locator("h2")).toContainText("Word Review & Refinement");
+
+    // 3. Verify card elements are visible
+    const wordInput = page.locator('input[name="value"]');
+    await expect(wordInput).toBeVisible();
+    const originalValue = await wordInput.inputValue();
+
+    // 4. Edit fields (difficulty and isReal only, don't rename value to avoid breaking other E2E tests dropdowns)
+    await page.locator('select[name="difficulty"]').selectOption("4");
+    const isRealCheckbox = page.locator('input[name="isReal"]');
+    const wasChecked = await isRealCheckbox.isChecked();
+    if (wasChecked) {
+      await isRealCheckbox.uncheck();
+    } else {
+      await isRealCheckbox.check();
+    }
+
+    // Click Confirm & Next
+    await page.getByRole("button", { name: /confirm & next/i }).click();
+
+    // 5. Verify that a different word is loaded
+    await expect(wordInput).not.toHaveValue(originalValue);
+    const nextValue = await wordInput.inputValue();
+
+    // 6. Test the skip functionality
+    await page.getByRole("button", { name: /skip/i }).click();
+    await expect(wordInput).not.toHaveValue(nextValue);
   });
 });

@@ -22,6 +22,7 @@ import {
   type AdminChallengesLoader,
   type AdminDashboardLoader,
   type AdminHistoryLoader,
+  type AdminReviewLoader,
   type AdminWordsLoader,
   createAdminRoute,
 } from "./routes/admin.tsx";
@@ -37,6 +38,7 @@ interface CreateAppOptions {
   adminWordsLoader?: AdminWordsLoader;
   adminChallengesLoader?: AdminChallengesLoader;
   adminHistoryLoader?: AdminHistoryLoader;
+  adminReviewLoader?: AdminReviewLoader;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -66,6 +68,7 @@ export function createApp(options: CreateAppOptions = {}) {
       options.adminWordsLoader,
       options.adminChallengesLoader,
       options.adminHistoryLoader,
+      options.adminReviewLoader,
     ),
   );
 

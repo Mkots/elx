@@ -215,12 +215,7 @@ export async function executeImport(
 
   // 1. Fetch all existing words in the DB to check conflicts
   const existingWordsList = await db
-    .select({
-      id: words.id,
-      value: words.value,
-      isReal: words.isReal,
-      difficulty: words.difficulty,
-    })
+    .select()
     .from(words);
   const existingMap = new Map<string, typeof words.$inferSelect>(
     existingWordsList.map((w: typeof words.$inferSelect) => [w.value, w]),
@@ -290,12 +285,13 @@ export async function executeImport(
             difficulty: mapped.difficulty,
           })
           .returning({ id: words.id });
-        // Add to existingMap
         existingMap.set(val, {
           id: insertResult[0]?.id || 0,
           value: mapped.value,
           isReal: mapped.isReal,
           difficulty: mapped.difficulty,
+          reviewed: false,
+          reviewedAt: null,
         });
       } else {
         // For dry-run, we also add to existingMap to simulate subsequent duplicates check
@@ -304,6 +300,8 @@ export async function executeImport(
           value: mapped.value,
           isReal: mapped.isReal,
           difficulty: mapped.difficulty,
+          reviewed: false,
+          reviewedAt: null,
         });
       }
       result.inserted++;

@@ -11,6 +11,8 @@ export const words = pgTable("words", {
   value: text().notNull().unique(),
   isReal: boolean("is_real").notNull(),
   difficulty: integer().notNull(),
+  reviewed: boolean().notNull().default(false),
+  reviewedAt: timestamp("reviewed_at"),
 });
 
 export const synonyms = pgTable("synonyms", {
