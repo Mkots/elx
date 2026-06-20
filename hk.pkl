@@ -1,0 +1,31 @@
+amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
+
+local linters = new Mapping<String, Step> {
+    ["fmt"] {
+        glob = List("*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.md")
+        check = "deno fmt --check {{files}}"
+        fix = "deno fmt {{files}}"
+    }
+    ["lint"] {
+        glob = List("*.ts", "*.tsx", "*.js", "*.jsx")
+        check = "deno lint {{files}}"
+    }
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps = linters
+    }
+    ["pre-push"] {
+        steps {
+            ["check"] {
+                check = "deno task check"
+            }
+            ["test"] {
+                check = "deno task test"
+            }
+        }
+    }
+}

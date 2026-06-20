@@ -7,7 +7,7 @@ JSX.
 
 - Deno `2.8.3`
 - Docker with the Compose plugin
-- [lefthook](https://github.com/evilmartians/lefthook) for git hooks
+- [hk](https://hk.jdx.dev/) for git hooks
 - Zed with Dev Containers support when developing inside a container
 
 ## Local Development
@@ -75,11 +75,11 @@ deno task e2e            # Playwright E2E
 
 ## Git Hooks
 
-Install lefthook to enable pre-commit and pre-push hooks:
+Install hk to enable pre-commit and pre-push hooks:
 
 ```bash
-brew install lefthook   # macOS
-lefthook install
+brew install hk   # macOS
+hk install
 ```
 
 Pre-commit runs `deno fmt --check` and `deno lint` on staged files. Pre-push

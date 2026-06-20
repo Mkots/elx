@@ -17,7 +17,7 @@ deno task --env-file=.env dev
 3. **Type check**: `deno task check`
 4. **Tests**: `deno task test`
 
-All of these run automatically via lefthook on pre-commit and pre-push.
+All of these run automatically via hk on pre-commit and pre-push.
 
 ## Commit Convention
 
