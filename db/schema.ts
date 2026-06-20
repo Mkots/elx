@@ -29,6 +29,7 @@ export interface SynonymSnapshotQuestion extends BaseSnapshotQuestion {
   promptText: string;
   correctText: string;
   distractors: string[];
+  verified?: boolean;
 }
 
 export interface SpellingSnapshotQuestion extends BaseSnapshotQuestion {
@@ -36,6 +37,7 @@ export interface SpellingSnapshotQuestion extends BaseSnapshotQuestion {
   contextSentence: string;
   correctText: string;
   distractors: string[];
+  verified?: boolean;
 }
 
 export interface DefinitionSnapshotQuestion extends BaseSnapshotQuestion {
@@ -43,6 +45,7 @@ export interface DefinitionSnapshotQuestion extends BaseSnapshotQuestion {
   definitionText: string;
   correctText: string;
   distractors: string[];
+  verified?: boolean;
 }
 
 export type SnapshotQuestion =

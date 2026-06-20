@@ -55,6 +55,14 @@ export function AdminLayout(
                 </li>
                 <li>
                   <a
+                    href="/admin/tickets"
+                    class={activeTab === "tickets" ? "active" : ""}
+                  >
+                    🎟️ Ticket Builder
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="/admin/history"
                     class={activeTab === "history" ? "active" : ""}
                   >
