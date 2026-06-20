@@ -7,6 +7,7 @@ JSX.
 
 - Deno `2.8.3`
 - Docker with the Compose plugin
+- [hk](https://hk.jdx.dev/) for git hooks
 - Zed with Dev Containers support when developing inside a container
 
 ## Local Development
@@ -71,6 +72,22 @@ deno task --env-file=.env db:generate # create a Drizzle migration
 deno task --env-file=.env db:migrate  # apply migrations
 deno task e2e            # Playwright E2E
 ```
+
+## Git Hooks
+
+Install hk to enable pre-commit and pre-push hooks:
+
+```bash
+brew install hk   # macOS
+hk install
+```
+
+Pre-commit runs `deno fmt --check` and `deno lint` on staged files. Pre-push
+runs `deno task check` (type-check) and `deno task test`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Production
 
