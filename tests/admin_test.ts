@@ -7,6 +7,7 @@ import type {
   AdminHistoryLoader,
   AdminWordsLoader,
 } from "../routes/admin.tsx";
+import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import type { TestRun } from "../ui/pages/AdminDashboardPage.tsx";
 
 const mockDashboardLoader: AdminDashboardLoader = {
@@ -97,6 +98,77 @@ const mockWordsLoader: AdminWordsLoader = {
       return { success: true };
     }
     return { success: false, error: "Word not found." };
+  },
+
+  async importWords(fileContent, configJson, dryRun) {
+    await Promise.resolve();
+    // Simulate Drizzle DB mapping onto mockWordsList
+    const mockDb = {
+      select() {
+        return {
+          from() {
+            return mockWordsList;
+          },
+        };
+      },
+      insert() {
+        return {
+          values(data: { value: string; isReal: boolean; difficulty: number }) {
+            return {
+              returning() {
+                if (!dryRun) {
+                  const nextId = mockWordsList.reduce(
+                    (max, w) => (w.id > max ? w.id : max),
+                    0,
+                  ) + 1;
+                  const newWord = {
+                    id: nextId,
+                    value: data.value,
+                    isReal: data.isReal,
+                    difficulty: data.difficulty,
+                  };
+                  mockWordsList.push(newWord);
+                  return [{ id: nextId }];
+                }
+                return [{ id: 0 }];
+              },
+            };
+          },
+        };
+      },
+      update() {
+        return {
+          set(
+            updateData: {
+              value?: string;
+              isReal?: boolean;
+              difficulty?: number;
+            },
+          ) {
+            return {
+              where() {
+                if (!dryRun) {
+                  const word = mockWordsList.find((w) =>
+                    w.value === updateData.value
+                  );
+                  if (word) {
+                    if (updateData.isReal !== undefined) {
+                      word.isReal = updateData.isReal;
+                    }
+                    if (updateData.difficulty !== undefined) {
+                      word.difficulty = updateData.difficulty;
+                    }
+                  }
+                }
+              },
+            };
+          },
+        };
+      },
+    };
+    const rawConfig = JSON.parse(configJson);
+    const config = validateConfig(rawConfig);
+    return await executeImport(mockDb, fileContent, config, dryRun);
   },
 };
 
@@ -847,4 +919,57 @@ Deno.test("VER-ADMIN-ROUTE: GET /admin/history/export exports CSV and JSON forma
     headers: { "Cookie": `admin_session=${sessionId}` },
   });
   assertEquals(invalidRes.status, 400);
+});
+
+Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/import routes", async () => {
+  resetMockData();
+  const sessionId = await createAdminSession();
+
+  // 1. GET route
+  const getRes = await app.request("/admin/words/import", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+  const getBody = await getRes.text();
+  assertEquals(getRes.status, 200);
+  assertStringIncludes(getBody, "Import Words");
+  assertStringIncludes(getBody, "Source File");
+
+  // 2. POST route with valid CSV file (dry run)
+  const config = {
+    format: "csv",
+    delimiter: ",",
+    hasHeader: true,
+    fields: {
+      value: { from: "word" },
+      isReal: {
+        from: "real_flag",
+        map: { "y": true, "n": false },
+        default: true,
+      },
+      difficulty: { from: "level", default: 3 },
+    },
+  };
+
+  const fileContent = "word,real_flag,level\nkiwi,y,4\nmango,n,2";
+
+  const formData = new FormData();
+  const fileBlob = new Blob([fileContent], { type: "text/csv" });
+  formData.append("file", fileBlob, "test.csv");
+  formData.append("config", JSON.stringify(config));
+  formData.append("dryRun", "true");
+
+  const postRes = await app.request("/admin/words/import", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+    },
+    body: formData,
+  });
+
+  const postBody = await postRes.text();
+  assertEquals(postRes.status, 200);
+  assertStringIncludes(postBody, "Dry run completed successfully");
+  assertStringIncludes(postBody, "Import Results");
+  // Check count "2" is shown in inserted result block
+  assertStringIncludes(postBody, "2");
 });

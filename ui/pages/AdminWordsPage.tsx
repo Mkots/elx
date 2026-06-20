@@ -63,13 +63,23 @@ export function AdminWordsPage({
           <h3 style="margin: 0; font-size: 1.25rem;">
             Vocabulary Words ({totalCount})
           </h3>
-          <a
-            href="/admin/words/new"
-            role="button"
-            style="margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839;"
-          >
-            ➕ Add Word
-          </a>
+          <div style="display: inline-flex; gap: 0.5rem;">
+            <a
+              href="/admin/words/import"
+              role="button"
+              class="outline"
+              style="margin: 0; font-weight: 700; border-color: var(--pico-muted-color); color: var(--pico-color);"
+            >
+              📥 Import Words
+            </a>
+            <a
+              href="/admin/words/new"
+              role="button"
+              style="margin: 0; font-weight: 700; background: var(--pico-primary); color: #2d2839;"
+            >
+              ➕ Add Word
+            </a>
+          </div>
         </div>
 
         {/* Filter bar */}

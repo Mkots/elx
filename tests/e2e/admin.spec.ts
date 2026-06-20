@@ -324,4 +324,84 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     // Wait for the URL/page to update with orderBy=score
     await expect(page).toHaveURL(/orderBy=score/);
   });
+
+  test("Import Words CSV via Admin UI (Dry run & Real run)", async ({ page }) => {
+    // 1. Write temporary CSV import file to disk
+    const tempCsvPath = "./tests/e2e/temp_import.csv";
+    const importWordValue = `imp_${testId}`;
+    Deno.writeTextFileSync(
+      tempCsvPath,
+      `word,real_flag,level\n${importWordValue},y,4`,
+    );
+
+    try {
+      // 2. Login
+      await page.goto("/admin/login");
+      await page.locator('input[name="username"]').fill(username);
+      await page.locator('input[name="password"]').fill(password);
+      await page.getByRole("button", { name: /sign in/i }).click();
+
+      // 3. Navigate to Import Words page
+      await page.goto("/admin/words");
+      await page.getByRole("button", { name: /import words/i }).click();
+      await expect(page).toHaveURL("/admin/words/import");
+
+      // 4. Fill in Config mapping
+      const config = {
+        format: "csv",
+        delimiter: ",",
+        hasHeader: true,
+        fields: {
+          value: { from: "word" },
+          isReal: {
+            from: "real_flag",
+            map: { "y": true, "n": false },
+            default: true,
+          },
+          difficulty: { from: "level", default: 3 },
+        },
+      };
+      await page.locator('textarea[name="config"]').fill(
+        JSON.stringify(config),
+      );
+
+      // 5. Select the file
+      const absolutePath = Deno.realPathSync(tempCsvPath);
+      await page.locator('input[name="file"]').setInputFiles(absolutePath);
+
+      // 6. Run Dry run (checkbox is checked by default)
+      const dryRunCheckbox = page.locator('input[name="dryRun"]');
+      await expect(dryRunCheckbox).toBeChecked();
+      await page.getByRole("button", { name: /run import/i }).click();
+
+      // 7. Verify dry run results
+      await expect(page.locator("h4", { hasText: "Import Results" }))
+        .toBeVisible();
+      await expect(page.locator(".alert-success")).toContainText(
+        "Dry run completed successfully",
+      );
+
+      // 8. Uncheck Dry run for a real import
+      await page.locator('input[name="file"]').setInputFiles(absolutePath);
+      await page.locator('input[name="dryRun"]').uncheck();
+      await page.getByRole("button", { name: /run import/i }).click();
+
+      // 9. Verify real import results
+      await expect(page.locator(".alert-success")).toContainText(
+        "Import completed successfully",
+      );
+
+      // 10. Check if the word is actually in Words Manager
+      await page.goto(`/admin/words?q=${importWordValue}`);
+      await expect(page.locator("tr", { hasText: importWordValue }))
+        .toBeVisible();
+    } finally {
+      // Clean up temp file
+      try {
+        Deno.removeSync(tempCsvPath);
+      } catch {
+        // ignore if already removed
+      }
+    }
+  });
 });
