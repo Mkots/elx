@@ -4,9 +4,12 @@ type AdminLayoutProps = {
   children: Child;
   title: string;
   activeTab?: string;
+  htmx?: boolean;
 };
 
-export function AdminLayout({ children, title, activeTab }: AdminLayoutProps) {
+export function AdminLayout(
+  { children, title, activeTab, htmx = false }: AdminLayoutProps,
+) {
   return (
     <html lang="en" data-theme="dark">
       <head>
@@ -16,6 +19,7 @@ export function AdminLayout({ children, title, activeTab }: AdminLayoutProps) {
         <title>{title} | ELX Admin</title>
         <link rel="stylesheet" href="/static/pico.min.css" />
         <link rel="stylesheet" href="/static/app.css" />
+        {htmx && <script src="/static/htmx.min.js" defer></script>}
       </head>
       <body class="admin-body">
         <div class="admin-layout">

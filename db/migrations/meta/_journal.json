@@ -15,6 +15,13 @@
       "when": 1781644281000,
       "tag": "0001_add_test_stage_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781953465672,
+      "tag": "0002_medical_expediter",
+      "breakpoints": true
     }
   ]
 }

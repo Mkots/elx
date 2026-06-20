@@ -1,6 +1,6 @@
 import { type Context, Hono } from "@hono/hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, ne, or, sql } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
 import {
   definitions,
@@ -20,6 +20,11 @@ import { AdminChallengesPage } from "../ui/pages/AdminChallengesPage.tsx";
 import { AdminChallengeEditPage } from "../ui/pages/AdminChallengeEditPage.tsx";
 import { AdminHistoryPage } from "../ui/pages/AdminHistoryPage.tsx";
 import { AdminWordsImportPage } from "../ui/pages/AdminWordsImportPage.tsx";
+import {
+  AdminWordsReviewCard,
+  AdminWordsReviewEmpty,
+  AdminWordsReviewPage,
+} from "../ui/pages/AdminWordsReviewPage.tsx";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import { getKv } from "../session.ts";
 
@@ -103,6 +108,100 @@ export interface AdminWordsLoader {
     errors: { line: number; reason: string }[];
   }>;
 }
+
+export interface AdminReviewLoader {
+  getNextUnreviewed(
+    afterId?: number,
+  ): Promise<typeof words.$inferSelect | null>;
+  skipWord(id: number): Promise<typeof words.$inferSelect | null>;
+  reviewWord(
+    id: number,
+    data: { value: string; isReal: boolean; difficulty: number },
+  ): Promise<void>;
+  progress(): Promise<{ reviewed: number; total: number; remaining: number }>;
+}
+
+export const databaseAdminReviewLoader: AdminReviewLoader = {
+  async getNextUnreviewed(afterId?: number) {
+    const { client, db } = createDatabase();
+    try {
+      if (afterId !== undefined) {
+        const nextWords = await db
+          .select()
+          .from(words)
+          .where(and(eq(words.reviewed, false), gt(words.id, afterId)))
+          .orderBy(words.id)
+          .limit(1);
+        if (nextWords.length > 0) {
+          return nextWords[0];
+        }
+      }
+      const firstWords = await db
+        .select()
+        .from(words)
+        .where(eq(words.reviewed, false))
+        .orderBy(words.id)
+        .limit(1);
+      return firstWords[0] || null;
+    } finally {
+      await client.end();
+    }
+  },
+
+  async skipWord(id: number) {
+    return await this.getNextUnreviewed(id);
+  },
+
+  async reviewWord(id, { value, isReal, difficulty }) {
+    const trimmedVal = value.trim().toLowerCase();
+    if (!trimmedVal) {
+      throw new Error("Word value cannot be empty");
+    }
+    if (difficulty < 1 || difficulty > 5) {
+      throw new Error("Difficulty must be between 1 and 5");
+    }
+
+    const { client, db } = createDatabase();
+    try {
+      const existing = await db
+        .select()
+        .from(words)
+        .where(and(eq(words.value, trimmedVal), ne(words.id, id)))
+        .limit(1);
+      if (existing.length > 0) {
+        throw new Error(`Word '${trimmedVal}' already exists`);
+      }
+
+      await db
+        .update(words)
+        .set({
+          value: trimmedVal,
+          isReal,
+          difficulty,
+          reviewed: true,
+          reviewedAt: new Date(),
+        })
+        .where(eq(words.id, id));
+    } finally {
+      await client.end();
+    }
+  },
+
+  async progress() {
+    const { client, db } = createDatabase();
+    try {
+      const allWords = await db
+        .select()
+        .from(words);
+      const total = allWords.length;
+      const reviewed = allWords.filter((w) => w.reviewed).length;
+      const remaining = total - reviewed;
+      return { reviewed, total, remaining };
+    } finally {
+      await client.end();
+    }
+  },
+};
 
 export const databaseAdminWordsLoader: AdminWordsLoader = {
   async listWords({ search, difficulty, isReal, page, limit }) {
@@ -597,6 +696,7 @@ export function createAdminRoute(
   wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
   challengesLoader: AdminChallengesLoader = databaseAdminChallengesLoader,
   historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
+  reviewLoader: AdminReviewLoader = databaseAdminReviewLoader,
 ) {
   const route = new Hono();
 
@@ -656,7 +756,13 @@ export function createAdminRoute(
   // GET /admin (Dashboard)
   route.get("/", async (context) => {
     const stats = await dashboardLoader.getDashboardStats();
-    return context.html(AdminDashboardPage(stats));
+    const reviewProg = await reviewLoader.progress();
+    return context.html(
+      AdminDashboardPage({
+        ...stats,
+        unreviewedCount: reviewProg.remaining,
+      }),
+    );
   });
 
   // GET /admin/words
@@ -795,6 +901,91 @@ export function createAdminRoute(
         }),
       );
     }
+  });
+
+  // GET /admin/words/review
+  route.get("/words/review", async (context) => {
+    const word = await reviewLoader.getNextUnreviewed();
+    const prog = await reviewLoader.progress();
+
+    let cardHtml;
+    if (!word) {
+      cardHtml = AdminWordsReviewEmpty();
+    } else {
+      cardHtml = AdminWordsReviewCard({
+        word,
+        reviewed: prog.reviewed,
+        total: prog.total,
+        remaining: prog.remaining,
+      });
+    }
+
+    return context.html(AdminWordsReviewPage({ cardHtml }));
+  });
+
+  // POST /admin/words/review/:id (Confirm & Next)
+  route.post("/words/review/:id", async (context) => {
+    const id = Number(context.req.param("id"));
+    const body = await context.req.parseBody();
+    const value = (body.value || "") as string;
+    const isReal = body.isReal === "on" || body.isReal === "true";
+    const difficulty = Number(body.difficulty);
+
+    try {
+      await reviewLoader.reviewWord(id, { value, isReal, difficulty });
+
+      // Load next card
+      const word = await reviewLoader.getNextUnreviewed(id);
+      const prog = await reviewLoader.progress();
+
+      if (!word) {
+        return context.html(AdminWordsReviewEmpty());
+      }
+
+      return context.html(
+        AdminWordsReviewCard({
+          word,
+          reviewed: prog.reviewed,
+          total: prog.total,
+          remaining: prog.remaining,
+        }),
+      );
+    } catch (err) {
+      // Re-render the current card with validation error
+      const prog = await reviewLoader.progress();
+      const currentWord = await wordsLoader.getWord(id);
+      const errMsg = err instanceof Error ? err.message : String(err);
+
+      return context.html(
+        AdminWordsReviewCard({
+          word: currentWord || { id, value, isReal, difficulty },
+          reviewed: prog.reviewed,
+          total: prog.total,
+          remaining: prog.remaining,
+          error: errMsg,
+        }),
+      );
+    }
+  });
+
+  // POST /admin/words/review/:id/skip (Skip & Next)
+  route.post("/words/review/:id/skip", async (context) => {
+    const id = Number(context.req.param("id"));
+    const word = await reviewLoader.skipWord(id);
+    const prog = await reviewLoader.progress();
+
+    if (!word) {
+      return context.html(AdminWordsReviewEmpty());
+    }
+
+    return context.html(
+      AdminWordsReviewCard({
+        word,
+        reviewed: prog.reviewed,
+        total: prog.total,
+        remaining: prog.remaining,
+      }),
+    );
   });
 
   // GET /admin/words/:id/edit
