@@ -30,7 +30,7 @@ function createStore(): Stage1SessionStore & {
   };
 }
 
-Deno.test("GET /stage/1 returns HTML with word grid", async () => {
+Deno.test("VER-STAGE1-ROUTE: GET /stage/1 returns HTML with word grid", async () => {
   const words = makeWords(60);
   const app = createApp({ stage1WordLoader: createLoader(words) });
 
@@ -47,7 +47,7 @@ Deno.test("GET /stage/1 returns HTML with word grid", async () => {
   assertStringIncludes(body, words[59].value);
 });
 
-Deno.test("GET /stage/1 renders a form that POSTs to /stage/1", async () => {
+Deno.test("VER-STAGE1-ROUTE: GET /stage/1 renders a form that POSTs to /stage/1", async () => {
   const app = createApp({ stage1WordLoader: createLoader() });
 
   const response = await app.request("/stage/1");
@@ -60,7 +60,7 @@ Deno.test("GET /stage/1 renders a form that POSTs to /stage/1", async () => {
   assertStringIncludes(body, 'type="submit"');
 });
 
-Deno.test("POST /stage/1 saves selection and redirects to /stage/2", async () => {
+Deno.test("VER-STAGE1-ROUTE: POST /stage/1 saves selection and redirects to /stage/2", async () => {
   const store = createStore();
   const app = createApp({
     stage1WordLoader: createLoader(),
@@ -88,7 +88,7 @@ Deno.test("POST /stage/1 saves selection and redirects to /stage/2", async () =>
   assertEquals(store.calls[0].wordIds, [1, 3, 5]);
 });
 
-Deno.test("POST /stage/1 creates a new session cookie when none present", async () => {
+Deno.test("VER-STAGE1-ROUTE: POST /stage/1 creates a new session cookie when none present", async () => {
   const store = createStore();
   const app = createApp({
     stage1WordLoader: createLoader(),
@@ -109,7 +109,7 @@ Deno.test("POST /stage/1 creates a new session cookie when none present", async 
   assertEquals(store.calls[0].wordIds, []);
 });
 
-Deno.test("POST /stage/1 handles empty selection (no words checked)", async () => {
+Deno.test("VER-STAGE1-ROUTE: POST /stage/1 handles empty selection (no words checked)", async () => {
   const store = createStore();
   const app = createApp({
     stage1WordLoader: createLoader(),

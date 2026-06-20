@@ -1,7 +1,7 @@
 import { app } from "../app.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 
-Deno.test("GET / returns server-rendered HTML", async () => {
+Deno.test("VER-APP-ROUTE: GET / returns server-rendered HTML", async () => {
   const response = await app.request("/");
   const body = await response.text();
 
@@ -10,7 +10,7 @@ Deno.test("GET / returns server-rendered HTML", async () => {
   assertStringIncludes(body, "ELX Vocabulary Assessment");
 });
 
-Deno.test("GET /health returns service status", async () => {
+Deno.test("VER-APP-ROUTE: GET /health returns service status", async () => {
   const response = await app.request("/health");
 
   assertEquals(response.status, 200);

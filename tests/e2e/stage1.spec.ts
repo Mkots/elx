@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("stage 1 renders word grid with checkboxes", async ({ page }) => {
+test("VER-STAGE1-E2E: stage 1 renders word grid with checkboxes", async ({ page }) => {
   await page.goto("/stage/1");
 
   await expect(
@@ -12,7 +12,7 @@ test("stage 1 renders word grid with checkboxes", async ({ page }) => {
   expect(await checkboxes.count()).toBeGreaterThan(0);
 });
 
-test("stage 1 form submits and redirects to stage 2", async ({ page }) => {
+test("VER-STAGE1-E2E: stage 1 form submits and redirects to stage 2", async ({ page }) => {
   await page.goto("/stage/1");
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
@@ -25,7 +25,7 @@ test("stage 1 form submits and redirects to stage 2", async ({ page }) => {
   await expect(page).toHaveURL("/stage/2");
 });
 
-test("stage 1 sets sessionId cookie on submit", async ({ page }) => {
+test("VER-STAGE1-E2E: stage 1 sets sessionId cookie on submit", async ({ page }) => {
   await page.goto("/stage/1");
   await page.getByRole("button", { name: /next/i }).click();
 
@@ -37,7 +37,7 @@ test("stage 1 sets sessionId cookie on submit", async ({ page }) => {
   expect(session?.sameSite).toBe("Lax");
 });
 
-test("stage 1 is accessible without JavaScript", async ({ browser }) => {
+test("VER-STAGE1-E2E: stage 1 is accessible without JavaScript", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
 

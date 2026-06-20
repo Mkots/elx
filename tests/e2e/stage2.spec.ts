@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("stage 2 renders one verification card after stage 1 submission", async ({ page }) => {
+test("VER-STAGE2-E2E: stage 2 renders one verification card after stage 1 submission", async ({ page }) => {
   await page.goto("/stage/1");
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
@@ -17,7 +17,7 @@ test("stage 2 renders one verification card after stage 1 submission", async ({ 
   await expect(page.locator(".verification-progress")).toBeVisible();
 });
 
-test("stage 2 shows Know and Don't know buttons", async ({ page }) => {
+test("VER-STAGE2-E2E: stage 2 shows Know and Don't know buttons", async ({ page }) => {
   await page.goto("/stage/1");
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
@@ -30,7 +30,7 @@ test("stage 2 shows Know and Don't know buttons", async ({ page }) => {
   await expect(page.getByRole("button", { name: /don't know/i })).toBeVisible();
 });
 
-test("stage 2 advances one htmx card at a time", async ({ page }) => {
+test("VER-STAGE2-E2E: stage 2 advances one htmx card at a time", async ({ page }) => {
   await page.goto("/stage/1");
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
@@ -47,7 +47,7 @@ test("stage 2 advances one htmx card at a time", async ({ page }) => {
   await expect(page.locator(".word-value")).not.toHaveText(firstWord ?? "");
 });
 
-test("stage 2 result page shows score and truthfulness", async ({ page }) => {
+test("VER-STAGE2-E2E: stage 2 result page shows score and truthfulness", async ({ page }) => {
   await page.goto("/stage/1");
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
@@ -61,7 +61,7 @@ test("stage 2 result page shows score and truthfulness", async ({ page }) => {
   await expect(page.locator(".truthfulness-progress")).toBeVisible();
 });
 
-test("stage 2 is accessible without JavaScript", async ({ browser }) => {
+test("VER-STAGE2-E2E: stage 2 is accessible without JavaScript", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
 
@@ -81,7 +81,7 @@ test("stage 2 is accessible without JavaScript", async ({ browser }) => {
   await context.close();
 });
 
-test("/result redirects to /stage/2 after stage 1 but before stage 2", async ({ page }) => {
+test("VER-STAGE2-E2E: /result redirects to /stage/2 after stage 1 but before stage 2", async ({ page }) => {
   await page.goto("/stage/1");
   await page.locator('.word-grid input[type="checkbox"]').nth(0).check();
   await page.getByRole("button", { name: /next/i }).click();

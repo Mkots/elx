@@ -6,23 +6,23 @@ import {
 } from "../scripts/seed_meanings.ts";
 import { assert, assertEquals } from "@std/assert";
 
-Deno.test("cleanDefinition collapses whitespace and trims", () => {
+Deno.test("VER-SEED-MEANINGS: cleanDefinition collapses whitespace and trims", () => {
   assertEquals(
     cleanDefinition("  a   small\n  domestic   animal  "),
     "a small domestic animal",
   );
 });
 
-Deno.test("isUsableDefinition accepts reasonable definitions", () => {
+Deno.test("VER-SEED-MEANINGS: isUsableDefinition accepts reasonable definitions", () => {
   assert(isUsableDefinition("a small domestic carnivore kept as a pet", "cat"));
 });
 
-Deno.test("isUsableDefinition rejects too short or too long text", () => {
+Deno.test("VER-SEED-MEANINGS: isUsableDefinition rejects too short or too long text", () => {
   assert(!isUsableDefinition("a pet", "cat"), "too short");
   assert(!isUsableDefinition("x".repeat(241), "cat"), "too long");
 });
 
-Deno.test("isUsableDefinition rejects definitions revealing the word", () => {
+Deno.test("VER-SEED-MEANINGS: isUsableDefinition rejects definitions revealing the word", () => {
   assert(
     !isUsableDefinition("a cat is a small domestic carnivore", "cat"),
     "exact word leaks the answer",
@@ -33,7 +33,7 @@ Deno.test("isUsableDefinition rejects definitions revealing the word", () => {
   );
 });
 
-Deno.test("extractDefinition returns the first usable definition", () => {
+Deno.test("VER-SEED-MEANINGS: extractDefinition returns the first usable definition", () => {
   const entries: DictionaryEntry[] = [
     {
       word: "kitten",
@@ -55,7 +55,7 @@ Deno.test("extractDefinition returns the first usable definition", () => {
   );
 });
 
-Deno.test("extractDefinition returns null when nothing fits", () => {
+Deno.test("VER-SEED-MEANINGS: extractDefinition returns null when nothing fits", () => {
   const entries: DictionaryEntry[] = [
     { word: "cat", meanings: [{ definitions: [{ definition: "a cat" }] }] },
     { word: "cat", meanings: [{ definitions: [{}] }] },
@@ -64,6 +64,6 @@ Deno.test("extractDefinition returns null when nothing fits", () => {
   assertEquals(extractDefinition(entries, "cat"), null);
 });
 
-Deno.test("extractDefinition tolerates missing meanings and definitions", () => {
+Deno.test("VER-SEED-MEANINGS: extractDefinition tolerates missing meanings and definitions", () => {
   assertEquals(extractDefinition([{ word: "cat" }], "cat"), null);
 });

@@ -1,14 +1,14 @@
 import { wordSeeds } from "../scripts/seed_words.ts";
 import { assert, assertEquals } from "@std/assert";
 
-Deno.test("seed words contain no duplicate values", () => {
+Deno.test("VER-SEED-WORDS: seed words contain no duplicate values", () => {
   const values = wordSeeds.map((word) => word.value);
   const unique = new Set(values);
 
   assertEquals(unique.size, values.length, "duplicate word values found");
 });
 
-Deno.test("seed words are lowercase and non-empty", () => {
+Deno.test("VER-SEED-WORDS: seed words are lowercase and non-empty", () => {
   for (const word of wordSeeds) {
     assert(word.value.length > 0, "empty word value");
     assertEquals(
@@ -19,7 +19,7 @@ Deno.test("seed words are lowercase and non-empty", () => {
   }
 });
 
-Deno.test("seed words have difficulty in range 1-5", () => {
+Deno.test("VER-SEED-WORDS: seed words have difficulty in range 1-5", () => {
   for (const word of wordSeeds) {
     assert(
       Number.isInteger(word.difficulty) &&
@@ -30,7 +30,7 @@ Deno.test("seed words have difficulty in range 1-5", () => {
   }
 });
 
-Deno.test("seed words include both real words and pseudowords", () => {
+Deno.test("VER-SEED-WORDS: seed words include both real words and pseudowords", () => {
   const realCount = wordSeeds.filter((word) => word.isReal).length;
   const pseudoCount = wordSeeds.filter((word) => !word.isReal).length;
 

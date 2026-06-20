@@ -49,7 +49,7 @@ function createLoader(
   };
 }
 
-Deno.test("GET /health/seeds/words returns seeded words", async () => {
+Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/words returns seeded words", async () => {
   const app = createApp({ seedVerificationLoader: createLoader() });
   const response = await app.request("/health/seeds/words");
 
@@ -64,7 +64,7 @@ Deno.test("GET /health/seeds/words returns seeded words", async () => {
   });
 });
 
-Deno.test("GET /health/seeds/synonyms returns synonym challenges", async () => {
+Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/synonyms returns synonym challenges", async () => {
   const app = createApp({ seedVerificationLoader: createLoader() });
   const response = await app.request("/health/seeds/synonyms");
 
@@ -84,7 +84,7 @@ Deno.test("GET /health/seeds/synonyms returns synonym challenges", async () => {
   });
 });
 
-Deno.test("GET /health/seeds/spelling returns spelling challenges", async () => {
+Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/spelling returns spelling challenges", async () => {
   const app = createApp({ seedVerificationLoader: createLoader() });
   const response = await app.request("/health/seeds/spelling");
 
@@ -103,7 +103,7 @@ Deno.test("GET /health/seeds/spelling returns spelling challenges", async () => 
   });
 });
 
-Deno.test("GET /health/seeds/meanings returns meaning challenges", async () => {
+Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/meanings returns meaning challenges", async () => {
   const app = createApp({ seedVerificationLoader: createLoader() });
   const response = await app.request("/health/seeds/meanings");
 
@@ -122,7 +122,7 @@ Deno.test("GET /health/seeds/meanings returns meaning challenges", async () => {
   });
 });
 
-Deno.test("seed verification routes propagate errors through app handler", async () => {
+Deno.test("VER-SEED-VERIFICATION-ROUTE: seed verification routes propagate errors through app handler", async () => {
   const app = createApp({
     seedVerificationLoader: createLoader({
       loadWords: () => Promise.reject(new Error("db offline")),
