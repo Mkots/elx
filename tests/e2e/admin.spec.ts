@@ -301,12 +301,26 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     await expect(page.locator("h2")).toContainText("Ticket Composition Config");
 
     // 3. Fill in settings
+    await page.locator('input[name="realCount"]').fill("30");
+    await page.locator('input[name="pseudoCount"]').fill("15");
+    await page.locator('input[name="difficulty1Count"]').fill("8");
+    await page.locator('input[name="difficulty2Count"]').fill("10");
+    await page.locator('input[name="difficulty3Count"]').fill("10");
+    await page.locator('input[name="difficulty4Count"]').fill("9");
+    await page.locator('input[name="difficulty5Count"]').fill("8");
     await page.locator('input[name="synonymsCount"]').fill("5");
     await page.locator('input[name="spellingCount"]').fill("5");
     await page.locator('input[name="definitionCount"]').fill("5");
 
     // 4. Submit form
     await page.getByRole("button", { name: /save configuration/i }).click();
+
+    // Check if error alert is shown and throw it
+    const errorAlert = page.locator(".alert-error");
+    if (await errorAlert.isVisible()) {
+      const errorText = await errorAlert.textContent();
+      throw new Error(`Validation failed with error: ${errorText}`);
+    }
 
     // 5. Verify success alert is shown
     await expect(page.locator(".alert-success")).toContainText(
