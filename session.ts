@@ -102,3 +102,23 @@ export async function loadStage2Result(
   const entry = await kv.get<Stage2Result>(stage2ResultKey(sessionId));
   return entry.value;
 }
+
+function ticketIdKey(sessionId: string): Deno.KvKey {
+  return ["session", sessionId, "ticket_id"];
+}
+
+export async function saveSessionTicketId(
+  kv: Deno.Kv,
+  sessionId: string,
+  ticketId: number,
+): Promise<void> {
+  await kv.set(ticketIdKey(sessionId), ticketId);
+}
+
+export async function loadSessionTicketId(
+  kv: Deno.Kv,
+  sessionId: string,
+): Promise<number | null> {
+  const entry = await kv.get<number>(ticketIdKey(sessionId));
+  return entry.value;
+}

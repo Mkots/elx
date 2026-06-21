@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("VER-STAGE2-E2E: stage 2 renders one verification card after stage 1 submission", async ({ page }) => {
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -18,7 +19,8 @@ test("VER-STAGE2-E2E: stage 2 renders one verification card after stage 1 submis
 });
 
 test("VER-STAGE2-E2E: stage 2 shows Know and Don't know buttons", async ({ page }) => {
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -31,7 +33,8 @@ test("VER-STAGE2-E2E: stage 2 shows Know and Don't know buttons", async ({ page 
 });
 
 test("VER-STAGE2-E2E: stage 2 advances one htmx card at a time", async ({ page }) => {
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -48,7 +51,8 @@ test("VER-STAGE2-E2E: stage 2 advances one htmx card at a time", async ({ page }
 });
 
 test("VER-STAGE2-E2E: stage 2 result page shows score and truthfulness", async ({ page }) => {
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -65,7 +69,8 @@ test("VER-STAGE2-E2E: stage 2 is accessible without JavaScript", async ({ browse
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
 
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -82,7 +87,8 @@ test("VER-STAGE2-E2E: stage 2 is accessible without JavaScript", async ({ browse
 });
 
 test("VER-STAGE2-E2E: /result redirects to /stage/2 after stage 1 but before stage 2", async ({ page }) => {
-  await page.goto("/stage/1");
+  await page.goto("/");
+  await page.getByRole("button", { name: /start assessment/i }).click();
   await page.locator('.word-grid input[type="checkbox"]').nth(0).check();
   await page.getByRole("button", { name: /next/i }).click();
   await expect(page).toHaveURL("/stage/2");

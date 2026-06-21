@@ -1,7 +1,7 @@
 import { Hono } from "@hono/hono";
 import { serveStatic } from "@hono/hono/deno";
 import { healthRoute } from "./routes/health.ts";
-import { homeRoute } from "./routes/home.ts";
+import { createHomeRoute, type HomeTicketLoader } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
 import { createResultRoute, type ResultSessionStore } from "./routes/result.ts";
 import {
@@ -11,12 +11,12 @@ import {
 import {
   createStage1Route,
   type Stage1SessionStore,
-  type Stage1WordLoader,
+  type Stage1TicketLoader,
 } from "./routes/stage1.ts";
 import {
   createStage2Route,
   type Stage2SessionStore,
-  type Stage2WordLoader,
+  type Stage2TicketLoader,
 } from "./routes/stage2.ts";
 import {
   type AdminDashboardLoader,
@@ -29,10 +29,11 @@ import {
 } from "./routes/admin/index.ts";
 
 interface CreateAppOptions {
+  homeTicketLoader?: HomeTicketLoader;
   seedVerificationLoader?: SeedVerificationLoader;
-  stage1WordLoader?: Stage1WordLoader;
+  stage1TicketLoader?: Stage1TicketLoader;
   stage1SessionStore?: Stage1SessionStore;
-  stage2WordLoader?: Stage2WordLoader;
+  stage2TicketLoader?: Stage2TicketLoader;
   stage2SessionStore?: Stage2SessionStore;
   resultSessionStore?: ResultSessionStore;
   adminDashboardLoader?: AdminDashboardLoader;
@@ -48,7 +49,7 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.use("*", requestLogger);
   app.use("/static/*", serveStatic({ root: "./" }));
-  app.route("/", homeRoute);
+  app.route("/", createHomeRoute(options.homeTicketLoader));
   app.route("/health", healthRoute);
   app.route(
     "/health/seeds",
@@ -56,11 +57,11 @@ export function createApp(options: CreateAppOptions = {}) {
   );
   app.route(
     "/stage/1",
-    createStage1Route(options.stage1WordLoader, options.stage1SessionStore),
+    createStage1Route(options.stage1TicketLoader, options.stage1SessionStore),
   );
   app.route(
     "/stage/2",
-    createStage2Route(options.stage2WordLoader, options.stage2SessionStore),
+    createStage2Route(options.stage2TicketLoader, options.stage2SessionStore),
   );
   app.route("/result", createResultRoute(options.resultSessionStore));
   app.route(

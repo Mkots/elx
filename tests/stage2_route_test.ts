@@ -1,35 +1,51 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
-import type { Stage2SessionStore, Stage2WordLoader } from "../routes/stage2.ts";
+import type { tickets } from "../db/schema.ts";
+import type {
+  Stage2SessionStore,
+  Stage2TicketLoader,
+} from "../routes/stage2.ts";
 
-type Word = { id: number; value: string; isReal: boolean };
+const mockTicket: typeof tickets.$inferSelect = {
+  id: 42,
+  code: "ELX-T-0042",
+  status: "published",
+  title: "Mock Ticket",
+  notes: "Notes",
+  questions: [
+    { type: "verification", wordText: "apple", isReal: true },
+    { type: "verification", wordText: "blurp", isReal: false },
+    { type: "verification", wordText: "chair", isReal: true },
+  ],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
-function makeWords(): Word[] {
-  return [
-    { id: 1, value: "apple", isReal: true },
-    { id: 2, value: "blurp", isReal: false },
-    { id: 3, value: "chair", isReal: true },
-  ];
-}
-
-function createLoader(wordList = makeWords()): Stage2WordLoader {
+function createLoader(): Stage2TicketLoader {
   return {
-    loadWords: (_ids) => Promise.resolve(wordList),
+    getTicketById: (id) => {
+      if (id === 42) return Promise.resolve(mockTicket);
+      return Promise.resolve(null);
+    },
   };
 }
 
 function createStore(
-  wordIds: number[] = [1, 2, 3],
+  wordIds: number[] = [0, 1, 2],
 ): Stage2SessionStore & {
   answers: Record<string, boolean>;
-  savedResults: Array<
-    { sessionId: string; result: { score: number; truthfulness: number } }
-  >;
+  savedResults: Array<{
+    sessionId: string;
+    result: { score: number; truthfulness: number };
+    ticketId: number;
+  }>;
 } {
   const answers: Record<string, boolean> = {};
-  const savedResults: Array<
-    { sessionId: string; result: { score: number; truthfulness: number } }
-  > = [];
+  const savedResults: Array<{
+    sessionId: string;
+    result: { score: number; truthfulness: number };
+    ticketId: number;
+  }> = [];
   return {
     answers,
     loadStage2Answers: () => Promise.resolve({ ...answers }),
@@ -39,17 +55,18 @@ function createStore(
       answers[String(wordId)] = known;
       return Promise.resolve();
     },
-    saveStage2Result(sessionId, result) {
-      savedResults.push({ sessionId, result });
+    saveStage2Result(sessionId, result, ticketId) {
+      savedResults.push({ sessionId, result, ticketId });
       return Promise.resolve();
     },
+    loadSessionTicketId: () => Promise.resolve(42),
   };
 }
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when no session cookie", async () => {
   const store = createStore();
   const app = createApp({
-    stage2WordLoader: createLoader(),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
@@ -62,7 +79,7 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when no session 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when word selection is empty", async () => {
   const store = createStore([]);
   const app = createApp({
-    stage2WordLoader: createLoader(),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
@@ -75,10 +92,9 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when word select
 });
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verification card", async () => {
-  const words = makeWords();
-  const store = createStore([1, 2, 3]);
+  const store = createStore([0, 1, 2]);
   const app = createApp({
-    stage2WordLoader: createLoader(words),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
@@ -90,6 +106,7 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verificati
   assertEquals(response.status, 200);
   assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
   assertStringIncludes(body, "Stage 2: Verification");
+  assertStringIncludes(body, "ELX-T-0042");
   assertStringIncludes(body, "Word 1 of 3");
   assertStringIncludes(body, 'class="verification-progress"');
   assertStringIncludes(body, 'value="1"');
@@ -101,9 +118,9 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verificati
 });
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders htmx Know/Don't know buttons", async () => {
-  const store = createStore([1, 2, 3]);
+  const store = createStore([0, 1, 2]);
   const app = createApp({
-    stage2WordLoader: createLoader(),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
@@ -124,7 +141,7 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders htmx Know/Don't know buttons",
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session cookie", async () => {
   const store = createStore();
   const app = createApp({
-    stage2WordLoader: createLoader(),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
@@ -139,15 +156,14 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and returns next card", async () => {
-  const store = createStore([1, 2, 3]);
-  const words = makeWords();
+  const store = createStore([0, 1, 2]);
   const app = createApp({
-    stage2WordLoader: createLoader(words),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
   const body = new URLSearchParams();
-  body.append("wordId", "1");
+  body.append("wordId", "0");
   body.append("answer", "know");
 
   const response = await app.request("/stage/2", {
@@ -162,23 +178,22 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and return
   const responseBody = await response.text();
 
   assertEquals(response.status, 200);
-  assertEquals(store.answers["1"], true);
+  assertEquals(store.answers["0"], true);
   assertStringIncludes(responseBody, "Word 2 of 3");
   assertStringIncludes(responseBody, "blurp");
   assertEquals(responseBody.includes("apple"), false);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and sends HX redirect", async () => {
-  const store = createStore([1, 2]);
-  store.answers["1"] = true;
-  const words = makeWords().slice(0, 2);
+  const store = createStore([0, 1]);
+  store.answers["0"] = true;
   const app = createApp({
-    stage2WordLoader: createLoader(words),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
   const body = new URLSearchParams();
-  body.append("wordId", "2");
+  body.append("wordId", "1");
   body.append("answer", "dont_know");
 
   const response = await app.request("/stage/2", {
@@ -196,20 +211,20 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and 
   assertEquals(store.savedResults.length, 1);
   assertEquals(store.savedResults[0].result.score, 1);
   assertEquals(store.savedResults[0].result.truthfulness, 100);
+  assertEquals(store.savedResults[0].ticketId, 42);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /result", async () => {
-  const store = createStore([1, 2, 3]);
-  const words = makeWords();
+  const store = createStore([0, 1, 2]);
   const app = createApp({
-    stage2WordLoader: createLoader(words),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
   const body = new URLSearchParams();
-  body.append("word_1", "know");
-  body.append("word_2", "dont_know");
-  body.append("word_3", "know");
+  body.append("word_0", "know");
+  body.append("word_1", "dont_know");
+  body.append("word_2", "know");
 
   const response = await app.request("/stage/2", {
     method: "POST",
@@ -224,22 +239,22 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /resu
   assertEquals(response.headers.get("location"), "/result");
   assertEquals(store.savedResults.length, 1);
   assertEquals(store.savedResults[0].sessionId, "test-session");
-  assertEquals(store.savedResults[0].result.score, 2); // 2 real - 0 pseudo (blurp not known)
+  assertEquals(store.savedResults[0].result.score, 2); // 2 real - 0 pseudo
   assertEquals(store.savedResults[0].result.truthfulness, 100);
+  assertEquals(store.savedResults[0].ticketId, 42);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseudoword is claimed", async () => {
-  const store = createStore([1, 2, 3]);
-  const words = makeWords();
+  const store = createStore([0, 1, 2]);
   const app = createApp({
-    stage2WordLoader: createLoader(words),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
   const body = new URLSearchParams();
-  body.append("word_1", "know");
-  body.append("word_2", "know"); // pseudoword claimed
-  body.append("word_3", "dont_know");
+  body.append("word_0", "know");
+  body.append("word_1", "know"); // pseudoword claimed
+  body.append("word_2", "dont_know");
 
   const response = await app.request("/stage/2", {
     method: "POST",
@@ -256,9 +271,9 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseud
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 sets session cookie in response", async () => {
-  const store = createStore([1]);
+  const store = createStore([0]);
   const app = createApp({
-    stage2WordLoader: createLoader([{ id: 1, value: "word", isReal: true }]),
+    stage2TicketLoader: createLoader(),
     stage2SessionStore: store,
   });
 
