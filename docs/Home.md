@@ -15,6 +15,8 @@ offline-generated question bank (PostgreSQL), minimal client JavaScript.
 ## Quick Start
 
 - [Project Idea](idea.md) — what ELX does and how it works
+- [Business Process Flow](business-process.md) — end-to-end ticket-driven
+  workflow
 - [Technology Stack](tech-details/tech-stack.md) — Deno + Hono + PostgreSQL
   architecture
 - [Word Import Configuration](import-config.md) — mapping configuration guide

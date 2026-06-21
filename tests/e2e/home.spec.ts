@@ -8,13 +8,13 @@ test("VER-HOME-E2E: home page renders heading and start button", async ({ page }
   ).toBeVisible();
 
   await expect(
-    page.getByRole("button", { name: /start test/i }),
+    page.getByRole("button", { name: /start assessment/i }),
   ).toBeVisible();
 });
 
 test("VER-HOME-E2E: start test button navigates to stage 1", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /start test/i }).click();
+  await page.getByRole("button", { name: /start assessment/i }).click();
   await expect(page).toHaveURL("/stage/1");
 });
 

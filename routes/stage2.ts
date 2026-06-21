@@ -1,10 +1,12 @@
 import { Hono } from "@hono/hono";
-import { inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDatabase } from "../db/client.ts";
-import { testHistory, words } from "../db/schema.ts";
+import { testHistory, tickets } from "../db/schema.ts";
+import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
 import {
   getKv,
+  loadSessionTicketId,
   loadStage2Answers,
   loadWordSelection,
   parseSessionId,
@@ -15,10 +17,8 @@ import {
 } from "../session.ts";
 import { Stage2Card, Stage2Page } from "../ui/pages/Stage2Page.tsx";
 
-export interface Stage2WordLoader {
-  loadWords(
-    ids: number[],
-  ): Promise<{ id: number; value: string; isReal: boolean }[]>;
+export interface Stage2TicketLoader {
+  getTicketById(id: number): Promise<typeof tickets.$inferSelect | null>;
 }
 
 export interface Stage2SessionStore {
@@ -32,18 +32,21 @@ export interface Stage2SessionStore {
   saveStage2Result(
     sessionId: string,
     result: { score: number; truthfulness: number },
+    ticketId: number,
   ): Promise<void>;
+  loadSessionTicketId(sessionId: string): Promise<number | null>;
 }
 
-export const databaseStage2WordLoader: Stage2WordLoader = {
-  async loadWords(ids) {
-    if (ids.length === 0) return [];
+export const databaseStage2TicketLoader: Stage2TicketLoader = {
+  async getTicketById(id) {
     const { client, db } = createDatabase();
     try {
-      return await db
-        .select({ id: words.id, value: words.value, isReal: words.isReal })
-        .from(words)
-        .where(inArray(words.id, ids));
+      const result = await db
+        .select()
+        .from(tickets)
+        .where(eq(tickets.id, id))
+        .limit(1);
+      return result[0] || null;
     } finally {
       await client.end();
     }
@@ -63,7 +66,11 @@ export const kvStage2SessionStore: Stage2SessionStore = {
     const kv = await getKv();
     await saveStage2Answer(kv, sessionId, wordId, known);
   },
-  async saveStage2Result(sessionId, result) {
+  async loadSessionTicketId(sessionId) {
+    const kv = await getKv();
+    return await loadSessionTicketId(kv, sessionId);
+  },
+  async saveStage2Result(sessionId, result, ticketId) {
     const kv = await getKv();
     await saveStage2Result(kv, sessionId, result);
 
@@ -73,6 +80,7 @@ export const kvStage2SessionStore: Stage2SessionStore = {
         sessionId,
         score: result.score,
         truthfulness: result.truthfulness,
+        ticketId,
       });
     } finally {
       await client.end();
@@ -111,7 +119,7 @@ function isHtmxRequest(request: Request) {
 }
 
 export function createStage2Route(
-  loader: Stage2WordLoader = databaseStage2WordLoader,
+  loader: Stage2TicketLoader = databaseStage2TicketLoader,
   store: Stage2SessionStore = kvStage2SessionStore,
 ) {
   const route = new Hono();
@@ -122,19 +130,33 @@ export function createStage2Route(
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
-    const wordIds = await store.loadWordSelection(sessionId);
-    if (wordIds.length === 0) return context.redirect("/stage/1", 302);
+    const ticketId = await store.loadSessionTicketId(sessionId);
+    if (!ticketId) return context.redirect("/", 302);
+
+    const ticket = await loader.getTicketById(ticketId);
+    if (!ticket) return context.redirect("/", 302);
+
+    const selectedIndices = await store.loadWordSelection(sessionId);
+    if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
 
     const wordList = orderWordsBySelection(
-      await loader.loadWords(wordIds),
-      wordIds,
+      selectedIndices.map((idx) => {
+        const q = ticket.questions[idx] as VerificationSnapshotQuestion;
+        return {
+          id: idx,
+          value: q.wordText,
+          isReal: q.isReal,
+        };
+      }),
+      selectedIndices,
     );
+
     const answers = await store.loadStage2Answers(sessionId);
     const currentIndex = getNextWordIndex(wordList, answers);
 
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result);
+      await store.saveStage2Result(sessionId, result, ticketId);
       context.header("Set-Cookie", sessionCookie(sessionId));
       return context.redirect("/result", 302);
     }
@@ -144,6 +166,7 @@ export function createStage2Route(
         currentIndex,
         totalWords: wordList.length,
         word: wordList[currentIndex],
+        ticketCode: ticket.code,
       }),
     );
   });
@@ -154,19 +177,34 @@ export function createStage2Route(
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
-    const wordIds = await store.loadWordSelection(sessionId);
-    if (wordIds.length === 0) return context.redirect("/stage/1", 302);
+    const ticketId = await store.loadSessionTicketId(sessionId);
+    if (!ticketId) return context.redirect("/", 302);
+
+    const ticket = await loader.getTicketById(ticketId);
+    if (!ticket) return context.redirect("/", 302);
+
+    const selectedIndices = await store.loadWordSelection(sessionId);
+    if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
 
     const wordList = orderWordsBySelection(
-      await loader.loadWords(wordIds),
-      wordIds,
+      selectedIndices.map((idx) => {
+        const q = ticket.questions[idx] as VerificationSnapshotQuestion;
+        return {
+          id: idx,
+          value: q.wordText,
+          isReal: q.isReal,
+        };
+      }),
+      selectedIndices,
     );
 
     const form = await context.req.formData();
-    const submittedWordId = Number(form.get("wordId"));
+    const submittedWordId = form.get("wordId")
+      ? Number(form.get("wordId"))
+      : null;
     const submittedAnswer = form.get("answer");
 
-    if (!submittedWordId && submittedAnswer === null) {
+    if (submittedWordId === null && submittedAnswer === null) {
       const answers = Object.fromEntries(
         wordList.map((word) => [
           String(word.id),
@@ -174,15 +212,15 @@ export function createStage2Route(
         ]),
       );
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result);
+      await store.saveStage2Result(sessionId, result, ticketId);
 
       context.header("Set-Cookie", sessionCookie(sessionId));
       return context.redirect("/result", 302);
     }
 
-    const word = wordList.find((item) => item.id === submittedWordId);
     if (
-      !word || (submittedAnswer !== "know" && submittedAnswer !== "dont_know")
+      submittedWordId === null ||
+      (submittedAnswer !== "know" && submittedAnswer !== "dont_know")
     ) {
       return context.text("Invalid Stage 2 answer", 400);
     }
@@ -203,7 +241,7 @@ export function createStage2Route(
 
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result);
+      await store.saveStage2Result(sessionId, result, ticketId);
 
       if (isHtmxRequest(context.req.raw)) {
         context.header("HX-Redirect", "/result");
@@ -219,6 +257,7 @@ export function createStage2Route(
           currentIndex,
           totalWords: wordList.length,
           word: wordList[currentIndex],
+          ticketCode: ticket.code,
         }),
       );
     }

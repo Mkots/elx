@@ -9,6 +9,7 @@ type Stage2CardProps = {
   currentIndex: number;
   totalWords: number;
   word: Word;
+  ticketCode: string;
 };
 
 type Stage2PageProps = Stage2CardProps;
@@ -75,6 +76,9 @@ export function Stage2Page(props: Stage2PageProps) {
   return (
     <Layout title="ELX – Verification" htmx>
       <h1>Stage 2: Verification</h1>
+      <p style="margin-top: -10px; font-size: 0.875rem; color: var(--pico-muted-color); margin-bottom: 20px;">
+        Test Version: <strong>{props.ticketCode}</strong>
+      </p>
       <p>Confirm which words you truly know.</p>
       <Stage2Card {...props} />
     </Layout>
