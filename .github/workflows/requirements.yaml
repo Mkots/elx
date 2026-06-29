@@ -19,7 +19,7 @@ jobs:
 
       - name: Cache SARA binary
         id: sara-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /usr/local/cargo/bin/sara
           key: sara-${{ runner.os }}-${{ env.SARA_VERSION }}
