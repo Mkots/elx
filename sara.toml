@@ -1,0 +1,16 @@
+model_schema = "docs/requirements/model.yaml"
+
+[repositories]
+paths = [
+    "docs/requirements/solutions",
+    "docs/requirements/requirements",
+    "docs/requirements/decisions",
+    "docs/requirements/verifications",
+]
+
+[validation]
+strict_mode = true
+
+[output]
+colors = true
+emojis = true

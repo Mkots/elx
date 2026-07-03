@@ -241,6 +241,11 @@ Deno.test({
         // Clear existing active configs
         await db.update(ticketConfigs).set({ isActive: false });
 
+        // Delete any leftover config from aborted tests to avoid uniqueness violations
+        await db.delete(ticketConfigs).where(
+          eq(ticketConfigs.name, testConfigName),
+        );
+
         // Insert custom config matching seeded words
         const [cfg] = await db
           .insert(ticketConfigs)

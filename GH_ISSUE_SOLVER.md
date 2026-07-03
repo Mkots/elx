@@ -1,1 +1,0 @@
-skills/gh-issue-solver/SKILL.md

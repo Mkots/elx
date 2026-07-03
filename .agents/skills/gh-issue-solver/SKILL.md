@@ -17,7 +17,7 @@ this repository.
 3. **Preparation**:
    - Fetch issue details: `gh issue view <id>`.
    - Generate branch name:
-     `deno run -A skills/gh-issue-solver/scripts/issue_helper.ts --action branch-name --title "<title>" --number <id>`.
+     `deno run -A .agents/skills/gh-issue-solver/scripts/issue_helper.ts --action branch-name --title "<title>" --number <id>`.
    - Create and switch to branch: `git checkout -b <branch-name>`.
 4. **Implementation**:
    - Analyze the issue and create a plan.

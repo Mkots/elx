@@ -26,7 +26,6 @@ test-results/
 node_modules/
 
 # Editor / AI
-.claude/project-context.md
 *.swp
 *.swo
 *~
