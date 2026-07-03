@@ -27,14 +27,20 @@ deno task enrich ALL.clean.csv -o ALL.enriched.csv
   `conjunction`, `number`, `modal auxiliary`, `be-verb`, `do-verb`, `have-verb`,
   `interjection`, or `infinitive-to` are dropped — `enrich.ts` has no rabbits
   data for them. Rows tagged `noun`, `verb`, `adjective`, or `adverb` are kept.
-- **Normalization**: headwords are trimmed, double spaces collapsed, unicode
-  normalized to NFC.
+- **Multi-word headwords**: rows whose (slash-cut) headword contains whitespace
+  are dropped, e.g. `alarm clock`, `air force`.
+- **Hyphenated headwords**: rows whose headword contains a hyphen are dropped,
+  e.g. `brand-new`, `CD-ROM`.
+- **Abbreviations/acronyms**: rows whose headword contains a `.` (`a.m.`, `Mr.`)
+  or is an all-caps acronym (`DVD`, `ID`, `OK`) are dropped.
+- **Lowercasing**: surviving headwords are lowercased, trimmed, double spaces
+  collapsed, unicode normalized to NFC.
 - **Guard**: throws on an empty headword or a POS tag it doesn't recognize
   (neither kept nor dropped), so unexpected input in future files fails loudly
   instead of being silently mis-processed.
-- **Reporting**: prints removed/changed counts (broken down by POS) to stderr.
-  Pass `--report <path>` to also write the dropped rows, with a `reason` column,
-  to their own CSV so nothing is lost silently.
+- **Reporting**: prints removed/changed counts (broken down by POS and by shape
+  rule) to stderr. Pass `--report <path>` to also write the dropped rows, with a
+  `reason` column, to their own CSV so nothing is lost silently.
 
 ```bash
 deno run --allow-read --allow-write scripts/clean.ts <input.csv> \
@@ -55,5 +61,5 @@ deno run --allow-read --allow-write scripts/enrich.ts <input.csv> \
 ### Checking the result
 
 `enrich.ts` prints `Done: N words, enriched M, not found K` to stderr. Cleaning
-first should push the notFound rate from roughly 8% down to about 2% (the
+first should push the notFound rate from roughly 8% down to about 1-2% (the
 remainder being words genuinely absent from the WordNet data).

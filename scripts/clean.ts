@@ -4,8 +4,8 @@
  *
  * Cleans a word-list CSV before it goes into enrich.ts: trims slash-variant
  * headwords to their first form (`adviser/advisor` -> `adviser`), drops rows
- * whose POS is a function-word tag enrich.ts has no rabbits data for, and
- * normalizes whitespace/unicode.
+ * whose POS is a function-word tag enrich.ts has no rabbits data for, drops
+ * multi-word/hyphenated/abbreviation headwords, and lowercases the rest.
  *
  * Example:
  *   deno run --allow-read --allow-write scripts/clean.ts \
@@ -33,14 +33,35 @@ const DROPPED_POS = new Set([
   "infinitive-to",
 ]);
 
-/** Cuts a slash-variant headword to its first form and normalizes it. */
-export function cleanHeadword(raw: string): string {
-  return raw.split("/")[0].trim().replace(/\s+/g, " ").normalize("NFC");
+/** Cuts a slash-variant headword to its first form, e.g. `adviser/advisor` -> `adviser`. */
+export function cutSlashVariant(raw: string): string {
+  return raw.split("/")[0].trim();
+}
+
+export function isMultiWord(headword: string): boolean {
+  return /\s/.test(headword);
+}
+
+export function isHyphenated(headword: string): boolean {
+  return headword.includes("-");
+}
+
+/** Dotted shorthand (`a.m.`, `Mr.`) or an all-caps acronym (`CD`, `DVD`). */
+export function isAbbreviation(headword: string): boolean {
+  if (headword.includes(".")) return true;
+  const letters = headword.replace(/[^A-Za-z]/g, "");
+  return letters.length >= 2 && letters === letters.toUpperCase();
+}
+
+/** Lowercases and normalizes whitespace/unicode of an already-vetted headword. */
+export function normalizeHeadword(headword: string): string {
+  return headword.trim().toLowerCase().replace(/\s+/g, " ").normalize("NFC");
 }
 
 export interface CleanStats {
   headwordChanged: number;
   removedByPos: Record<string, number>;
+  removedByShape: Record<string, number>;
 }
 
 export interface CleanResult {
@@ -53,7 +74,13 @@ export function cleanRecords(records: Record<string, string>[]): CleanResult {
   const rows: Record<string, string>[] = [];
   const removed: Record<string, string>[] = [];
   const removedByPos: Record<string, number> = {};
+  const removedByShape: Record<string, number> = {};
   let headwordChanged = 0;
+
+  const dropShape = (rec: Record<string, string>, reason: string) => {
+    removedByShape[reason] = (removedByShape[reason] ?? 0) + 1;
+    removed.push({ ...rec, reason });
+  };
 
   for (const rec of records) {
     const pos = (rec.pos ?? "").trim();
@@ -74,12 +101,30 @@ export function cleanRecords(records: Record<string, string>[]): CleanResult {
       continue;
     }
 
-    const headword = cleanHeadword(originalHeadword);
+    const cut = cutSlashVariant(originalHeadword);
+    if (isMultiWord(cut)) {
+      dropShape(rec, "multi-word headword");
+      continue;
+    }
+    if (isHyphenated(cut)) {
+      dropShape(rec, "hyphenated headword");
+      continue;
+    }
+    if (isAbbreviation(cut)) {
+      dropShape(rec, "abbreviation/acronym");
+      continue;
+    }
+
+    const headword = normalizeHeadword(cut);
     if (headword !== originalHeadword) headwordChanged++;
     rows.push({ ...rec, headword });
   }
 
-  return { rows, removed, stats: { headwordChanged, removedByPos } };
+  return {
+    rows,
+    removed,
+    stats: { headwordChanged, removedByPos, removedByShape },
+  };
 }
 
 async function main() {
@@ -120,6 +165,9 @@ Options:
   console.error(`  rows removed: ${removed.length}`);
   for (const [pos, count] of Object.entries(stats.removedByPos)) {
     console.error(`    ${pos}: ${count}`);
+  }
+  for (const [reason, count] of Object.entries(stats.removedByShape)) {
+    console.error(`    ${reason}: ${count}`);
   }
 
   const outText = stringifyCsv(rows, { columns });
