@@ -51,7 +51,8 @@ deno run --allow-read --allow-write scripts/clean.ts <input.csv> \
 
 Looks up each headword (case-insensitively) in `scripts/magic-hat/rabbits/` and
 appends definition, synonyms, examples, pronunciation, and sense count. Rows it
-can't resolve are marked `notFound=true` instead of failing the run.
+can't resolve are dropped from the output entirely rather than failing the run —
+they're only visible in the stderr summary counts.
 
 ```bash
 deno run --allow-read --allow-write scripts/enrich.ts <input.csv> \
@@ -60,6 +61,8 @@ deno run --allow-read --allow-write scripts/enrich.ts <input.csv> \
 
 ### Checking the result
 
-`enrich.ts` prints `Done: N words, enriched M, not found K` to stderr. Cleaning
-first should push the notFound rate from roughly 8% down to about 1-2% (the
-remainder being words genuinely absent from the WordNet data).
+`enrich.ts` prints `Done: N words, enriched M, not found K` to stderr, and the
+output artifact contains exactly `M` rows (the `K` not-found words are dropped,
+not left in with a `notFound` flag). Cleaning first should push the not-found
+rate from roughly 8% down to about 1-2% (the remainder being words genuinely
+absent from the WordNet data).
