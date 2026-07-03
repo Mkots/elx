@@ -57,6 +57,7 @@
     "seed:e2e": "deno task db:migrate && deno task seed:words",
     "seed:words": "deno run --allow-net --allow-env scripts/seed_words.ts",
     "import:words": "deno run --allow-net --allow-env --allow-read scripts/import_words.ts",
+    "clean": "deno run --allow-read --allow-write scripts/clean.ts",
     "enrich": "deno run --allow-read --allow-write scripts/enrich.ts --format csv",
     "db:generate": "deno run -A npm:drizzle-kit@0.31.10 generate",
     "db:migrate": "deno run -A npm:drizzle-kit@0.31.10 migrate",
