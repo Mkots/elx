@@ -24,6 +24,12 @@ offline-generated question bank (PostgreSQL), minimal client JavaScript.
 - [Requirements Index](requirements/README.md) — SARA-managed requirements with
   traceability
 
+## Offline Tooling
+
+- [Word List Scripts](https://github.com/Mkots/elx/blob/main/scripts/README.md)
+  — `clean.ts` -> `enrich.ts` pipeline for preparing the LexTALE word bank from
+  CSV word lists
+
 ## Documentation
 
 ### [Roadmap](roadmap/index.md)

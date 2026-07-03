@@ -110,7 +110,6 @@ interface EnrichedSense {
 interface EnrichedRow {
   headword: string;
   pos: string;
-  notFound?: boolean;
   pronunciation: string[];
   senseCount: number;
   senses: EnrichedSense[];
@@ -300,7 +299,6 @@ function toCsvRow(
   out.examples = first ? first.examples.join(" | ") : "";
   out.pronunciation = row.pronunciation.join(", ");
   out.senseCount = String(row.senseCount);
-  out.notFound = row.notFound ? "true" : "";
   return out;
 }
 
@@ -366,11 +364,12 @@ Options:
       console.error(`  ...processed ${processed} (found ${found})`);
     }
 
+    if (!ok) continue;
+
     results.push({
       ...rec,
       headword,
       pos,
-      ...(ok ? {} : { notFound: true }),
       pronunciation,
       senseCount: senses.length,
       senses,
@@ -394,7 +393,6 @@ Options:
       "examples",
       "pronunciation",
       "senseCount",
-      "notFound",
     ];
     outText = stringifyCsv(rows, { columns });
   } else {
