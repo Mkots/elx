@@ -1,108 +1,134 @@
-# ELX Project Context
+# ELX — Agent Guide
 
-## Что это
+ELX is a web app for vocabulary size assessment based on the LexTALE
+methodology.
 
-ELX — веб-приложение для оценки словарного запаса на базе методики LexTALE.
-Стек: Deno + Hono + JSX (SSR) + Deno KV (сессии) + PostgreSQL (данные) + Drizzle
-ORM.
+**Stack**: Deno + Hono + JSX (SSR) + Deno KV (sessions) + PostgreSQL (data) +
+Drizzle ORM.
 
-## Архитектурные принципы
-
-- **SSR-only**: HTML рендерится сервером через Hono JSX. Минимум клиентского JS.
-- **GET/POST/302**: каждый стейдж — GET рендерит страницу, POST обрабатывает
-  форму и делает 302 redirect на следующий стейдж.
-- **Dependency injection**: роуты принимают интерфейсы `Loader` и `Store` — DB и
-  KV не вызываются напрямую в unit-тестах.
-- **Scoring на сервере**: клиент не участвует в подсчёте очков.
-
-## Стейдж-флоу (Ticket-driven)
-
-```
-GET  /             → главная страница, выбор опубликованного билета (или авто-билет)
-POST /stage/1/start → инициализирует сессию в KV с ticketId, redirect → /stage/1
-GET  /stage/1      → форма выбора слов (загружается из snapshot вопросов билета)
-POST /stage/1      → сохраняет wordIds (индексы) в KV, redirect → /stage/2
-GET  /stage/2      → карточки верификации по очереди через HTMX (загружаются из snapshot билета)
-POST /stage/2      → сохраняет ответ или финальный score в KV, пишет в test_history с ticket_id, redirect → /result
-GET  /result       → показывает score + truthfulness
-```
-
-Гарды:
-
-- `GET /stage/1` без sessionId или ticketId → redirect `/`
-- `GET /stage/2` без sessionId или с пустым wordIds → redirect `/stage/1`
-- `GET /result` без sessionId → redirect `/stage/1`
-- `GET /result` с sessionId но без stage2Result → redirect `/stage/2`
-
-## Структура файлов
-
-```
-app.ts                        — createApp() c DI-опциями для всех роутов
-main.ts                       — точка входа, запуск сервера
-session.ts                    — Deno KV: parseSessionId, sessionCookie,
-                                saveWordSelection, loadWordSelection,
-                                saveStage2Result, loadStage2Result, Stage2Result
-routes/
-  stage1.ts                   — GET/POST /stage/1, интерфейсы Stage1WordLoader, Stage1SessionStore
-  stage2.ts                   — GET/POST /stage/2, интерфейсы Stage2WordLoader, Stage2SessionStore
-  result.ts                   — GET /result, интерфейс ResultSessionStore
-  home.ts, health.ts, logger.ts, seed_verification.ts
-scoring/
-  lextale.ts                  — computeScore(WordAnswer[]) → { score, truthfulness }
-                                score = knownReal − knownPseudo
-                                truthfulness = knownReal/totalKnown * 100
-ui/
-  components/Layout.tsx, WordGrid.tsx
-  pages/HomePage.tsx, Stage1Page.tsx, Stage2Page.tsx, ResultPage.tsx
-db/
-  schema.ts                   — words(id,value,isReal,difficulty), synonyms, spellingChallenges, definitions, testHistory
-  client.ts                   — createDatabase() → { client, db }
-tests/
-  app_test.ts, session_test.ts
-  stage1_route_test.ts, stage2_route_test.ts, result_route_test.ts
-  lextale_scoring_test.ts
-  seed_*.ts, wiki_build_test.ts
-  e2e/home.spec.ts, stage1.spec.ts, stage2.spec.ts
-```
-
-## Сессии (Deno KV)
-
-| Ключ                                   | Значение                  | Описание                                               |
-| -------------------------------------- | ------------------------- | ------------------------------------------------------ |
-| `["session", id, "ticket_id"]`         | `number`                  | ID активного билета (`tickets.id`)                     |
-| `["session", id, "stage1_selections"]` | `number[]`                | Индексы слов, выбранных в стейдже 1                    |
-| `["session", id, "stage2_answers"]`    | `Record<string, boolean>` | Промежуточные ответы в стейдже 2 (map: index -> known) |
-| `["session", id, "stage2_result"]`     | `{score,truthfulness}`    | Результат верификации                                  |
-
-KV-путь задаётся через `DENO_KV_PATH` (в prod: `/data/kv`).
-
-## Алгоритм скоринга (lextale.ts)
-
-- **score** = (слова с isReal=true, отмеченные Know) − (слова с isReal=false,
-  отмеченные Know)
-- **truthfulness** = round(knownReal / totalKnown * 100), или 100 если никто не
-  отмечен
-
-## CI-задачи
+## Commands
 
 ```bash
-deno task ci          # fmt:check + lint + check + test:coverage
-deno task e2e         # Playwright e2e (нужен запущенный сервер + БД + seed)
-deno task seed:e2e    # db:migrate + seed:words (для e2e в CI)
-deno task start:e2e   # сервер для e2e с KV в .data/
+deno task ci          # fmt:check + lint + check + test:coverage — run before finishing any change
+deno task test        # unit/route tests only
+deno task dev         # dev server with --watch (needs DATABASE_URL)
+deno task e2e         # Playwright e2e (needs running server + DB + seed)
+deno task seed:e2e    # db:migrate + seed:words (prepares DB for e2e)
+deno task start:e2e   # server for e2e with KV stored in .data/
+deno task db:generate # drizzle-kit generate (after editing db/schema.ts)
+deno task db:migrate  # apply migrations
 ```
 
-e2e CI запускается в Docker-контейнере
-`mcr.microsoft.com/playwright:v1.61.0-noble` с сервисом PostgreSQL 17.
-Переменные окружения задаются в GitHub Secrets.
+- `deno task check` type-checks an explicit file list in `deno.json` — when
+  adding a new top-level directory with TS/TSX files, add it to the `check`
+  task.
+- e2e CI runs in the `mcr.microsoft.com/playwright:v1.61.0-noble` container with
+  a PostgreSQL 17 service; env vars come from GitHub Secrets.
 
+## Architecture principles
 
-## Известные нюансы
+- **SSR-only**: HTML is rendered server-side via Hono JSX. Minimal client JS
+  (HTMX for Stage 2 cards).
+- **GET/POST/302**: each stage is a GET that renders the page and a POST that
+  handles the form and 302-redirects to the next stage.
+- **Dependency injection**: routes accept `Loader`/`Store` interfaces (e.g.
+  `Stage1WordLoader`, `Stage2SessionStore`), so unit tests never touch the DB or
+  KV directly. `createApp()` in `app.ts` is the composition root.
+- **Server-side scoring**: the client never participates in score computation.
 
-- `GET /stage/2` с пустым wordIds → redirect `/stage/1` (не `/stage/2`). E2e
-  тест должен выбрать хотя бы одно слово перед сабмитом Stage 1.
-- `deno.json check` includes `scoring/*.ts` — было добавлено при работе над
-  issue #15.
-- `Stage2Page` использует radio-кнопки (не чекбоксы) с default `checked` на
-  "Know". Form-поля: `name="word_<id>" value="know|dont_know"`.
-- `data-testid="score"` и `data-testid="truthfulness"` в ResultPage.tsx для e2e.
+## Test flow (ticket-driven)
+
+```
+GET  /              → home page, picks a published ticket
+POST /stage/1/start → creates KV session with ticketId, redirect → /stage/1
+GET  /stage/1       → word-selection form (words come from the ticket's question snapshot)
+POST /stage/1       → saves selected word indexes to KV, redirect → /stage/2
+GET  /stage/2       → verification cards served one-by-one via HTMX (from the ticket snapshot)
+POST /stage/2       → saves an answer or the final score to KV, writes test_history
+                      with ticket_id, redirect → /result
+GET  /result        → shows score + truthfulness
+```
+
+Guards:
+
+- `GET /stage/1` without sessionId or ticketId → redirect `/`
+- `GET /stage/2` without sessionId or with empty wordIds → redirect `/stage/1`
+- `GET /result` without sessionId → redirect `/stage/1`
+- `GET /result` with sessionId but no stage2Result → redirect `/stage/2`
+
+## Admin panel (`/admin`)
+
+- Cookie-based auth (`admin_session` in KV); credentials from `ADMIN_USERNAME` /
+  `ADMIN_PASSWORD` (both default to `admin`).
+- `routes/admin/index.ts` is the composition root: each concern (auth,
+  dashboard, words, review, tickets, ticket config, history) registers its
+  handlers on one shared Hono router behind `adminAuthMiddleware`.
+- Each concern has a DI loader interface in `routes/admin/loaders/` with a
+  `databaseAdmin*Loader` production implementation.
+- Ticket lifecycle: `draft → base → complete → published`. Only published
+  tickets are served to test takers. A ticket stores a frozen JSONB snapshot of
+  its questions (`SnapshotQuestion[]` in `db/schema.ts`), so later word edits
+  don't affect existing tickets.
+
+## File map
+
+```
+app.ts                — createApp() with DI options for all routes
+main.ts               — entry point, starts the server
+session.ts            — Deno KV helpers: parseSessionId, sessionCookie,
+                        saveWordSelection, saveStage2Result, ticket id, etc.
+routes/
+  home.ts, stage1.ts, stage2.ts, result.ts   — public test flow
+  health.ts, logger.ts, seed_verification.ts
+  admin/              — admin panel (see above); loaders/ for DI interfaces
+scoring/lextale.ts    — computeScore(WordAnswer[]) → { score, truthfulness }
+ui/
+  components/         — Layout, AdminLayout, WordGrid
+  pages/              — one TSX page per screen (public + Admin*)
+db/
+  schema.ts           — words, tickets (JSONB question snapshots),
+                        test_history, ticket_configs; SnapshotQuestion types
+  client.ts           — createDatabase() → { client, db }
+  migrations/         — drizzle-kit output
+scripts/              — seed_words, import_words, clean, enrich, build_wiki
+tests/                — *_test.ts unit/route tests; e2e/ Playwright specs
+docs/                 — business process, data model, requirements, roadmap
+```
+
+## Sessions (Deno KV)
+
+| Key                                    | Value                     | Purpose                                 |
+| -------------------------------------- | ------------------------- | --------------------------------------- |
+| `["session", id, "ticket_id"]`         | `number`                  | Active ticket id (`tickets.id`)         |
+| `["session", id, "stage1_selections"]` | `number[]`                | Word indexes selected in Stage 1        |
+| `["session", id, "stage2_answers"]`    | `Record<string, boolean>` | Interim Stage 2 answers (index → known) |
+| `["session", id, "stage2_result"]`     | `{score, truthfulness}`   | Final verification result               |
+| `["admin_session", id]`                | session object            | Admin auth session                      |
+
+KV path is set via `DENO_KV_PATH` (prod: `/data/kv`).
+
+## Scoring (`scoring/lextale.ts`)
+
+- **score** = (words with `isReal=true` marked Know) − (words with
+  `isReal=false` marked Know)
+- **truthfulness** = `round(knownReal / totalKnown * 100)`, or 100 when nothing
+  is marked Know
+
+## Environment variables
+
+`DATABASE_URL`, `DENO_KV_PATH`, `PORT`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`; wiki
+sync uses `WIKI_SOURCE_REPO_URL` / `WIKI_SOURCE_REVISION`.
+
+## Gotchas
+
+- `GET /stage/2` with empty wordIds redirects to `/stage/1`, not `/stage/2` —
+  e2e tests must select at least one word before submitting Stage 1.
+- `Stage2Page` uses radio buttons (not checkboxes) with "Know" checked by
+  default. Form fields: `name="word_<id>" value="know|dont_know"`.
+- `data-testid="score"` and `data-testid="truthfulness"` in `ResultPage.tsx` are
+  relied on by e2e tests.
+- The lockfile is frozen (`"lock": { "frozen": true }` in `deno.json`) —
+  dependency changes require deliberately regenerating `deno.lock`.
+- Synonyms/antonyms/definitions live as columns on `words` (not separate
+  tables); question content served to users comes from the ticket's JSONB
+  snapshot, not live word rows.
