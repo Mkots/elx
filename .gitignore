@@ -30,5 +30,6 @@ node_modules/
 *.swo
 *~
 .vscode/settings.json
+.agents/skills/gh-issue-solver/state.json
 
 scripts/magic-hat/

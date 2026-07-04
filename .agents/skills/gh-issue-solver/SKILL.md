@@ -1,46 +1,43 @@
 ---
 name: gh-issue-solver
-description: Automates the end-to-end workflow of resolving GitHub issues. Use this to list open issues, select one to work on, create a branch/PR, and implement the necessary changes.
-globs: ["**/*"]
-alwaysApply: false
+description: Automates the end-to-end workflow of resolving GitHub issues. Use this to list open issues, select one to work on, create a branch, implement the fix, and open a PR that closes the issue.
 ---
 
 # GitHub Issue Solver Skill
 
-This skill provides a semi-autonomous workflow for resolving GitHub issues in
-this repository.
+Semi-autonomous workflow for resolving GitHub issues in this repository.
 
 ## Workflow
 
-1. **Discovery**: List open issues using `gh issue list`.
-2. **Selection**: Prompt the user to choose an issue ID.
-3. **Preparation**:
+1. **Selection**:
+   - If the user already provided an issue number, skip to Preparation.
+   - Otherwise list open issues with `gh issue list` and ask the user to pick
+     one. Confirm the selected issue before starting work.
+2. **Preparation**:
    - Fetch issue details: `gh issue view <id>`.
-   - Generate branch name:
-     `deno run -A .agents/skills/gh-issue-solver/scripts/issue_helper.ts --action branch-name --title "<title>" --number <id>`.
-   - Create and switch to branch: `git checkout -b <branch-name>`.
-4. **Implementation**:
-   - Analyze the issue and create a plan.
-   - Execute the Plan-Act-Validate cycle.
-   - **Validation**: You MUST run `deno task ci` to ensure all tests, linting,
-     and formatting pass.
-5. **Submission**:
-   - Commit changes.
-   - Create a Pull Request: `gh pr create --fill`. The PR should automatically
-     close the issue (include "Closes #<id>" in the description if `--fill`
-     doesn't do it).
+   - Ensure the working tree is clean (`git status`); stop and ask the user how
+     to proceed if it isn't.
+   - Branch from the up-to-date default branch:
+     `git fetch origin <default-branch> && git checkout -b issue-<id>-<kebab-description> origin/<default-branch>`.
+3. **Implementation**:
+   - Analyze the issue, plan the change, implement it.
+   - **Validation**: run `deno task ci` (fmt:check + lint + check + tests) and
+     fix failures until it passes.
+4. **Submission**:
+   - Commit using the conventional commit format used in this repo (`feat:`,
+     `fix:`, `build(deps):`, ...).
+   - Push the branch: `git push -u origin <branch-name>`.
+   - Create the PR with an explicit title and body — do not rely on `--fill`, it
+     never adds issue links on its own:
+     `gh pr create --title "<conventional title>" --body "<summary>` + blank
+     line + `Closes #<id>"`.
 
 ## Standards
 
-- **Branch Naming**: Always use the format `issue-<number>-<description>`.
-- **Quality Gate**: Never create a PR if `deno task ci` fails.
-- **Semi-Autonomous**: Ask the user to confirm the selected issue before
-  starting, then work autonomously until the PR is ready or a major blocker is
-  encountered.
-
-## Commands
-
-- `gh issue list`: View open issues.
-- `gh issue view <id>`: Get details for a specific issue.
-- `deno task ci`: Run the full CI suite (fmt, lint, check, tests).
-- `gh pr create --fill`: Create a PR using metadata from the branch and issue.
+- **Branch naming**: `issue-<number>-<kebab-description>` — lowercase, digits
+  and hyphens only (e.g. `issue-42-fix-stage2-redirect`).
+- **Quality gate**: never create a PR if `deno task ci` fails.
+- **Issue linking**: the PR body must contain `Closes #<id>` so merging closes
+  the issue automatically.
+- **Semi-autonomous**: confirm the selected issue with the user, then work
+  autonomously until the PR is ready or a major blocker is encountered.
