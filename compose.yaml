@@ -6,12 +6,9 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      DENO_KV_PATH: /data/kv/elx.sqlite3
       ENVIRONMENT: production
       PORT: "8000"
       SENTRY_DSN: ${SENTRY_DSN:-}
-    volumes:
-      - kv_data:/data/kv
     depends_on:
       postgres:
         condition: service_healthy
@@ -78,5 +75,4 @@ services:
 volumes:
   caddy_config:
   caddy_data:
-  kv_data:
   postgres_data:

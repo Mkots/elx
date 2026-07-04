@@ -29,7 +29,6 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
-      DENO_KV_PATH: .data/elx.sqlite3
       DENO_DIR: .deno-cache
       PLAYWRIGHT_RETRIES: ${{ inputs.event_name == 'pull_request' && '1' || '2' }}
     steps:

@@ -22,8 +22,6 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-RUN mkdir -p /data/kv && chown -R deno:deno /data/kv
-
 USER deno
 
-CMD ["run", "--frozen", "--unstable-kv", "--allow-net=0.0.0.0:8000,postgres:5432", "--allow-env", "--allow-read=/app/static,/data/kv", "--allow-write=/data/kv", "main.ts"]
+CMD ["run", "--frozen", "--allow-net=0.0.0.0:8000,postgres:5432", "--allow-env", "--allow-read=/app/static,/app/.env", "--allow-write=/app/.data", "main.ts"]

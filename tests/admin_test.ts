@@ -1,5 +1,4 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
 import { defaultServices, type Services } from "../db/services.ts";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
@@ -436,8 +435,42 @@ const mockHistoryLoader: Services["history"] = {
   },
 };
 
+const mockAdminSessionRows = new Map<
+  string,
+  { id: string; username: string; createdAt: Date; expiresAt: Date }
+>();
+
+async function purgeMockAdminSessions(now = new Date()) {
+  await Promise.resolve();
+  for (const [id, session] of mockAdminSessionRows) {
+    if (session.expiresAt < now) mockAdminSessionRows.delete(id);
+  }
+}
+
+const mockAdminSessions: Services["adminSessions"] = {
+  purgeExpired: purgeMockAdminSessions,
+  async getAdminSession(sessionId) {
+    await purgeMockAdminSessions();
+    return mockAdminSessionRows.get(sessionId) ?? null;
+  },
+  async createAdminSession(sessionId, username, expiresAt) {
+    await Promise.resolve();
+    mockAdminSessionRows.set(sessionId, {
+      id: sessionId,
+      username,
+      createdAt: new Date(),
+      expiresAt,
+    });
+  },
+  async deleteAdminSession(sessionId) {
+    await Promise.resolve();
+    mockAdminSessionRows.delete(sessionId);
+  },
+};
+
 const mockServices: Services = {
   ...defaultServices,
+  adminSessions: mockAdminSessions,
   history: {
     ...defaultServices.history,
     getDashboardStats: mockDashboardLoader.getDashboardStats,
@@ -477,11 +510,12 @@ const app = createApp(mockServices);
 
 // Setup helper for authenticated session
 async function createAdminSession() {
-  const kv = await getKv();
   const sessionId = crypto.randomUUID();
-  await kv.set(["admin_session", sessionId], { username: "admin" }, {
-    expireIn: 60 * 1000,
-  });
+  await mockAdminSessions.createAdminSession(
+    sessionId,
+    "admin",
+    new Date(Date.now() + 60 * 1000),
+  );
   return sessionId;
 }
 
@@ -558,9 +592,8 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
     const sessionId = match ? match[1] : "";
     assertEquals(sessionId !== "", true);
 
-    const kv = await getKv();
-    const sessionEntry = await kv.get(["admin_session", sessionId]);
-    assertEquals(sessionEntry.value !== null, true);
+    const sessionEntry = await mockAdminSessions.getAdminSession(sessionId);
+    assertEquals(sessionEntry !== null, true);
 
     const authenticatedResponse = await app.request("/admin", {
       headers: { "Cookie": `admin_session=${sessionId}` },
@@ -586,12 +619,28 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
     assertEquals(logoutResponse.status, 302);
     assertEquals(logoutResponse.headers.get("location"), "/admin/login");
 
-    const deletedEntry = await kv.get(["admin_session", sessionId]);
-    assertEquals(deletedEntry.value, null);
+    const deletedEntry = await mockAdminSessions.getAdminSession(sessionId);
+    assertEquals(deletedEntry, null);
   } finally {
     Deno.env.delete("ADMIN_USERNAME");
     Deno.env.delete("ADMIN_PASSWORD");
   }
+});
+
+Deno.test("VER-ADMIN-AUTH: expired admin session redirects to login", async () => {
+  const sessionId = crypto.randomUUID();
+  await mockAdminSessions.createAdminSession(
+    sessionId,
+    "admin",
+    new Date(Date.now() - 60 * 1000),
+  );
+
+  const response = await app.request("/admin", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+
+  assertEquals(response.status, 302);
+  assertEquals(response.headers.get("location"), "/admin/login");
 });
 
 Deno.test("VER-ADMIN-AUTH: GET /admin/login returns 503 when env vars not set", async () => {

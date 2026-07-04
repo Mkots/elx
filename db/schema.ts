@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -90,17 +91,34 @@ export const testSessions = pgTable("test_sessions", {
   stage1Selection: jsonb("stage1_selection").$type<number[]>(),
 });
 
-export const testAnswers = pgTable("test_answers", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  sessionId: uuid("session_id").notNull().references(() => testSessions.id, {
-    onDelete: "cascade",
-  }),
-  questionIndex: integer("question_index").notNull(),
-  questionType: text("question_type").notNull(),
-  stage: integer("stage").notNull(),
-  answer: text("answer"),
-  isCorrect: boolean("is_correct"),
-  answeredAt: timestamp("answered_at").notNull().defaultNow(),
+export const testAnswers = pgTable(
+  "test_answers",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    sessionId: uuid("session_id").notNull().references(() => testSessions.id, {
+      onDelete: "cascade",
+    }),
+    questionIndex: integer("question_index").notNull(),
+    questionType: text("question_type").notNull(),
+    stage: integer("stage").notNull(),
+    answer: text("answer"),
+    isCorrect: boolean("is_correct"),
+    answeredAt: timestamp("answered_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("test_answers_session_stage_question_idx").on(
+      table.sessionId,
+      table.stage,
+      table.questionIndex,
+    ),
+  ],
+);
+
+export const adminSessions = pgTable("admin_sessions", {
+  id: uuid("id").primaryKey(),
+  username: text("username").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
 export const ticketConfigs = pgTable("ticket_configs", {

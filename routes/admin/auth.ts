@@ -1,7 +1,9 @@
 import type { Context, Hono } from "@hono/hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { getKv } from "../../session.ts";
+import type { Services } from "../../db/services.ts";
 import { LoginPage } from "../../ui/pages/LoginPage.tsx";
+
+type AdminSessionStore = Services["adminSessions"];
 
 // ---------------------------------------------------------------------------
 // Env-based credentials — no fallback to "admin"/"admin"
@@ -92,30 +94,31 @@ export function _loginAttemptsForTest(): Map<string, RateLimitEntry> {
 // ---------------------------------------------------------------------------
 
 /** Authentication middleware — applied to all /admin routes. */
-export async function adminAuthMiddleware(
-  context: Context,
-  next: () => Promise<void>,
-) {
-  const path = context.req.path;
-  // Exclude login endpoint from auth check
-  if (path === "/admin/login") {
-    return await next();
-  }
+export function createAdminAuthMiddleware(store: AdminSessionStore) {
+  return async function adminAuthMiddleware(
+    context: Context,
+    next: () => Promise<void>,
+  ) {
+    const path = context.req.path;
+    // Exclude login endpoint from auth check
+    if (path === "/admin/login") {
+      return await next();
+    }
 
-  const sessionId = getCookie(context, "admin_session");
-  if (!sessionId) {
-    return context.redirect("/admin/login");
-  }
+    const sessionId = getCookie(context, "admin_session");
+    if (!sessionId) {
+      return context.redirect("/admin/login");
+    }
 
-  const kv = await getKv();
-  const sessionEntry = await kv.get(["admin_session", sessionId]);
-  if (!sessionEntry.value) {
-    deleteCookie(context, "admin_session");
-    return context.redirect("/admin/login");
-  }
+    const session = await store.getAdminSession(sessionId);
+    if (!session) {
+      deleteCookie(context, "admin_session");
+      return context.redirect("/admin/login");
+    }
 
-  context.set("adminSession", sessionEntry.value);
-  await next();
+    context.set("adminSession", session);
+    await next();
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -123,9 +126,9 @@ export async function adminAuthMiddleware(
 // ---------------------------------------------------------------------------
 
 /** Registers the login/logout routes on the shared admin router. */
-export function registerAuthRoutes(route: Hono) {
+export function registerAuthRoutes(route: Hono, store: AdminSessionStore) {
   // GET /admin/login
-  route.get("/login", (context) => {
+  route.get("/login", async (context) => {
     const creds = getAdminCredentials();
     if (!creds) {
       return context.html(
@@ -134,9 +137,10 @@ export function registerAuthRoutes(route: Hono) {
       );
     }
     const sessionId = getCookie(context, "admin_session");
-    if (sessionId) {
+    if (sessionId && await store.getAdminSession(sessionId)) {
       return context.redirect("/admin");
     }
+    if (sessionId) deleteCookie(context, "admin_session");
     return context.html(LoginPage());
   });
 
@@ -174,11 +178,14 @@ export function registerAuthRoutes(route: Hono) {
       resetRateLimit(ip);
 
       const sessionId = crypto.randomUUID();
-      const kv = await getKv();
+      const now = new Date();
 
-      await kv.set(["admin_session", sessionId], { username: creds.username }, {
-        expireIn: 24 * 60 * 60 * 1000,
-      });
+      await store.purgeExpired(now);
+      await store.createAdminSession(
+        sessionId,
+        creds.username,
+        new Date(now.getTime() + 24 * 60 * 60 * 1000),
+      );
 
       setCookie(context, "admin_session", sessionId, {
         httpOnly: true,
@@ -197,8 +204,7 @@ export function registerAuthRoutes(route: Hono) {
   route.post("/logout", async (context) => {
     const sessionId = getCookie(context, "admin_session");
     if (sessionId) {
-      const kv = await getKv();
-      await kv.delete(["admin_session", sessionId]);
+      await store.deleteAdminSession(sessionId);
       deleteCookie(context, "admin_session");
     }
     return context.redirect("/admin/login");

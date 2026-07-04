@@ -1,5 +1,5 @@
 import { Hono } from "@hono/hono";
-import { adminAuthMiddleware, registerAuthRoutes } from "./auth.ts";
+import { createAdminAuthMiddleware, registerAuthRoutes } from "./auth.ts";
 import { registerDashboardRoutes } from "./dashboard.ts";
 import { registerWordsRoutes } from "./words.ts";
 import { registerReviewRoutes } from "./review.ts";
@@ -8,7 +8,7 @@ import { registerTicketConfigRoutes } from "./ticket_config.ts";
 import { registerTicketsRoutes } from "./tickets.ts";
 import { defaultServices, type Services } from "../../db/services.ts";
 
-export { adminAuthMiddleware };
+export { createAdminAuthMiddleware };
 
 /**
  * Composition root for the admin panel. Each concern (auth, dashboard, words,
@@ -19,9 +19,9 @@ export function createAdminRoute(services: Services = defaultServices) {
   const route = new Hono();
 
   // Apply middleware to all /admin routes
-  route.use("*", adminAuthMiddleware);
+  route.use("*", createAdminAuthMiddleware(services.adminSessions));
 
-  registerAuthRoutes(route);
+  registerAuthRoutes(route, services.adminSessions);
   registerDashboardRoutes(route, services);
   registerWordsRoutes(route, services);
   registerReviewRoutes(route, services);

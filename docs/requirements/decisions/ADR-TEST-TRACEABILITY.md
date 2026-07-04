@@ -23,7 +23,7 @@ traceability without heavy dependencies. Source:
 - **Unit/Integration:** built-in `deno test` with `@std/assert`,
   `@std/testing/mock`, `@std/testing/snapshot`, and `deno coverage`.
 - **Routes:** Hono `app.request()` without starting a server; use
-  `Deno.openKv(":memory:")` with Testcontainers/Postgres for state and
+  PostgreSQL-backed session helpers with Testcontainers/Postgres for state and
   `deno-dom` for HTML.
 - **E2E:** Playwright against a running server.
 - **Traceability:** **SARA** (Rust CLI), with requirements stored as Markdown

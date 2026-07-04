@@ -124,18 +124,18 @@ covered by fast pure unit tests; GET / has no side effects.
 
 ## Phase 4 — One storage + research-grade answer log (2–3 days)
 
-Motivation: KV+Postgres is two storage systems, two mental models, an
-`--unstable-kv` flag, and KV data is invisible to Adminer/SQL — bad for DX and
-for research. The owner plans to analyze _how_ people take the test; today only
-the final aggregate (`test_history.score/truthfulness`) survives.
+Motivation: KV+Postgres is two storage systems, two mental models, an old KV
+runtime flag, and KV data is invisible to Adminer/SQL — bad for DX and for
+research. The owner plans to analyze _how_ people take the test; today only the
+final aggregate (`test_history.score/truthfulness`) survives.
 
 - [ ] Add `test_sessions` table (id uuid, ticket_id, created_at, state jsonb or
       dedicated columns for selection) and `test_answers` table (session_id,
       question_index, stage, answer, is_correct, answered_at timestamptz,
       latency_ms nullable).
-- [ ] Rewrite `session.ts` against Postgres; delete Deno KV usage and the
-      `--unstable-kv` flags from tasks/Dockerfile. Admin sessions move to the
-      same table or a `admin_sessions` table.
+- [ ] Rewrite `session.ts` against Postgres; delete Deno KV usage and the old KV
+      runtime flags from tasks/Dockerfile. Admin sessions move to the same table
+      or a `admin_sessions` table.
 - [ ] Record every stage-1 selection and stage-2 answer as a `test_answers` row
       (timestamps give per-item latency for free; the gasparl/lextale reference
       implementation records per-item response times for exactly this reason).

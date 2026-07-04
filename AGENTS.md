@@ -120,17 +120,13 @@ tests/                — *_test.ts unit/route tests; e2e/ Playwright specs
 docs/                 — business process, data model, requirements, roadmap
 ```
 
-## Sessions (Deno KV)
+## Sessions (PostgreSQL)
 
-| Key                                    | Value                     | Purpose                                 |
-| -------------------------------------- | ------------------------- | --------------------------------------- |
-| `["session", id, "ticket_id"]`         | `number`                  | Active ticket id (`tickets.id`)         |
-| `["session", id, "stage1_selections"]` | `number[]`                | Word indexes selected in Stage 1        |
-| `["session", id, "stage2_answers"]`    | `Record<string, boolean>` | Interim Stage 2 answers (index → known) |
-| `["session", id, "stage2_result"]`     | `{score, truthfulness}`   | Final verification result               |
-| `["admin_session", id]`                | session object            | Admin auth session                      |
-
-KV path is set via `DENO_KV_PATH` (prod: `/data/kv`).
+| Table            | Columns / Value                                      | Purpose                                |
+| ---------------- | ---------------------------------------------------- | -------------------------------------- |
+| `test_sessions`  | `id`, `ticket_id`, `stage1_selection`, result fields | Test session state and final aggregate |
+| `test_answers`   | `session_id`, `question_index`, `stage`, `answer`    | Per-item answer state                  |
+| `admin_sessions` | `id`, `username`, `expires_at`                       | Admin auth sessions                    |
 
 ## Scoring (`scoring/lextale.ts`)
 
@@ -141,10 +137,10 @@ KV path is set via `DENO_KV_PATH` (prod: `/data/kv`).
 
 ## Environment variables
 
-`DATABASE_URL`, `DENO_KV_PATH`, `PORT`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
-`APP_ENV` (set to `production` to add `Secure` to session/admin cookies),
-`APP_ORIGIN` (optional; restricts CSRF's allowed origin behind a proxy); wiki
-sync uses `WIKI_SOURCE_REPO_URL` / `WIKI_SOURCE_REVISION`.
+`DATABASE_URL`, `PORT`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `APP_ENV` (set to
+`production` to add `Secure` to session/admin cookies), `APP_ORIGIN` (optional;
+restricts CSRF's allowed origin behind a proxy); wiki sync uses
+`WIKI_SOURCE_REPO_URL` / `WIKI_SOURCE_REVISION`.
 
 ## Gotchas
 
