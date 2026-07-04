@@ -433,6 +433,7 @@ Deno.test({
 Deno.test({
   name:
     "VER-ADMIN-TICKETS: generateBaseTicket retry loop 20th attempt success regression",
+  ignore: !Deno.env.get("DATABASE_URL"),
   fn: async () => {
     let configId = 0;
     let ticketId = 0;
