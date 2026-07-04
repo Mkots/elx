@@ -21,13 +21,15 @@ function loadEnvFile(path: string): Record<string, string> {
 
 const envFile = loadEnvFile(".env");
 const getEnv = (key: string) => Deno.env.get(key) ?? envFile[key] ?? "";
+const isCI = Deno.env.get("CI") === "true";
+const retries = Number(Deno.env.get("PLAYWRIGHT_RETRIES") ?? (isCI ? "2" : "0"));
 
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  forbidOnly: Deno.env.get("CI") === "true",
-  retries: Deno.env.get("CI") === "true" ? 2 : 0,
-  reporter: Deno.env.get("CI") === "true" ? "github" : "list",
+  forbidOnly: isCI,
+  retries,
+  reporter: isCI ? "github" : "list",
   use: {
     baseURL: "http://127.0.0.1:8000",
     trace: "on-first-retry",

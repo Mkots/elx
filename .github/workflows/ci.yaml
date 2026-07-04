@@ -17,25 +17,101 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  filter:
+    runs-on: ubuntu-24.04
+    outputs:
+      e2e: ${{ steps.changes.outputs.e2e }}
+      requirements: ${{ steps.changes.outputs.requirements }}
+      image: ${{ steps.changes.outputs.image }}
+      deploy: ${{ steps.changes.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect changed paths
+        id: changes
+        uses: dorny/paths-filter@v3.0.3
+        with:
+          filters: |
+            e2e:
+              - main.ts
+              - app.ts
+              - session.ts
+              - deps.ts
+              - deno.json
+              - deno.lock
+              - playwright.config.ts
+              - routes/**
+              - ui/**
+              - db/**
+              - scoring/**
+              - tests/e2e/**
+              - .github/workflows/ci.yaml
+              - .github/workflows/e2e.yaml
+            requirements:
+              - docs/requirements/**
+              - .github/workflows/ci.yaml
+              - .github/workflows/requirements.yaml
+            image:
+              - main.ts
+              - app.ts
+              - session.ts
+              - deps.ts
+              - deno.json
+              - deno.lock
+              - Dockerfile
+              - static/**
+              - db/**
+              - routes/**
+              - ui/**
+              - scoring/**
+              - .github/workflows/ci.yaml
+              - .github/workflows/image.yaml
+            deploy:
+              - compose.yaml
+              - deploy/Caddyfile
+              - .github/workflows/ci.yaml
+              - .github/workflows/deploy.yaml
+
   quality:
+    needs:
+      - filter
     uses: ./.github/workflows/quality.yaml
 
   e2e:
+    needs:
+      - filter
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      needs.filter.outputs.e2e == 'true'
     uses: ./.github/workflows/e2e.yaml
 
   requirements:
+    needs:
+      - filter
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      needs.filter.outputs.requirements == 'true'
     uses: ./.github/workflows/requirements.yaml
 
   image:
     needs:
+      - filter
       - quality
       - e2e
       - requirements
     if: >-
+      always() &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
-      startsWith(github.ref, 'refs/tags/v'))
+      startsWith(github.ref, 'refs/tags/v')) &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+      needs.filter.outputs.image == 'true' ||
+      needs.filter.outputs.deploy == 'true') &&
+      needs.quality.result == 'success' &&
+      (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') &&
+      (needs.requirements.result == 'success' ||
+      needs.requirements.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -43,12 +119,18 @@ jobs:
 
   deploy:
     needs:
+      - filter
       - image
     if: >-
+      always() &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
-      startsWith(github.ref, 'refs/tags/v'))
+      startsWith(github.ref, 'refs/tags/v')) &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+      needs.filter.outputs.image == 'true' ||
+      needs.filter.outputs.deploy == 'true') &&
+      needs.image.result == 'success'
     permissions:
       contents: read
       packages: read

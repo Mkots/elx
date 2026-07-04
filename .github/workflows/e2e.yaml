@@ -26,16 +26,18 @@ jobs:
     env:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
       DENO_KV_PATH: .data/elx.sqlite3
+      DENO_DIR: .deno-cache
+      PLAYWRIGHT_RETRIES: ${{ github.event_name == 'pull_request' && '1' || '2' }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Cache Deno
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.deno
-            .deno-cache
+          path: .deno-cache
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
 
       - name: Install unzip for setup-deno
         run: apt-get update && apt-get install -y --no-install-recommends unzip
@@ -51,7 +53,7 @@ jobs:
         run: deno task e2e
 
       - name: Upload Playwright report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
