@@ -1,20 +1,19 @@
+import type { Context } from "@hono/hono";
+import { getCookie, setCookie } from "hono/cookie";
+
 const COOKIE_NAME = "sessionId";
 
-export function parseSessionId(
-  cookieHeader: string | null,
-): string | undefined {
-  if (!cookieHeader) return undefined;
-  for (const part of cookieHeader.split(";")) {
-    const trimmed = part.trim();
-    if (trimmed.startsWith(`${COOKIE_NAME}=`)) {
-      return trimmed.slice(COOKIE_NAME.length + 1) || undefined;
-    }
-  }
-  return undefined;
+export function getSessionId(context: Context): string | undefined {
+  return getCookie(context, COOKIE_NAME);
 }
 
-export function sessionCookie(sessionId: string): string {
-  return `${COOKIE_NAME}=${sessionId}; HttpOnly; Path=/; SameSite=Lax`;
+export function setSessionCookie(context: Context, sessionId: string): void {
+  setCookie(context, COOKIE_NAME, sessionId, {
+    httpOnly: true,
+    path: "/",
+    sameSite: "Lax",
+    secure: Deno.env.get("APP_ENV") === "production",
+  });
 }
 
 let kvInstance: Deno.Kv | null = null;

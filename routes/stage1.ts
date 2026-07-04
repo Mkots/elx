@@ -1,6 +1,6 @@
 import { Hono } from "@hono/hono";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
-import { parseSessionId, sessionCookie } from "../session.ts";
+import { getSessionId, setSessionCookie } from "../session.ts";
 import { Stage1Page } from "../ui/pages/Stage1Page.tsx";
 import type { Services } from "../db/services.ts";
 
@@ -16,13 +16,12 @@ export function createStage1Route(services: Services) {
     await services.sessions.saveSessionTicketId(sessionId, ticketId);
     await services.sessions.saveWordSelection(sessionId, []);
 
-    context.header("Set-Cookie", sessionCookie(sessionId));
+    setSessionCookie(context, sessionId);
     return context.redirect("/stage/1", 302);
   });
 
   route.get("/", async (context) => {
-    const cookieHeader = context.req.raw.headers.get("cookie");
-    const sessionId = parseSessionId(cookieHeader);
+    const sessionId = getSessionId(context);
 
     if (!sessionId) return context.redirect("/", 302);
 
@@ -49,8 +48,7 @@ export function createStage1Route(services: Services) {
   });
 
   route.post("/", async (context) => {
-    const cookieHeader = context.req.raw.headers.get("cookie");
-    const sessionId = parseSessionId(cookieHeader);
+    const sessionId = getSessionId(context);
 
     if (!sessionId) return context.redirect("/", 302);
 
@@ -59,7 +57,7 @@ export function createStage1Route(services: Services) {
 
     await services.sessions.saveWordSelection(sessionId, wordIds);
 
-    context.header("Set-Cookie", sessionCookie(sessionId));
+    setSessionCookie(context, sessionId);
     return context.redirect("/stage/2", 302);
   });
 

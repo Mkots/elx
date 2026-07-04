@@ -35,6 +35,10 @@ deno task db:migrate  # apply migrations
   `Stage1WordLoader`, `Stage2SessionStore`), so unit tests never touch the DB or
   KV directly. `createApp()` in `app.ts` is the composition root.
 - **Server-side scoring**: the client never participates in score computation.
+- **Security middleware**: `csrf()` (origin check, `APP_ORIGIN` env if the app
+  sits behind a proxy) and `secureHeaders()` are applied app-wide in `app.ts`.
+  `app.onError` unwraps `HTTPException` (e.g. the CSRF 403) instead of masking
+  it as a generic 500.
 
 ## Test flow (ticket-driven)
 
@@ -75,9 +79,10 @@ Guards:
 ## File map
 
 ```
-app.ts                — createApp() with DI options for all routes
+app.ts                — createApp() with DI options for all routes; csrf(),
+                        secureHeaders(), HTML/JSON 404 split
 main.ts               — entry point, starts the server
-session.ts            — Deno KV helpers: parseSessionId, sessionCookie,
+session.ts            — Deno KV helpers: getSessionId, setSessionCookie,
                         saveWordSelection, saveStage2Result, ticket id, etc.
 routes/
   home.ts, stage1.ts, stage2.ts, result.ts   — public test flow
@@ -86,7 +91,8 @@ routes/
 scoring/lextale.ts    — computeScore(WordAnswer[]) → { score, truthfulness }
 ui/
   components/         — Layout, AdminLayout, WordGrid
-  pages/              — one TSX page per screen (public + Admin*)
+  pages/              — one TSX page per screen (public + Admin*); NotFoundPage
+                        for the non-/health HTML 404
 db/
   schema.ts           — words, tickets (JSONB question snapshots),
                         test_history, ticket_configs; SnapshotQuestion types
@@ -118,7 +124,9 @@ KV path is set via `DENO_KV_PATH` (prod: `/data/kv`).
 
 ## Environment variables
 
-`DATABASE_URL`, `DENO_KV_PATH`, `PORT`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`; wiki
+`DATABASE_URL`, `DENO_KV_PATH`, `PORT`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
+`APP_ENV` (set to `production` to add `Secure` to session/admin cookies),
+`APP_ORIGIN` (optional; restricts CSRF's allowed origin behind a proxy); wiki
 sync uses `WIKI_SOURCE_REPO_URL` / `WIKI_SOURCE_REVISION`.
 
 ## Gotchas

@@ -1,5 +1,5 @@
 import { Hono } from "@hono/hono";
-import { parseSessionId } from "../session.ts";
+import { getSessionId } from "../session.ts";
 import { ResultPage } from "../ui/pages/ResultPage.tsx";
 import type { Services } from "../db/services.ts";
 
@@ -7,8 +7,7 @@ export function createResultRoute(services: Services) {
   const route = new Hono();
 
   route.get("/", async (context) => {
-    const cookieHeader = context.req.raw.headers.get("cookie");
-    const sessionId = parseSessionId(cookieHeader);
+    const sessionId = getSessionId(context);
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 

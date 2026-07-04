@@ -2,8 +2,8 @@ import { Hono } from "@hono/hono";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
 import {
-  parseSessionId,
-  sessionCookie,
+  getSessionId,
+  setSessionCookie,
   type Stage2Answers,
 } from "../session.ts";
 import { Stage2Card, Stage2Page } from "../ui/pages/Stage2Page.tsx";
@@ -43,8 +43,7 @@ export function createStage2Route(services: Services) {
   const route = new Hono();
 
   route.get("/", async (context) => {
-    const cookieHeader = context.req.raw.headers.get("cookie");
-    const sessionId = parseSessionId(cookieHeader);
+    const sessionId = getSessionId(context);
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
@@ -78,7 +77,7 @@ export function createStage2Route(services: Services) {
       const result = computeStage2Result(wordList, answers);
       await services.sessions.saveStage2Result(sessionId, result);
       await services.history.saveStage2Result(sessionId, result, ticketId);
-      context.header("Set-Cookie", sessionCookie(sessionId));
+      setSessionCookie(context, sessionId);
       return context.redirect("/result", 302);
     }
 
@@ -93,8 +92,7 @@ export function createStage2Route(services: Services) {
   });
 
   route.post("/", async (context) => {
-    const cookieHeader = context.req.raw.headers.get("cookie");
-    const sessionId = parseSessionId(cookieHeader);
+    const sessionId = getSessionId(context);
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
@@ -138,7 +136,7 @@ export function createStage2Route(services: Services) {
       await services.sessions.saveStage2Result(sessionId, result);
       await services.history.saveStage2Result(sessionId, result, ticketId);
 
-      context.header("Set-Cookie", sessionCookie(sessionId));
+      setSessionCookie(context, sessionId);
       return context.redirect("/result", 302);
     }
 
@@ -161,7 +159,7 @@ export function createStage2Route(services: Services) {
     };
     const currentIndex = getNextWordIndex(wordList, answers);
 
-    context.header("Set-Cookie", sessionCookie(sessionId));
+    setSessionCookie(context, sessionId);
 
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);

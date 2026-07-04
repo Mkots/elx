@@ -117,6 +117,7 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes session with ticket
     body: form.toString(),
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
     },
   });
 
@@ -145,6 +146,7 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 saves selection and redirects to /sta
     body,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=test-session-123",
     },
   });
@@ -171,6 +173,7 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 handles empty selection (no words che
     body: new URLSearchParams(),
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=empty-session",
     },
   });
