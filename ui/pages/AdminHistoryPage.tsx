@@ -1,8 +1,7 @@
 import { AdminLayout } from "../components/AdminLayout.tsx";
 
 type TestRunItem = {
-  id: number;
-  sessionId: string;
+  id: string;
   score: number;
   truthfulness: number;
   completedAt: Date;
@@ -154,7 +153,6 @@ export function AdminHistoryPage({
                 <table class="admin-table">
                   <thead>
                     <tr>
-                      <th>ID</th>
                       <th>Session ID</th>
                       <th class="text-center">
                         <a
@@ -187,11 +185,8 @@ export function AdminHistoryPage({
                         key={run.id}
                         class="border-bottom-row"
                       >
-                        <td class="fs-0875 color-muted">
-                          {run.id}
-                        </td>
                         <td class="admin-monospace fw-700">
-                          {run.sessionId}
+                          {run.id}
                         </td>
                         <td class="text-center fw-600">
                           {run.score}%

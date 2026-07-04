@@ -1,8 +1,7 @@
 import { AdminLayout } from "../components/AdminLayout.tsx";
 
 export type TestRun = {
-  id: number;
-  sessionId: string;
+  id: string;
   score: number;
   truthfulness: number;
   completedAt: Date;
@@ -123,7 +122,7 @@ export function AdminDashboardPage({
                         class="border-bottom-row"
                       >
                         <td class="admin-monospace fs-0875">
-                          {run.sessionId}
+                          {run.id}
                         </td>
                         <td class="text-center fw-700 color-primary">
                           {run.score}%
