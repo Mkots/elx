@@ -1,7 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
-import { db } from "../db/client.ts";
-import { adminSessions, type ticketConfigs } from "../db/schema.ts";
+import type { ticketConfigs } from "../db/schema.ts";
 import { defaultServices, type Services } from "../db/services.ts";
 import type {
   DatabaseWordStats,
@@ -51,8 +50,42 @@ const mockTicketConfigLoader: Services["ticketConfigs"] = {
   },
 };
 
+const mockAdminSessionRows = new Map<
+  string,
+  { id: string; username: string; createdAt: Date; expiresAt: Date }
+>();
+
+async function purgeMockAdminSessions(now = new Date()) {
+  await Promise.resolve();
+  for (const [id, session] of mockAdminSessionRows) {
+    if (session.expiresAt < now) mockAdminSessionRows.delete(id);
+  }
+}
+
+const mockAdminSessions: Services["adminSessions"] = {
+  purgeExpired: purgeMockAdminSessions,
+  async getAdminSession(sessionId) {
+    await purgeMockAdminSessions();
+    return mockAdminSessionRows.get(sessionId) ?? null;
+  },
+  async createAdminSession(sessionId, username, expiresAt) {
+    await Promise.resolve();
+    mockAdminSessionRows.set(sessionId, {
+      id: sessionId,
+      username,
+      createdAt: new Date(),
+      expiresAt,
+    });
+  },
+  async deleteAdminSession(sessionId) {
+    await Promise.resolve();
+    mockAdminSessionRows.delete(sessionId);
+  },
+};
+
 const app = createApp({
   ...defaultServices,
+  adminSessions: mockAdminSessions,
   ticketConfigs: mockTicketConfigLoader,
   tickets: {
     ...defaultServices.tickets,
@@ -66,11 +99,11 @@ const app = createApp({
 
 async function createAdminSession() {
   const sessionId = crypto.randomUUID();
-  await db.insert(adminSessions).values({
-    id: sessionId,
-    username: "admin",
-    expiresAt: new Date(Date.now() + 60 * 1000),
-  });
+  await mockAdminSessions.createAdminSession(
+    sessionId,
+    "admin",
+    new Date(Date.now() + 60 * 1000),
+  );
   return sessionId;
 }
 

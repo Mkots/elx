@@ -2,6 +2,7 @@ import * as ticketsRepo from "./repositories/tickets.ts";
 import * as wordsRepo from "./repositories/words.ts";
 import * as historyRepo from "./repositories/history.ts";
 import * as ticketConfigsRepo from "./repositories/ticket_configs.ts";
+import * as adminSessionsRepo from "./repositories/admin_sessions.ts";
 import * as sessionHelpers from "../session.ts";
 
 export const defaultSessionsService = {
@@ -39,6 +40,7 @@ export interface Services {
   words: typeof wordsRepo;
   history: typeof historyRepo;
   ticketConfigs: typeof ticketConfigsRepo;
+  adminSessions: typeof adminSessionsRepo;
   sessions: typeof defaultSessionsService;
 }
 
@@ -47,5 +49,6 @@ export const defaultServices: Services = {
   words: wordsRepo,
   history: historyRepo,
   ticketConfigs: ticketConfigsRepo,
+  adminSessions: adminSessionsRepo,
   sessions: defaultSessionsService,
 };
