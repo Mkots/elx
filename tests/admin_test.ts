@@ -486,11 +486,27 @@ Deno.test("VER-ADMIN-ROUTE: GET /admin redirects unauthenticated user to login",
 });
 
 Deno.test("VER-ADMIN-ROUTE: GET /admin/login renders login page", async () => {
+  Deno.env.set("ADMIN_USERNAME", "testadmin");
+  Deno.env.set("ADMIN_PASSWORD", "testpass");
+
+  try {
+    const response = await app.request("/admin/login");
+    const body = await response.text();
+    assertEquals(response.status, 200);
+    assertStringIncludes(
+      response.headers.get("content-type") ?? "",
+      "text/html",
+    );
+    assertStringIncludes(body, "ELX Admin Portal");
+  } finally {
+    Deno.env.delete("ADMIN_USERNAME");
+    Deno.env.delete("ADMIN_PASSWORD");
+  }
+});
+
+Deno.test("VER-ADMIN-ROUTE: GET /admin/login returns 503 when admin credentials are unset", async () => {
   const response = await app.request("/admin/login");
-  const body = await response.text();
-  assertEquals(response.status, 200);
-  assertStringIncludes(response.headers.get("content-type") ?? "", "text/html");
-  assertStringIncludes(body, "ELX Admin Portal");
+  assertEquals(response.status, 503);
 });
 
 Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session creation", async () => {
@@ -557,6 +573,75 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
 
     const deletedEntry = await kv.get(["admin_session", sessionId]);
     assertEquals(deletedEntry.value, null);
+  } finally {
+    Deno.env.delete("ADMIN_USERNAME");
+    Deno.env.delete("ADMIN_PASSWORD");
+  }
+});
+
+Deno.test("VER-ADMIN-AUTH: GET /admin/login returns 503 when env vars not set", async () => {
+  Deno.env.delete("ADMIN_USERNAME");
+  Deno.env.delete("ADMIN_PASSWORD");
+
+  const response = await app.request("/admin/login");
+  const body = await response.text();
+  assertEquals(response.status, 503);
+  assertStringIncludes(body, "disabled");
+});
+
+Deno.test("VER-ADMIN-AUTH: POST /admin/login returns 503 when env vars not set", async () => {
+  Deno.env.delete("ADMIN_USERNAME");
+  Deno.env.delete("ADMIN_PASSWORD");
+
+  const form = new URLSearchParams();
+  form.append("username", "admin");
+  form.append("password", "admin");
+
+  const response = await app.request("/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+  });
+  assertEquals(response.status, 503);
+});
+
+Deno.test("VER-ADMIN-AUTH: 6th rapid login attempt returns 429", async () => {
+  Deno.env.set("ADMIN_USERNAME", "admin-rl-test");
+  Deno.env.set("ADMIN_PASSWORD", "pass-rl-test");
+
+  // Use a unique IP header to avoid interfering with other tests
+  const uniqueIp = `10.0.0.${Date.now() % 254 + 1}`;
+
+  try {
+    const form = new URLSearchParams();
+    form.append("username", "wrong");
+    form.append("password", "wrong");
+
+    // 5 failed attempts (should succeed with 200 "Invalid...")
+    for (let i = 0; i < 5; i++) {
+      const res = await app.request("/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-forwarded-for": uniqueIp,
+        },
+        body: form.toString(),
+      });
+      assertEquals(res.status, 200);
+    }
+
+    // 6th attempt should be rate-limited
+    const res6 = await app.request("/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-forwarded-for": uniqueIp,
+      },
+      body: form.toString(),
+    });
+    assertEquals(res6.status, 429);
+    const body = await res6.text();
+    assertStringIncludes(body, "Too many login attempts");
   } finally {
     Deno.env.delete("ADMIN_USERNAME");
     Deno.env.delete("ADMIN_PASSWORD");
