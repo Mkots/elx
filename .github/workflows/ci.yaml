@@ -38,7 +38,6 @@ jobs:
               - main.ts
               - app.ts
               - session.ts
-              - deps.ts
               - deno.json
               - deno.lock
               - playwright.config.ts
@@ -57,7 +56,6 @@ jobs:
               - main.ts
               - app.ts
               - session.ts
-              - deps.ts
               - deno.json
               - deno.lock
               - Dockerfile

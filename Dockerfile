@@ -2,8 +2,8 @@ FROM denoland/deno:debian-2.9.0 AS dependencies
 
 WORKDIR /app
 
-COPY deno.json deno.lock deps.ts ./
-RUN deno cache --frozen deps.ts
+COPY deno.json deno.lock ./
+RUN deno install --frozen
 
 FROM dependencies AS build
 

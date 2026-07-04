@@ -26,6 +26,6 @@
       "label": "PostgreSQL"
     }
   },
-  "postCreateCommand": "test -f .env || cp .env.example .env; deno cache --frozen deps.ts",
+  "postCreateCommand": "test -f .env || cp .env.example .env; deno install --frozen",
   "remoteUser": "vscode"
 }
