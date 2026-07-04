@@ -2,7 +2,8 @@
 
 ## Description
 
-An optional stage that verifies a deeper understanding of words.
+An optional challenge stage that verifies a deeper understanding of words
+(currently authoring-only, user-facing is planned).
 
 ## Requirements
 
@@ -22,3 +23,5 @@ An optional stage that verifies a deeper understanding of words.
 - Generate distractors.
 - **Generate the question bank offline** (see [Stage 0](./00-data-seeding.md),
   script `seed:synonyms`). Runtime only performs `SELECT` queries.
+- Note: The user-facing synonyms/antonyms challenge stage is planned for a
+  future phase and not yet implemented.

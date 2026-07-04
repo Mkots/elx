@@ -2,7 +2,8 @@
 
 ## Description
 
-Test the user's understanding of word definitions.
+Test the user's understanding of word definitions (currently authoring-only,
+user-facing is planned).
 
 ## Requirements
 
@@ -19,3 +20,5 @@ Test the user's understanding of word definitions.
 - **Generate the question bank offline** (see [Stage 0](./00-data-seeding.md),
   script `seed:meanings`): retrieve definitions from a dictionary API during
   seeding, not at runtime. Runtime only performs `SELECT` queries.
+- Note: The user-facing meaning challenge stage is planned for a future phase
+  and not yet implemented.

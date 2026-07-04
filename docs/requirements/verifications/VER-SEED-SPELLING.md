@@ -4,16 +4,16 @@ type: verification
 name: "seed:spelling sentences, distractors, and idempotency"
 method: utest
 verifies:
-  - "REQ-SPELLING"
+  - "REQ-SPELLING-SEEDS"
   - "REQ-QUESTION-BANK"
 ---
 
 # Verification: seed:spelling
 
 Covers the `seed:spelling` seeder against
-[REQ-SPELLING](../requirements/REQ-SPELLING.md) (a context sentence with a
-single gap and four phonetically similar options, exactly one correct) and
-[REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse
+[REQ-SPELLING-SEEDS](../requirements/REQ-SPELLING-SEEDS.md) (a context sentence
+with a single gap and four phonetically similar options, exactly one correct)
+and [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse
 sourcing and idempotency).
 
 ## Code under verification

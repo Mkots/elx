@@ -2,7 +2,8 @@
 
 ## Description
 
-Test spelling skills and the ability to distinguish similar words in context.
+Test spelling skills and the ability to distinguish similar words in context
+(currently authoring-only, user-facing is planned).
 
 ## Requirements
 
@@ -20,3 +21,5 @@ Test spelling skills and the ability to distinguish similar words in context.
   distractors.
 - **Generate the question bank offline** (see [Stage 0](./00-data-seeding.md),
   script `seed:spelling`). Runtime only performs `SELECT` queries.
+- Note: The user-facing contextual spelling challenge stage is planned for a
+  future phase and not yet implemented.
