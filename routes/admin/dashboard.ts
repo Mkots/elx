@@ -1,17 +1,12 @@
 import type { Hono } from "@hono/hono";
 import { AdminDashboardPage } from "../../ui/pages/AdminDashboardPage.tsx";
-import type { AdminDashboardLoader } from "./loaders/dashboard.ts";
-import type { AdminReviewLoader } from "./loaders/review.ts";
+import type { Services } from "../../db/services.ts";
 
 /** Registers the dashboard route (`GET /admin`). */
-export function registerDashboardRoutes(
-  route: Hono,
-  dashboardLoader: AdminDashboardLoader,
-  reviewLoader: AdminReviewLoader,
-) {
+export function registerDashboardRoutes(route: Hono, services: Services) {
   route.get("/", async (context) => {
-    const stats = await dashboardLoader.getDashboardStats();
-    const reviewProg = await reviewLoader.progress();
+    const stats = await services.history.getDashboardStats();
+    const reviewProg = await services.words.progress();
     return context.html(
       AdminDashboardPage({
         ...stats,

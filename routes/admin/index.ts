@@ -6,76 +6,28 @@ import { registerReviewRoutes } from "./review.ts";
 import { registerHistoryRoutes } from "./history.ts";
 import { registerTicketConfigRoutes } from "./ticket_config.ts";
 import { registerTicketsRoutes } from "./tickets.ts";
-import {
-  type AdminDashboardLoader,
-  databaseAdminDashboardLoader,
-} from "./loaders/dashboard.ts";
-import {
-  type AdminWordsLoader,
-  databaseAdminWordsLoader,
-} from "./loaders/words.ts";
-import {
-  type AdminReviewLoader,
-  databaseAdminReviewLoader,
-} from "./loaders/review.ts";
-import {
-  type AdminHistoryLoader,
-  databaseAdminHistoryLoader,
-} from "./loaders/history.ts";
-import {
-  type AdminTicketConfigLoader,
-  databaseAdminTicketConfigLoader,
-} from "./loaders/ticket_config.ts";
-import {
-  type AdminTicketsLoader,
-  databaseAdminTicketsLoader,
-} from "./loaders/tickets.ts";
+import { defaultServices, type Services } from "../../db/services.ts";
 
-// Re-export the admin public surface so `app.ts` and tests have a single
-// import entry point.
 export { adminAuthMiddleware };
-export type {
-  AdminDashboardLoader,
-  AdminHistoryLoader,
-  AdminReviewLoader,
-  AdminTicketConfigLoader,
-  AdminTicketsLoader,
-  AdminWordsLoader,
-};
-export {
-  databaseAdminDashboardLoader,
-  databaseAdminHistoryLoader,
-  databaseAdminReviewLoader,
-  databaseAdminTicketConfigLoader,
-  databaseAdminTicketsLoader,
-  databaseAdminWordsLoader,
-};
 
 /**
  * Composition root for the admin panel. Each concern (auth, dashboard, words,
  * review, challenges, history) lives in its own module and registers its
  * handlers onto a single shared Hono router, behind the auth middleware.
  */
-export function createAdminRoute(
-  dashboardLoader: AdminDashboardLoader = databaseAdminDashboardLoader,
-  wordsLoader: AdminWordsLoader = databaseAdminWordsLoader,
-  historyLoader: AdminHistoryLoader = databaseAdminHistoryLoader,
-  reviewLoader: AdminReviewLoader = databaseAdminReviewLoader,
-  ticketConfigLoader: AdminTicketConfigLoader = databaseAdminTicketConfigLoader,
-  ticketsLoader: AdminTicketsLoader = databaseAdminTicketsLoader,
-) {
+export function createAdminRoute(services: Services = defaultServices) {
   const route = new Hono();
 
   // Apply middleware to all /admin routes
   route.use("*", adminAuthMiddleware);
 
   registerAuthRoutes(route);
-  registerDashboardRoutes(route, dashboardLoader, reviewLoader);
-  registerWordsRoutes(route, wordsLoader);
-  registerReviewRoutes(route, reviewLoader, wordsLoader);
-  registerHistoryRoutes(route, historyLoader);
-  registerTicketConfigRoutes(route, ticketConfigLoader);
-  registerTicketsRoutes(route, ticketsLoader);
+  registerDashboardRoutes(route, services);
+  registerWordsRoutes(route, services);
+  registerReviewRoutes(route, services);
+  registerHistoryRoutes(route, services);
+  registerTicketConfigRoutes(route, services);
+  registerTicketsRoutes(route, services);
 
   return route;
 }

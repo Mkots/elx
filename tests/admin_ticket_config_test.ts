@@ -2,11 +2,11 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
 import type { ticketConfigs } from "../db/schema.ts";
+import { defaultServices, type Services } from "../db/services.ts";
 import type {
-  AdminTicketConfigLoader,
   DatabaseWordStats,
   TicketConfigData,
-} from "../routes/admin/loaders/ticket_config.ts";
+} from "../db/repositories/ticket_configs.ts";
 
 let mockConfig: typeof ticketConfigs.$inferSelect = {
   id: 1,
@@ -35,7 +35,8 @@ const mockStats: DatabaseWordStats = {
   realDefinitions: 25,
 };
 
-const mockTicketConfigLoader: AdminTicketConfigLoader = {
+const mockTicketConfigLoader: Services["ticketConfigs"] = {
+  ...defaultServices.ticketConfigs,
   async getActiveConfig() {
     await Promise.resolve();
     return mockConfig;
@@ -51,7 +52,16 @@ const mockTicketConfigLoader: AdminTicketConfigLoader = {
 };
 
 const app = createApp({
-  adminTicketConfigLoader: mockTicketConfigLoader,
+  ...defaultServices,
+  ticketConfigs: mockTicketConfigLoader,
+  tickets: {
+    ...defaultServices.tickets,
+    getPublishedTickets: () => Promise.resolve([]),
+  },
+  sessions: {
+    ...defaultServices.sessions,
+    loadStage2Result: () => Promise.resolve(null),
+  },
 });
 
 async function createAdminSession() {

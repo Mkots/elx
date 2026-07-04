@@ -1,12 +1,9 @@
 import type { Hono } from "@hono/hono";
 import { AdminHistoryPage } from "../../ui/pages/AdminHistoryPage.tsx";
-import type { AdminHistoryLoader } from "./loaders/history.ts";
+import type { Services } from "../../db/services.ts";
 
 /** Registers the test-history list + export routes. */
-export function registerHistoryRoutes(
-  route: Hono,
-  historyLoader: AdminHistoryLoader,
-) {
+export function registerHistoryRoutes(route: Hono, services: Services) {
   // GET /admin/history
   route.get("/history", async (context) => {
     const page = Number(context.req.query("page") || 1);
@@ -18,7 +15,7 @@ export function registerHistoryRoutes(
 
     const limit = 20;
     try {
-      const { history: historyList, totalCount } = await historyLoader
+      const { history: historyList, totalCount } = await services.history
         .listHistory({
           search,
           orderBy,
@@ -70,7 +67,7 @@ export function registerHistoryRoutes(
     }
 
     try {
-      const allHistory = await historyLoader.exportAllHistory();
+      const allHistory = await services.history.exportAllHistory();
 
       if (format === "csv") {
         let csvContent = "id,session_id,score,truthfulness,completed_at\n";

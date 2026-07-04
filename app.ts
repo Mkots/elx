@@ -1,80 +1,27 @@
 import { Hono } from "@hono/hono";
 import { serveStatic } from "@hono/hono/deno";
 import { healthRoute } from "./routes/health.ts";
-import { createHomeRoute, type HomeTicketLoader } from "./routes/home.ts";
+import { createHomeRoute } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
-import { createResultRoute, type ResultSessionStore } from "./routes/result.ts";
-import {
-  createSeedVerificationRoute,
-  type SeedVerificationLoader,
-} from "./routes/seed_verification.ts";
-import {
-  createStage1Route,
-  type Stage1SessionStore,
-  type Stage1TicketLoader,
-} from "./routes/stage1.ts";
-import {
-  createStage2Route,
-  type Stage2SessionStore,
-  type Stage2TicketLoader,
-} from "./routes/stage2.ts";
-import {
-  type AdminDashboardLoader,
-  type AdminHistoryLoader,
-  type AdminReviewLoader,
-  type AdminTicketConfigLoader,
-  type AdminTicketsLoader,
-  type AdminWordsLoader,
-  createAdminRoute,
-} from "./routes/admin/index.ts";
+import { createResultRoute } from "./routes/result.ts";
+import { createSeedVerificationRoute } from "./routes/seed_verification.ts";
+import { createStage1Route } from "./routes/stage1.ts";
+import { createStage2Route } from "./routes/stage2.ts";
+import { createAdminRoute } from "./routes/admin/index.ts";
+import { defaultServices, type Services } from "./db/services.ts";
 
-interface CreateAppOptions {
-  homeTicketLoader?: HomeTicketLoader;
-  seedVerificationLoader?: SeedVerificationLoader;
-  stage1TicketLoader?: Stage1TicketLoader;
-  stage1SessionStore?: Stage1SessionStore;
-  stage2TicketLoader?: Stage2TicketLoader;
-  stage2SessionStore?: Stage2SessionStore;
-  resultSessionStore?: ResultSessionStore;
-  adminDashboardLoader?: AdminDashboardLoader;
-  adminWordsLoader?: AdminWordsLoader;
-  adminHistoryLoader?: AdminHistoryLoader;
-  adminReviewLoader?: AdminReviewLoader;
-  adminTicketConfigLoader?: AdminTicketConfigLoader;
-  adminTicketsLoader?: AdminTicketsLoader;
-}
-
-export function createApp(options: CreateAppOptions = {}) {
+export function createApp(services: Services = defaultServices) {
   const app = new Hono();
 
   app.use("*", requestLogger);
   app.use("/static/*", serveStatic({ root: "./" }));
-  app.route("/", createHomeRoute(options.homeTicketLoader));
+  app.route("/", createHomeRoute(services));
   app.route("/health", healthRoute);
-  app.route(
-    "/health/seeds",
-    createSeedVerificationRoute(options.seedVerificationLoader),
-  );
-  app.route(
-    "/stage/1",
-    createStage1Route(options.stage1TicketLoader, options.stage1SessionStore),
-  );
-  app.route(
-    "/stage/2",
-    createStage2Route(options.stage2TicketLoader, options.stage2SessionStore),
-  );
-  app.route("/result", createResultRoute(options.resultSessionStore));
-  app.route(
-    "/admin",
-    createAdminRoute(
-      options.adminDashboardLoader,
-      options.adminWordsLoader,
-      options.adminHistoryLoader,
-      options.adminReviewLoader,
-      options.adminTicketConfigLoader,
-      options.adminTicketsLoader,
-    ),
-  );
+  app.route("/health/seeds", createSeedVerificationRoute(services));
+  app.route("/stage/1", createStage1Route(services));
+  app.route("/stage/2", createStage2Route(services));
+  app.route("/result", createResultRoute(services));
+  app.route("/admin", createAdminRoute(services));
 
   app.notFound((context) => context.json({ error: "Not found" }, 404));
 

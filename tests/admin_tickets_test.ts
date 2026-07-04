@@ -1,10 +1,7 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
-import {
-  databaseAdminTicketsLoader,
-  generateSpellingCandidates,
-} from "../routes/admin/loaders/tickets.ts";
+import { generateSpellingCandidates } from "../db/repositories/tickets.ts";
 import { db } from "../db/client.ts";
 import { ticketConfigs, tickets } from "../db/schema.ts";
 import type {
@@ -13,7 +10,8 @@ import type {
   tickets as ticketsTable,
   VerificationSnapshotQuestion,
 } from "../db/schema.ts";
-import type { AdminTicketsLoader } from "../routes/admin/loaders/tickets.ts";
+import { defaultServices, type Services } from "../db/services.ts";
+import { databaseAdminTicketsLoader } from "../routes/admin/loaders/tickets.ts";
 import { eq } from "drizzle-orm";
 
 // Load environment variables from .env if not present (for local testing)
@@ -74,7 +72,8 @@ let mockTicketsList: (typeof ticketsTable.$inferSelect)[] = [
   },
 ];
 
-const mockTicketsLoader: AdminTicketsLoader = {
+const mockTicketsLoader: Services["tickets"] = {
+  ...defaultServices.tickets,
   async getTickets() {
     await Promise.resolve();
     return mockTicketsList;
@@ -123,7 +122,12 @@ const mockTicketsLoader: AdminTicketsLoader = {
 };
 
 const app = createApp({
-  adminTicketsLoader: mockTicketsLoader,
+  ...defaultServices,
+  tickets: mockTicketsLoader,
+  sessions: {
+    ...defaultServices.sessions,
+    loadStage2Result: () => Promise.resolve(null),
+  },
 });
 
 async function createAdminSession() {

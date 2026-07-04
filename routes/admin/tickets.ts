@@ -1,16 +1,14 @@
 import type { Hono } from "@hono/hono";
 import { AdminTicketsPage } from "../../ui/pages/AdminTicketsPage.tsx";
 import { AdminTicketDetailPage } from "../../ui/pages/AdminTicketDetailPage.tsx";
-import {
-  type AdminTicketsLoader,
-  generateSpellingCandidates,
-} from "./loaders/tickets.ts";
+import { generateSpellingCandidates } from "../../db/repositories/tickets.ts";
 import type { SnapshotQuestion } from "../../db/schema.ts";
+import type { Services } from "../../db/services.ts";
 
-export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
+export function registerTicketsRoutes(route: Hono, services: Services) {
   // 1. List tickets page
   route.get("/tickets", async (context) => {
-    const allTickets = await loader.getTickets();
+    const allTickets = await services.tickets.getTickets();
     const successMsg = context.req.query("success") || undefined;
     const errorMsg = context.req.query("error") || undefined;
 
@@ -40,13 +38,13 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
     const notes = typeof body.notes === "string" ? body.notes.trim() : "";
 
     try {
-      await loader.generateBaseTicket(title, notes);
+      await services.tickets.generateBaseTicket(title, notes);
       return context.redirect(
         "/admin/tickets?success=" +
           encodeURIComponent("Base ticket generated successfully"),
       );
     } catch (err) {
-      const allTickets = await loader.getTickets();
+      const allTickets = await services.tickets.getTickets();
       const ticketsList = allTickets.map((t) => ({
         id: t.id,
         code: t.code,
@@ -70,7 +68,7 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
   // 3. View/Enrich single ticket detail page
   route.get("/tickets/:id", async (context) => {
     const id = Number(context.req.param("id"));
-    const ticket = await loader.getTicketById(id);
+    const ticket = await services.tickets.getTicketById(id);
 
     if (!ticket) {
       return context.redirect(
@@ -100,7 +98,10 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
     });
 
     // Fetch 10 random real words as distractor proposals
-    const meaningSuggestions = await loader.getRandomRealWords(10, excludeList);
+    const meaningSuggestions = await services.tickets.getRandomRealWords(
+      10,
+      excludeList,
+    );
 
     return context.html(
       AdminTicketDetailPage({
@@ -118,7 +119,7 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
     const id = Number(context.req.param("id"));
     const index = Number(context.req.param("index"));
 
-    const ticket = await loader.getTicketById(id);
+    const ticket = await services.tickets.getTicketById(id);
     if (!ticket) {
       return context.redirect(
         "/admin/tickets?error=" + encodeURIComponent("Ticket not found"),
@@ -210,7 +211,7 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
         };
       }
 
-      await loader.updateQuestion(id, index, updatedQuestion);
+      await services.tickets.updateQuestion(id, index, updatedQuestion);
 
       return context.redirect(
         `/admin/tickets/${id}?success=` +
@@ -232,7 +233,7 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
     const id = Number(context.req.param("id"));
 
     try {
-      await loader.publishTicket(id);
+      await services.tickets.publishTicket(id);
       return context.redirect(
         "/admin/tickets?success=" +
           encodeURIComponent("Ticket successfully published and made active!"),
@@ -250,7 +251,7 @@ export function registerTicketsRoutes(route: Hono, loader: AdminTicketsLoader) {
     const id = Number(context.req.param("id"));
 
     try {
-      await loader.deleteTicket(id);
+      await services.tickets.deleteTicket(id);
       return context.redirect(
         "/admin/tickets?success=" +
           encodeURIComponent("Ticket deleted successfully"),

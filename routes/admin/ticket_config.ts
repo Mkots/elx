@@ -1,14 +1,11 @@
 import type { Hono } from "@hono/hono";
 import { AdminTicketConfigPage } from "../../ui/pages/AdminTicketConfigPage.tsx";
-import type { AdminTicketConfigLoader } from "./loaders/ticket_config.ts";
+import type { Services } from "../../db/services.ts";
 
-export function registerTicketConfigRoutes(
-  route: Hono,
-  loader: AdminTicketConfigLoader,
-) {
+export function registerTicketConfigRoutes(route: Hono, services: Services) {
   route.get("/ticket-config", async (context) => {
-    const config = await loader.getActiveConfig();
-    const stats = await loader.getDatabaseWordStats();
+    const config = await services.ticketConfigs.getActiveConfig();
+    const stats = await services.ticketConfigs.getDatabaseWordStats();
 
     const successMsg = context.req.query("success") || undefined;
     const errorMsg = context.req.query("error") || undefined;
@@ -81,7 +78,7 @@ export function registerTicketConfigRoutes(
         );
       }
 
-      const stats = await loader.getDatabaseWordStats();
+      const stats = await services.ticketConfigs.getDatabaseWordStats();
       if (realCount > stats.totalReal) {
         throw new Error(
           `Requested real words (${realCount}) exceeds available in database (${stats.totalReal})`,
@@ -139,13 +136,13 @@ export function registerTicketConfigRoutes(
         );
       }
 
-      await loader.updateActiveConfig(config);
+      await services.ticketConfigs.updateActiveConfig(config);
       return context.redirect(
         "/admin/ticket-config?success=" +
           encodeURIComponent("Configuration saved successfully"),
       );
     } catch (err) {
-      const stats = await loader.getDatabaseWordStats();
+      const stats = await services.ticketConfigs.getDatabaseWordStats();
       const errMsg = err instanceof Error ? err.message : String(err);
       return context.html(
         AdminTicketConfigPage({

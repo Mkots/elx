@@ -1,10 +1,8 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
 import type { tickets } from "../db/schema.ts";
-import type {
-  Stage2SessionStore,
-  Stage2TicketLoader,
-} from "../routes/stage2.ts";
+import { defaultServices, type Services } from "../db/services.ts";
+import type { Stage2Answers } from "../session.ts";
 
 const mockTicket: typeof tickets.$inferSelect = {
   id: 42,
@@ -21,54 +19,80 @@ const mockTicket: typeof tickets.$inferSelect = {
   updatedAt: new Date(),
 };
 
-function createLoader(): Stage2TicketLoader {
-  return {
-    getTicketById: (id) => {
-      if (id === 42) return Promise.resolve(mockTicket);
-      return Promise.resolve(null);
-    },
-  };
-}
-
-function createStore(
+function makeServices(
   wordIds: number[] = [0, 1, 2],
-): Stage2SessionStore & {
+): Services & {
   answers: Record<string, boolean>;
-  savedResults: Array<{
-    sessionId: string;
-    result: { score: number; truthfulness: number };
-    ticketId: number;
-  }>;
+  savedSessions: Array<
+    { sessionId: string; result: { score: number; truthfulness: number } }
+  >;
+  savedHistory: Array<
+    {
+      sessionId: string;
+      result: { score: number; truthfulness: number };
+      ticketId: number;
+    }
+  >;
 } {
   const answers: Record<string, boolean> = {};
-  const savedResults: Array<{
+  const savedSessions: Array<{
+    sessionId: string;
+    result: { score: number; truthfulness: number };
+  }> = [];
+  const savedHistory: Array<{
     sessionId: string;
     result: { score: number; truthfulness: number };
     ticketId: number;
   }> = [];
-  return {
-    answers,
-    loadStage2Answers: () => Promise.resolve({ ...answers }),
-    savedResults,
+
+  const sessions: Services["sessions"] = {
+    ...defaultServices.sessions,
+    loadStage2Answers: () => Promise.resolve({ ...answers } as Stage2Answers),
     loadWordSelection: () => Promise.resolve(wordIds),
     saveStage2Answer(_sessionId, wordId, known) {
       answers[String(wordId)] = known;
       return Promise.resolve();
     },
-    saveStage2Result(sessionId, result, ticketId) {
-      savedResults.push({ sessionId, result, ticketId });
+    saveStage2Result(sessionId, result) {
+      savedSessions.push({ sessionId, result });
       return Promise.resolve();
     },
     loadSessionTicketId: () => Promise.resolve(42),
   };
+
+  const services: Services = {
+    ...defaultServices,
+    tickets: {
+      ...defaultServices.tickets,
+      getTicketById: (id) => {
+        if (id === 42) return Promise.resolve(mockTicket);
+        return Promise.resolve(null);
+      },
+      getPublishedTickets: () => Promise.resolve([]),
+    },
+    history: {
+      ...defaultServices.history,
+      saveStage2Result(sessionId, result, ticketId) {
+        savedHistory.push({ sessionId, result, ticketId });
+        return Promise.resolve();
+      },
+    },
+    sessions,
+  };
+
+  // Merge savedResults for backward-compat test assertions
+  const savedResults = savedHistory;
+  return Object.assign(services, {
+    answers,
+    savedSessions,
+    savedHistory,
+    savedResults,
+  });
 }
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when no session cookie", async () => {
-  const store = createStore();
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices();
+  const app = createApp(services);
 
   const response = await app.request("/stage/2");
 
@@ -77,11 +101,8 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when no session 
 });
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when word selection is empty", async () => {
-  const store = createStore([]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([]);
+  const app = createApp(services);
 
   const response = await app.request("/stage/2", {
     headers: { "cookie": "sessionId=test-session" },
@@ -92,11 +113,8 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 redirects to /stage/1 when word select
 });
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verification card", async () => {
-  const store = createStore([0, 1, 2]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1, 2]);
+  const app = createApp(services);
 
   const response = await app.request("/stage/2", {
     headers: { "cookie": "sessionId=test-session" },
@@ -118,11 +136,8 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 returns HTML with the first verificati
 });
 
 Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders htmx Know/Don't know buttons", async () => {
-  const store = createStore([0, 1, 2]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1, 2]);
+  const app = createApp(services);
 
   const response = await app.request("/stage/2", {
     headers: { "cookie": "sessionId=test-session" },
@@ -139,11 +154,8 @@ Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders htmx Know/Don't know buttons",
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session cookie", async () => {
-  const store = createStore();
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices();
+  const app = createApp(services);
 
   const response = await app.request("/stage/2", {
     method: "POST",
@@ -156,11 +168,8 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and returns next card", async () => {
-  const store = createStore([0, 1, 2]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1, 2]);
+  const app = createApp(services);
 
   const body = new URLSearchParams();
   body.append("wordId", "0");
@@ -178,19 +187,16 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and return
   const responseBody = await response.text();
 
   assertEquals(response.status, 200);
-  assertEquals(store.answers["0"], true);
+  assertEquals(services.answers["0"], true);
   assertStringIncludes(responseBody, "Word 2 of 3");
   assertStringIncludes(responseBody, "blurp");
   assertEquals(responseBody.includes("apple"), false);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and sends HX redirect", async () => {
-  const store = createStore([0, 1]);
-  store.answers["0"] = true;
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1]);
+  services.answers["0"] = true;
+  const app = createApp(services);
 
   const body = new URLSearchParams();
   body.append("wordId", "1");
@@ -208,18 +214,15 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and 
 
   assertEquals(response.status, 204);
   assertEquals(response.headers.get("HX-Redirect"), "/result");
-  assertEquals(store.savedResults.length, 1);
-  assertEquals(store.savedResults[0].result.score, 1);
-  assertEquals(store.savedResults[0].result.truthfulness, 100);
-  assertEquals(store.savedResults[0].ticketId, 42);
+  assertEquals(services.savedHistory.length, 1);
+  assertEquals(services.savedHistory[0].result.score, 1);
+  assertEquals(services.savedHistory[0].result.truthfulness, 100);
+  assertEquals(services.savedHistory[0].ticketId, 42);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /result", async () => {
-  const store = createStore([0, 1, 2]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1, 2]);
+  const app = createApp(services);
 
   const body = new URLSearchParams();
   body.append("word_0", "know");
@@ -237,19 +240,16 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /resu
 
   assertEquals(response.status, 302);
   assertEquals(response.headers.get("location"), "/result");
-  assertEquals(store.savedResults.length, 1);
-  assertEquals(store.savedResults[0].sessionId, "test-session");
-  assertEquals(store.savedResults[0].result.score, 2); // 2 real - 0 pseudo
-  assertEquals(store.savedResults[0].result.truthfulness, 100);
-  assertEquals(store.savedResults[0].ticketId, 42);
+  assertEquals(services.savedHistory.length, 1);
+  assertEquals(services.savedHistory[0].sessionId, "test-session");
+  assertEquals(services.savedHistory[0].result.score, 2); // 2 real - 0 pseudo
+  assertEquals(services.savedHistory[0].result.truthfulness, 100);
+  assertEquals(services.savedHistory[0].ticketId, 42);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseudoword is claimed", async () => {
-  const store = createStore([0, 1, 2]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0, 1, 2]);
+  const app = createApp(services);
 
   const body = new URLSearchParams();
   body.append("word_0", "know");
@@ -266,16 +266,13 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseud
   });
 
   assertEquals(response.status, 302);
-  assertEquals(store.savedResults[0].result.score, 0); // 1 real - 1 pseudo
-  assertEquals(store.savedResults[0].result.truthfulness, 50);
+  assertEquals(services.savedHistory[0].result.score, 0); // 1 real - 1 pseudo
+  assertEquals(services.savedHistory[0].result.truthfulness, 50);
 });
 
 Deno.test("VER-STAGE2-ROUTE: POST /stage/2 sets session cookie in response", async () => {
-  const store = createStore([0]);
-  const app = createApp({
-    stage2TicketLoader: createLoader(),
-    stage2SessionStore: store,
-  });
+  const services = makeServices([0]);
+  const app = createApp(services);
 
   const response = await app.request("/stage/2", {
     method: "POST",

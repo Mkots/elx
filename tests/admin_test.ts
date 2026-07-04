@@ -1,16 +1,11 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
-import type {
-  AdminDashboardLoader,
-  AdminHistoryLoader,
-  AdminReviewLoader,
-  AdminWordsLoader,
-} from "../routes/admin/index.ts";
+import { defaultServices, type Services } from "../db/services.ts";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import type { TestRun } from "../ui/pages/AdminDashboardPage.tsx";
 
-const mockDashboardLoader: AdminDashboardLoader = {
+const mockDashboardLoader: Pick<Services["history"], "getDashboardStats"> = {
   async getDashboardStats() {
     await Promise.resolve();
     const recentRuns: TestRun[] = [
@@ -76,7 +71,8 @@ const mockWordsList = [
   },
 ];
 
-const mockReviewLoader: AdminReviewLoader = {
+const mockReviewLoader: Services["words"] = {
+  ...defaultServices.words,
   async getNextUnreviewed(afterId?: number) {
     await Promise.resolve();
     if (afterId !== undefined) {
@@ -123,7 +119,8 @@ const mockReviewLoader: AdminReviewLoader = {
   },
 };
 
-const mockWordsLoader: AdminWordsLoader = {
+const mockWordsLoader: Services["words"] = {
+  ...defaultServices.words,
   async listWords({ search, difficulty, isReal, reviewed, page, limit }) {
     await Promise.resolve();
     let filtered = [...mockWordsList];
@@ -398,7 +395,8 @@ function resetMockData() {
   );
 }
 
-const mockHistoryLoader: AdminHistoryLoader = {
+const mockHistoryLoader: Services["history"] = {
+  ...defaultServices.history,
   async listHistory({ search, orderBy, orderDir, page, limit }) {
     await Promise.resolve();
     let filtered = [...mockHistoryList];
@@ -432,12 +430,44 @@ const mockHistoryLoader: AdminHistoryLoader = {
   },
 };
 
-const app = createApp({
-  adminDashboardLoader: mockDashboardLoader,
-  adminWordsLoader: mockWordsLoader,
-  adminHistoryLoader: mockHistoryLoader,
-  adminReviewLoader: mockReviewLoader,
-});
+const mockServices: Services = {
+  ...defaultServices,
+  history: {
+    ...defaultServices.history,
+    getDashboardStats: mockDashboardLoader.getDashboardStats,
+    listHistory: mockHistoryLoader.listHistory,
+    exportAllHistory: mockHistoryLoader.exportAllHistory,
+    saveStage2Result: defaultServices.history.saveStage2Result,
+  },
+  words: {
+    // Merge both mocks: words loader + review loader functions on top of defaults
+    ...defaultServices.words,
+    listWords: mockWordsLoader.listWords,
+    findWordIds: mockWordsLoader.findWordIds,
+    getWord: mockWordsLoader.getWord,
+    createWord: mockWordsLoader.createWord,
+    updateWord: mockWordsLoader.updateWord,
+    deleteWord: mockWordsLoader.deleteWord,
+    bulkSetReviewed: mockWordsLoader.bulkSetReviewed,
+    bulkSetIsReal: mockWordsLoader.bulkSetIsReal,
+    bulkDelete: mockWordsLoader.bulkDelete,
+    importWords: mockWordsLoader.importWords,
+    getNextUnreviewed: mockReviewLoader.getNextUnreviewed,
+    skipWord: mockReviewLoader.skipWord,
+    reviewWord: mockReviewLoader.reviewWord,
+    progress: mockReviewLoader.progress,
+  },
+  tickets: {
+    ...defaultServices.tickets,
+    getPublishedTickets: () => Promise.resolve([]),
+  },
+  sessions: {
+    ...defaultServices.sessions,
+    loadStage2Result: () => Promise.resolve(null),
+  },
+};
+
+const app = createApp(mockServices);
 
 // Setup helper for authenticated session
 async function createAdminSession() {

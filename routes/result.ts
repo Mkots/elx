@@ -1,26 +1,9 @@
 import { Hono } from "@hono/hono";
-import {
-  getKv,
-  loadStage2Result,
-  parseSessionId,
-  type Stage2Result,
-} from "../session.ts";
+import { parseSessionId } from "../session.ts";
 import { ResultPage } from "../ui/pages/ResultPage.tsx";
+import type { Services } from "../db/services.ts";
 
-export interface ResultSessionStore {
-  loadStage2Result(sessionId: string): Promise<Stage2Result | null>;
-}
-
-export const kvResultSessionStore: ResultSessionStore = {
-  async loadStage2Result(sessionId) {
-    const kv = await getKv();
-    return loadStage2Result(kv, sessionId);
-  },
-};
-
-export function createResultRoute(
-  store: ResultSessionStore = kvResultSessionStore,
-) {
+export function createResultRoute(services: Services) {
   const route = new Hono();
 
   route.get("/", async (context) => {
@@ -29,7 +12,7 @@ export function createResultRoute(
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
-    const result = await store.loadStage2Result(sessionId);
+    const result = await services.sessions.loadStage2Result(sessionId);
     if (!result) return context.redirect("/stage/2", 302);
 
     return context.html(ResultPage(result));
