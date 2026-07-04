@@ -1,8 +1,9 @@
 import { Hono } from "@hono/hono";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
-import { getSessionId, setSessionCookie } from "../session.ts";
+import { setSessionCookie } from "../session.ts";
 import { Stage1Page } from "../ui/pages/Stage1Page.tsx";
 import type { Services } from "../db/services.ts";
+import { requireTestSession } from "./test_session.ts";
 
 export function createStage1Route(services: Services) {
   const route = new Hono();
@@ -21,15 +22,12 @@ export function createStage1Route(services: Services) {
   });
 
   route.get("/", async (context) => {
-    const sessionId = getSessionId(context);
-
-    if (!sessionId) return context.redirect("/", 302);
-
-    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
-    if (!ticketId) return context.redirect("/", 302);
-
-    const ticket = await services.tickets.getTicketById(ticketId);
-    if (!ticket) return context.redirect("/", 302);
+    const session = await requireTestSession(context, services, {
+      noSessionRedirect: "/",
+      requireTicket: true,
+    });
+    if (session instanceof Response) return session;
+    const { ticket } = session;
 
     const verificationWords = ticket.questions
       .map((q, idx) => ({ q, idx }))
@@ -48,9 +46,11 @@ export function createStage1Route(services: Services) {
   });
 
   route.post("/", async (context) => {
-    const sessionId = getSessionId(context);
-
-    if (!sessionId) return context.redirect("/", 302);
+    const session = await requireTestSession(context, services, {
+      noSessionRedirect: "/",
+    });
+    if (session instanceof Response) return session;
+    const { sessionId } = session;
 
     const form = await context.req.formData();
     const wordIds = form.getAll("word").map((v) => Number(v));
