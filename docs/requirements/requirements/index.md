@@ -16,12 +16,15 @@ Markdown file with YAML frontmatter, managed by [SARA](../README.md).
 
 ### Optional Challenges
 
-| ID                                                | Name                            | Status       |
-| ------------------------------------------------- | ------------------------------- | ------------ |
-| [REQ-SYNONYMS-ANTONYMS](REQ-SYNONYMS-ANTONYMS.md) | Synonyms and antonyms challenge | accepted     |
-| [REQ-SPELLING](REQ-SPELLING.md)                   | Contextual spelling challenge   | accepted     |
-| [REQ-MEANING](REQ-MEANING.md)                     | Meaning challenge (definitions) | accepted     |
-| [REQ-SEMANTIC-USAGE](REQ-SEMANTIC-USAGE.md)       | Semantic usage challenge        | **deferred** |
+| ID                                                            | Name                                      | Status       |
+| ------------------------------------------------------------- | ----------------------------------------- | ------------ |
+| [REQ-SYNONYMS-ANTONYMS-SEEDS](REQ-SYNONYMS-ANTONYMS-SEEDS.md) | Synonyms and antonyms challenge (seeding) | accepted     |
+| [REQ-SYNONYMS-ANTONYMS](REQ-SYNONYMS-ANTONYMS.md)             | Synonyms and antonyms challenge (user)    | **deferred** |
+| [REQ-SPELLING-SEEDS](REQ-SPELLING-SEEDS.md)                   | Contextual spelling challenge (seeding)   | accepted     |
+| [REQ-SPELLING](REQ-SPELLING.md)                               | Contextual spelling challenge (user)      | **deferred** |
+| [REQ-MEANING-SEEDS](REQ-MEANING-SEEDS.md)                     | Meaning challenge (seeding)               | accepted     |
+| [REQ-MEANING](REQ-MEANING.md)                                 | Meaning challenge (user)                  | **deferred** |
+| [REQ-SEMANTIC-USAGE](REQ-SEMANTIC-USAGE.md)                   | Semantic usage challenge                  | **deferred** |
 
 ### Data and Infrastructure
 

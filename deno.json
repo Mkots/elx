@@ -4,7 +4,8 @@
   "exports": "./main.ts",
   "nodeModulesDir": "auto",
   "exclude": [
-    ".deno-cache"
+    ".deno-cache",
+    ".claude"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",

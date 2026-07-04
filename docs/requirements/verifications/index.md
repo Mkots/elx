@@ -5,12 +5,12 @@ to one or more requirements via the `verifies` relation.
 
 ## Seed Data Verifications
 
-| ID                                        | Name                                      | Verifies                        | Code                       |
-| ----------------------------------------- | ----------------------------------------- | ------------------------------- | -------------------------- |
-| [VER-SEED-WORDS](VER-SEED-WORDS.md)       | seed:words quality and idempotency        | REQ-QUESTION-BANK               | `scripts/seed_words.ts`    |
-| [VER-SEED-SYNONYMS](VER-SEED-SYNONYMS.md) | seed:synonyms distractors and idempotency | REQ-QUESTION-BANK               | `scripts/seed_synonyms.ts` |
-| [VER-SEED-SPELLING](VER-SEED-SPELLING.md) | seed:spelling sentences and distractors   | REQ-SPELLING, REQ-QUESTION-BANK | `scripts/seed_spelling.ts` |
-| [VER-SEED-MEANINGS](VER-SEED-MEANINGS.md) | seed:meanings definitions and distractors | REQ-MEANING, REQ-QUESTION-BANK  | `scripts/seed_meanings.ts` |
+| ID                                        | Name                                      | Verifies                                       | Code                       |
+| ----------------------------------------- | ----------------------------------------- | ---------------------------------------------- | -------------------------- |
+| [VER-SEED-WORDS](VER-SEED-WORDS.md)       | seed:words quality and idempotency        | REQ-QUESTION-BANK                              | `scripts/seed_words.ts`    |
+| [VER-SEED-SYNONYMS](VER-SEED-SYNONYMS.md) | seed:synonyms distractors and idempotency | REQ-SYNONYMS-ANTONYMS-SEEDS, REQ-QUESTION-BANK | `scripts/seed_synonyms.ts` |
+| [VER-SEED-SPELLING](VER-SEED-SPELLING.md) | seed:spelling sentences and distractors   | REQ-SPELLING-SEEDS, REQ-QUESTION-BANK          | `scripts/seed_spelling.ts` |
+| [VER-SEED-MEANINGS](VER-SEED-MEANINGS.md) | seed:meanings definitions and distractors | REQ-MEANING-SEEDS, REQ-QUESTION-BANK           | `scripts/seed_meanings.ts` |
 
 ## Application Route & Logic Verifications
 

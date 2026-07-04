@@ -4,6 +4,7 @@ type: verification
 name: "seed:synonyms distractors and idempotency"
 method: utest
 verifies:
+  - "REQ-SYNONYMS-ANTONYMS-SEEDS"
   - "REQ-QUESTION-BANK"
 ---
 
@@ -13,7 +14,7 @@ Covers the `seed:synonyms` seeder against
 [REQ-QUESTION-BANK](../requirements/REQ-QUESTION-BANK.md) (offline Datamuse
 sourcing, one unambiguous answer with distractors, and idempotency). The runtime
 challenge it feeds is specified by
-[REQ-SYNONYMS-ANTONYMS](../requirements/REQ-SYNONYMS-ANTONYMS.md).
+[REQ-SYNONYMS-ANTONYMS-SEEDS](../requirements/REQ-SYNONYMS-ANTONYMS-SEEDS.md).
 
 ## Code under verification
 

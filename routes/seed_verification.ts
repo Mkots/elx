@@ -104,7 +104,7 @@ export const databaseSeedVerificationLoader: SeedVerificationLoader = {
   },
 
   async loadSpelling() {
-    // Spelling challenges are retired, return empty
+    // Legacy spelling seeds table has been retired; user-facing spelling challenge features are planned for future phases.
     await Promise.resolve();
     return [];
   },
