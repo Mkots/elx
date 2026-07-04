@@ -32,4 +32,9 @@ node_modules/
 .vscode/settings.json
 .agents/skills/gh-issue-solver/state.json
 
-scripts/magic-hat/
+scripts/magic-hat/*
+!scripts/magic-hat/tatoeba/
+!scripts/magic-hat/tatoeba/eng_sentences_filtered.tsv
+!scripts/magic-hat/tatoeba/README.md
+!scripts/magic-hat/subtlex/
+!scripts/magic-hat/subtlex/README.md
