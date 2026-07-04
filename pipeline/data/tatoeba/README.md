@@ -22,5 +22,5 @@ include only those containing matching vocabulary words in `ALL.enriched.csv`
 To update the filtered subset, run the script:
 
 ```bash
-deno run --allow-all scripts/magic-hat/tatoeba/download_tatoeba.ts
+deno run --allow-all pipeline/data/tatoeba/download_tatoeba.ts
 ```

@@ -1,9 +1,9 @@
 import { assertEquals, assertNotEquals } from "@std/assert";
-import { Rabbits } from "../scripts/enrich.ts";
-import { generatePseudowordsList } from "../scripts/pseudowords.ts";
+import { Rabbits } from "./enrich.ts";
+import { generatePseudowordsList } from "./pseudowords.ts";
 
 const scriptDir = import.meta.dirname ?? ".";
-const rabbitsDir = `${scriptDir}/../scripts/magic-hat/rabbits`;
+const rabbitsDir = `${scriptDir}/data/wordnet`;
 const rabbitsExist = await (async () => {
   try {
     const stat = await Deno.stat(`${rabbitsDir}/entries-a.json`);

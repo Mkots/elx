@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { replaceHeadwordWithGap } from "../scripts/gap_sentences.ts";
+import { replaceHeadwordWithGap } from "./gap_sentences.ts";
 
 Deno.test("VER-GAP-SENTENCES: replaceHeadwordWithGap replaces base form case-insensitively", () => {
   assertEquals(

@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import {
   editDistance,
   selectPhoneticDistractors,
-} from "../scripts/phonetic_distractors.ts";
+} from "./phonetic_distractors.ts";
 
 Deno.test("VER-PHONETIC-DISTRACTORS: editDistance calculates correct Levenshtein distance", () => {
   assertEquals(editDistance("cat", "cat"), 0);

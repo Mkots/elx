@@ -1,19 +1,20 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat semantic distractor generator
+ * pipeline semantic distractor generator
  *
  * Operating on the enriched CSV, selects 3 plausible semantic distractors
  * per headword for definition and synonym questions.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/distractors.ts \
- *     --input scripts/magic-hat/ALL.enriched.csv \
- *     --output scripts/magic-hat/distractors.csv \
+ *   deno run --allow-read --allow-write pipeline/distractors.ts \
+ *     --input pipeline/out/ALL.enriched.csv \
+ *     --output pipeline/out/distractors.csv \
  *     --seed 12345
  */
 
 import { parseArgs } from "@std/cli/parse-args";
 import { parse as parseCsv, stringify as stringifyCsv } from "@std/csv";
+import { DEFAULT_SEED, seededRng } from "./rng.ts";
 
 interface WordRecord {
   headword: string;
@@ -23,15 +24,6 @@ interface WordRecord {
   synonyms: string[];
   antonyms: string[];
   hypernyms: string[];
-}
-
-function seededRng(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 // Fisher-Yates shuffle using seeded RNG
@@ -114,43 +106,19 @@ export function selectDistractors(
   }
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["input", "output", "seed", "help"],
-    alias: { i: "input", o: "output", s: "seed", h: "help" },
-  });
+export interface DistractorsOptions {
+  input: string;
+  output?: string;
+  seed?: number;
+}
 
-  if (args.help) {
-    console.error(
-      `magic-hat semantic distractor generator
+/** Generates semantic distractors for every word in `input`, writes `output`. Used by both the CLI and the orchestrator. */
+export async function runDistractors(
+  opts: DistractorsOptions,
+): Promise<{ rowCount: number }> {
+  const rng = seededRng(opts.seed ?? DEFAULT_SEED);
 
-Usage:
-  deno run --allow-read --allow-write scripts/distractors.ts [options]
-
-Options:
-  -i, --input <path>     input enriched CSV (defaults to scripts/magic-hat/ALL.enriched.csv)
-  -o, --output <path>    result CSV file (defaults to stdout)
-  -s, --seed <value>     random seed for determinism (defaults to 12345)
-  -h, --help             show this help`,
-    );
-    Deno.exit(0);
-  }
-
-  const scriptDir = import.meta.dirname ?? ".";
-  const inputPath = args.input ?? `${scriptDir}/magic-hat/ALL.enriched.csv`;
-  const seedVal = args.seed ? parseInt(args.seed, 10) : 12345;
-  const rng = seededRng(isNaN(seedVal) ? 12345 : seedVal);
-
-  // Read input enriched words
-  let csvText: string;
-  try {
-    csvText = await Deno.readTextFile(inputPath);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`Error: Failed to read input file ${inputPath}: ${msg}`);
-    Deno.exit(1);
-  }
-
+  const csvText = await Deno.readTextFile(opts.input);
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
     string
@@ -181,8 +149,7 @@ Options:
   }
 
   if (pool.length === 0) {
-    console.error("Error: No valid records found in the input CSV");
-    Deno.exit(1);
+    throw new Error("No valid records found in the input CSV");
   }
 
   const rows = [];
@@ -210,11 +177,52 @@ Options:
   ];
   const outText = stringifyCsv(rows, { columns });
 
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
+  }
+
+  return { rowCount: rows.length };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "output", "seed", "help"],
+    alias: { i: "input", o: "output", s: "seed", h: "help" },
+  });
+
+  if (args.help) {
+    console.error(
+      `pipeline semantic distractor generator
+
+Usage:
+  deno run --allow-read --allow-write pipeline/distractors.ts [options]
+
+Options:
+  -i, --input <path>     input enriched CSV (defaults to pipeline/out/ALL.enriched.csv)
+  -o, --output <path>    result CSV file (defaults to stdout)
+  -s, --seed <value>     random seed for determinism (defaults to ${DEFAULT_SEED})
+  -h, --help             show this help`,
+    );
+    Deno.exit(0);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
+  const seedVal = args.seed ? parseInt(args.seed, 10) : DEFAULT_SEED;
+
+  try {
+    await runDistractors({
+      input: inputPath,
+      output: args.output,
+      seed: isNaN(seedVal) ? DEFAULT_SEED : seedVal,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${msg}`);
+    Deno.exit(1);
   }
 }
 

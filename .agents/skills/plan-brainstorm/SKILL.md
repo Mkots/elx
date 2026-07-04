@@ -1,6 +1,6 @@
 ---
 name: plan-brainstorm
-description: Refines an abstract plan or idea into a strict development plan through an interactive brainstorm with the user. Use this when the user has a rough plan (e.g. scripts/magic-hat/ENRICHERS_PLAN.md) or a vague feature idea and wants to turn it into a concrete, issue-ready dev plan by answering clarifying questions.
+description: Refines an abstract plan or idea into a strict development plan through an interactive brainstorm with the user. Use this when the user has a rough plan (e.g. pipeline/notes/ENRICHERS_PLAN.md) or a vague feature idea and wants to turn it into a concrete, issue-ready dev plan by answering clarifying questions.
 ---
 
 # Plan Brainstorm Skill

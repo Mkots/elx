@@ -1,31 +1,23 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat pseudoword generator
+ * pipeline pseudoword generator
  *
  * Generates English-looking pseudowords using a bigram Markov model
  * trained on the real word list, matching length and CV-pattern,
  * and filtering out any real words using the rabbits dictionary.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/pseudowords.ts \
- *     --input scripts/magic-hat/ALL.enriched.csv \
- *     --rabbits scripts/magic-hat/rabbits \
- *     --output scripts/magic-hat/pseudowords.csv \
+ *   deno run --allow-read --allow-write pipeline/pseudowords.ts \
+ *     --input pipeline/out/ALL.enriched.csv \
+ *     --rabbits pipeline/data/wordnet \
+ *     --output pipeline/out/pseudowords.csv \
  *     --count 100 --seed 42
  */
 
 import { parseArgs } from "@std/cli/parse-args";
 import { parse as parseCsv, stringify as stringifyCsv } from "@std/csv";
 import { Rabbits } from "./enrich.ts";
-
-function seededRng(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+import { DEFAULT_SEED, seededRng } from "./rng.ts";
 
 function getCvPattern(word: string): string {
   return word
@@ -68,54 +60,25 @@ function generateCandidate(
   return word;
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["input", "rabbits", "output", "count", "seed", "help"],
-    alias: { i: "input", o: "output", c: "count", s: "seed", h: "help" },
-  });
+export interface PseudowordsOptions {
+  input: string;
+  rabbitsDir: string;
+  output?: string;
+  count?: number;
+  seed?: number;
+}
 
-  if (args.help) {
-    console.error(
-      `magic-hat pseudoword generator
+/** Generates pseudowords from `input`'s real words, writes `output`. Used by both the CLI and the orchestrator. */
+export async function runPseudowords(
+  opts: PseudowordsOptions,
+): Promise<{ rowCount: number }> {
+  const count = opts.count ?? 100;
+  const seedVal = opts.seed ?? DEFAULT_SEED;
 
-Usage:
-  deno run --allow-read --allow-write scripts/pseudowords.ts [options]
-
-Options:
-  -i, --input <path>     input enriched CSV (defaults to scripts/magic-hat/ALL.enriched.csv)
-      --rabbits <dir>    data directory (defaults to ./magic-hat/rabbits next to the script)
-  -o, --output <path>    result CSV file (defaults to stdout)
-  -c, --count <number>   number of pseudowords to generate (defaults to 100)
-  -s, --seed <value>     random seed for determinism (defaults to 12345)
-  -h, --help             show this help`,
-    );
-    Deno.exit(0);
-  }
-
-  const scriptDir = import.meta.dirname ?? ".";
-  const inputPath = args.input ?? `${scriptDir}/magic-hat/ALL.enriched.csv`;
-  const rabbitsDir = args.rabbits ?? `${scriptDir}/magic-hat/rabbits`;
-  const count = parseInt(args.count ?? "100", 10);
-  const seedVal = args.seed ? parseInt(args.seed, 10) : 12345;
-
-  if (isNaN(count) || count <= 0) {
-    console.error("Error: --count must be a positive integer");
-    Deno.exit(1);
-  }
-
-  const rabbits = new Rabbits(rabbitsDir);
+  const rabbits = new Rabbits(opts.rabbitsDir);
   await rabbits.init(false);
 
-  // Read input real words
-  let csvText: string;
-  try {
-    csvText = await Deno.readTextFile(inputPath);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`Error: Failed to read input file ${inputPath}: ${msg}`);
-    Deno.exit(1);
-  }
-
+  const csvText = await Deno.readTextFile(opts.input);
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
     string
@@ -131,8 +94,7 @@ Options:
   }
 
   if (realWords.length === 0) {
-    console.error("Error: No valid real words found in the input CSV");
-    Deno.exit(1);
+    throw new Error("No valid real words found in the input CSV");
   }
 
   console.error(
@@ -172,11 +134,63 @@ Options:
   ];
   const outText = stringifyCsv(rows, { columns });
 
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
+  }
+
+  return { rowCount: rows.length };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "rabbits", "output", "count", "seed", "help"],
+    alias: { i: "input", o: "output", c: "count", s: "seed", h: "help" },
+  });
+
+  if (args.help) {
+    console.error(
+      `pipeline pseudoword generator
+
+Usage:
+  deno run --allow-read --allow-write pipeline/pseudowords.ts [options]
+
+Options:
+  -i, --input <path>     input enriched CSV (defaults to pipeline/out/ALL.enriched.csv)
+      --rabbits <dir>    data directory (defaults to data/wordnet next to the script)
+  -o, --output <path>    result CSV file (defaults to stdout)
+  -c, --count <number>   number of pseudowords to generate (defaults to 100)
+  -s, --seed <value>     random seed for determinism (defaults to ${DEFAULT_SEED})
+  -h, --help             show this help`,
+    );
+    Deno.exit(0);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
+  const rabbitsDir = args.rabbits ?? `${scriptDir}/data/wordnet`;
+  const count = parseInt(args.count ?? "100", 10);
+  const seedVal = args.seed ? parseInt(args.seed, 10) : DEFAULT_SEED;
+
+  if (isNaN(count) || count <= 0) {
+    console.error("Error: --count must be a positive integer");
+    Deno.exit(1);
+  }
+
+  try {
+    await runPseudowords({
+      input: inputPath,
+      rabbitsDir,
+      output: args.output,
+      count,
+      seed: seedVal,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${msg}`);
+    Deno.exit(1);
   }
 }
 

@@ -32,9 +32,22 @@ node_modules/
 .vscode/settings.json
 .agents/skills/gh-issue-solver/state.json
 
-scripts/magic-hat/*
-!scripts/magic-hat/tatoeba/
-!scripts/magic-hat/tatoeba/eng_sentences_filtered.tsv
-!scripts/magic-hat/tatoeba/README.md
-!scripts/magic-hat/subtlex/
-!scripts/magic-hat/subtlex/README.md
+# Generated pipeline artifacts (see pipeline/README.md); manifest.json is the
+# one file in here that stays committed for provenance.
+pipeline/out/*
+!pipeline/out/manifest.json
+
+# Raw pipeline data: tracked for sources that are small and license-clean
+# (subtlex, tatoeba); wordlists/wordnet are large/local-only, README only.
+pipeline/data/*
+!pipeline/data/tatoeba/
+!pipeline/data/tatoeba/eng_sentences_filtered.tsv
+!pipeline/data/tatoeba/README.md
+!pipeline/data/subtlex/
+!pipeline/data/subtlex/README.md
+!pipeline/data/wordlists/
+pipeline/data/wordlists/*
+!pipeline/data/wordlists/README.md
+!pipeline/data/wordnet/
+pipeline/data/wordnet/*
+!pipeline/data/wordnet/README.md

@@ -1,0 +1,7 @@
+Word	FREQcount	CDcount	FREQlow	Cdlow	SUBTLWF
+abandon	100	50	10	5	2.5000
+acquire	80	40	8	4	1.8000
+arrange	120	60	12	6	3.2000
+ability	200	90	20	9	5.1000
+anger	150	70	15	7	4.0000
+animal	300	100	30	10	8.5000

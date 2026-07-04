@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat CSV cleaner
+ * pipeline CSV cleaner
  *
  * Cleans a word-list CSV before it goes into enrich.ts: trims slash-variant
  * headwords to their first form (`adviser/advisor` -> `adviser`), drops rows
@@ -8,8 +8,8 @@
  * multi-word/hyphenated/abbreviation headwords, and lowercases the rest.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/clean.ts \
- *     scripts/magic-hat/magicians/ALL.csv -o ALL.clean.csv [--report removed.csv]
+ *   deno run --allow-read --allow-write pipeline/clean.ts \
+ *     pipeline/data/wordlists/ALL.csv -o ALL.clean.csv [--report removed.csv]
  */
 
 import { parseArgs } from "@std/cli/parse-args";
@@ -127,30 +127,11 @@ export function cleanRecords(records: Record<string, string>[]): CleanResult {
   };
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["output", "report"],
-    boolean: ["help"],
-    alias: { o: "output", h: "help" },
-  });
-
-  const input = args._[0]?.toString();
-
-  if (args.help || !input) {
-    console.error(
-      `magic-hat CSV cleaner
-
-Usage:
-  deno run --allow-read --allow-write scripts/clean.ts <input.csv> [options]
-
-Options:
-  -o, --output <path>    result file (defaults to stdout)
-      --report <path>    write removed rows (with a reason column) to this CSV
-  -h, --help             show this help`,
-    );
-    Deno.exit(args.help ? 0 : 1);
-  }
-
+/** Reads `input`, cleans it, writes `output` (and `report`, if given). Used by both the CLI and the orchestrator. */
+export async function cleanFile(
+  input: string,
+  opts: { output?: string; report?: string } = {},
+): Promise<{ rowCount: number } & CleanResult> {
   const csvText = await Deno.readTextFile(input);
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
@@ -158,7 +139,8 @@ Options:
   >[];
   const columns = Object.keys(records[0] ?? {});
 
-  const { rows, removed, stats } = cleanRecords(records);
+  const result = cleanRecords(records);
+  const { rows, removed, stats } = result;
 
   console.error(`Cleaned ${records.length} rows -> ${rows.length} kept.`);
   console.error(`  headwords normalized: ${stats.headwordChanged}`);
@@ -171,20 +153,49 @@ Options:
   }
 
   const outText = stringifyCsv(rows, { columns });
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
   }
 
-  if (args.report) {
+  if (opts.report) {
     const reportText = stringifyCsv(removed, {
       columns: [...columns, "reason"],
     });
-    await Deno.writeTextFile(args.report, reportText);
-    console.error(`Removed rows written to ${args.report}`);
+    await Deno.writeTextFile(opts.report, reportText);
+    console.error(`Removed rows written to ${opts.report}`);
   }
+
+  return { rowCount: rows.length, ...result };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["output", "report"],
+    boolean: ["help"],
+    alias: { o: "output", h: "help" },
+  });
+
+  const input = args._[0]?.toString();
+
+  if (args.help || !input) {
+    console.error(
+      `pipeline CSV cleaner
+
+Usage:
+  deno run --allow-read --allow-write pipeline/clean.ts <input.csv> [options]
+
+Options:
+  -o, --output <path>    result file (defaults to stdout)
+      --report <path>    write removed rows (with a reason column) to this CSV
+  -h, --help             show this help`,
+    );
+    Deno.exit(args.help ? 0 : 1);
+  }
+
+  await cleanFile(input, { output: args.output, report: args.report });
 }
 
 if (import.meta.main) {

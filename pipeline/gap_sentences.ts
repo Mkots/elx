@@ -1,16 +1,16 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat gap sentence generator
+ * pipeline gap sentence generator
  *
  * Generates a gap sentence per headword. Converts WordNet examples first,
  * and backfills from Tatoeba for words lacking a usable WordNet example.
  * Replaces the headword (and its inflections) with a single '___'.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/gap_sentences.ts \
- *     --input scripts/magic-hat/ALL.enriched.csv \
- *     --tatoeba scripts/magic-hat/tatoeba/eng_sentences_filtered.tsv \
- *     --output scripts/magic-hat/gap_sentences.csv
+ *   deno run --allow-read --allow-write pipeline/gap_sentences.ts \
+ *     --input pipeline/out/ALL.enriched.csv \
+ *     --tatoeba pipeline/data/tatoeba/eng_sentences_filtered.tsv \
+ *     --output pipeline/out/gap_sentences.csv
  */
 
 import { parseArgs } from "@std/cli/parse-args";
@@ -62,42 +62,18 @@ export function replaceHeadwordWithGap(
   return result;
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["input", "tatoeba", "output", "help"],
-    alias: { i: "input", t: "tatoeba", o: "output", h: "help" },
-  });
+export interface GapSentencesOptions {
+  input: string;
+  tatoebaPath: string;
+  output?: string;
+}
 
-  if (args.help) {
-    console.error(
-      `magic-hat gap sentence generator
-
-Usage:
-  deno run --allow-read --allow-write scripts/gap_sentences.ts [options]
-
-Options:
-  -i, --input <path>     input enriched CSV (defaults to scripts/magic-hat/ALL.enriched.csv)
-  -t, --tatoeba <path>   pre-filtered Tatoeba TSV file (defaults to scripts/magic-hat/tatoeba/eng_sentences_filtered.tsv)
-  -o, --output <path>    result CSV file (defaults to stdout)
-  -h, --help             show this help`,
-    );
-    Deno.exit(0);
-  }
-
-  const scriptDir = import.meta.dirname ?? ".";
-  const inputPath = args.input ?? `${scriptDir}/magic-hat/ALL.enriched.csv`;
-  const tatoebaPath = args.tatoeba ??
-    `${scriptDir}/magic-hat/tatoeba/eng_sentences_filtered.tsv`;
-
+/** Generates one gap sentence per headword in `input` (WordNet first, Tatoeba backfill), writes `output`. Used by both the CLI and the orchestrator. */
+export async function runGapSentences(
+  opts: GapSentencesOptions,
+): Promise<{ rowCount: number }> {
   // 1. Read the input enriched words
-  let csvText: string;
-  try {
-    csvText = await Deno.readTextFile(inputPath);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`Error: Failed to read input file ${inputPath}: ${msg}`);
-    Deno.exit(1);
-  }
+  const csvText = await Deno.readTextFile(opts.input);
 
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
@@ -124,16 +100,15 @@ Options:
   }
 
   if (pool.length === 0) {
-    console.error("Error: No valid records found in the input CSV");
-    Deno.exit(1);
+    throw new Error("No valid records found in the input CSV");
   }
 
   // 2. Load and index Tatoeba sentences
-  console.error(`Loading Tatoeba sentences from ${tatoebaPath}...`);
+  console.error(`Loading Tatoeba sentences from ${opts.tatoebaPath}...`);
   const tatoebaIndex = new Map<string, string[]>();
 
   try {
-    const tatoebaText = await Deno.readTextFile(tatoebaPath);
+    const tatoebaText = await Deno.readTextFile(opts.tatoebaPath);
     const lines = tatoebaText.split("\n");
     for (const line of lines) {
       if (!line.trim()) continue;
@@ -215,11 +190,53 @@ Options:
   const columns = ["headword", "pos", "CEFR", "gap_sentence"];
   const outText = stringifyCsv(rows, { columns });
 
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
+  }
+
+  return { rowCount: rows.length };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "tatoeba", "output", "help"],
+    alias: { i: "input", t: "tatoeba", o: "output", h: "help" },
+  });
+
+  if (args.help) {
+    console.error(
+      `pipeline gap sentence generator
+
+Usage:
+  deno run --allow-read --allow-write pipeline/gap_sentences.ts [options]
+
+Options:
+  -i, --input <path>     input enriched CSV (defaults to pipeline/out/ALL.enriched.csv)
+  -t, --tatoeba <path>   pre-filtered Tatoeba TSV file (defaults to pipeline/data/tatoeba/eng_sentences_filtered.tsv)
+  -o, --output <path>    result CSV file (defaults to stdout)
+  -h, --help             show this help`,
+    );
+    Deno.exit(0);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
+  const tatoebaPath = args.tatoeba ??
+    `${scriptDir}/data/tatoeba/eng_sentences_filtered.tsv`;
+
+  try {
+    await runGapSentences({
+      input: inputPath,
+      tatoebaPath,
+      output: args.output,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${msg}`);
+    Deno.exit(1);
   }
 }
 

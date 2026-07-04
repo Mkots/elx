@@ -6,7 +6,7 @@ import {
   isHyphenated,
   isMultiWord,
   normalizeHeadword,
-} from "../scripts/clean.ts";
+} from "./clean.ts";
 
 Deno.test("VER-CLEAN: cutSlashVariant keeps the first slash-variant form", () => {
   assertEquals(cutSlashVariant("adviser/advisor"), "adviser");

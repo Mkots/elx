@@ -1,0 +1,8 @@
+{
+  "syn-arrange-1": {
+    "definition": ["make arrangements for an event"],
+    "example": ["We need to arrange a meeting soon."],
+    "hypernym": [],
+    "members": ["arrange", "organize"]
+  }
+}

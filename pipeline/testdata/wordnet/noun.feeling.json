@@ -1,0 +1,8 @@
+{
+  "syn-anger-1": {
+    "definition": ["a strong feeling of displeasure"],
+    "example": ["His sudden anger surprised his friends."],
+    "hypernym": [],
+    "members": ["anger", "wrath"]
+  }
+}

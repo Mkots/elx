@@ -1,5 +1,6 @@
 import { assertEquals, assertNotEquals } from "@std/assert";
-import { selectDistractors } from "../scripts/distractors.ts";
+import { selectDistractors } from "./distractors.ts";
+import { seededRng } from "./rng.ts";
 
 Deno.test("VER-DISTRACTORS: selectDistractors filters out target and target relations", () => {
   const target = {
@@ -71,13 +72,7 @@ Deno.test("VER-DISTRACTORS: selectDistractors filters out target and target rela
     },
   ];
 
-  let seed = 42;
-  const rng = () => {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  const rng = seededRng(42);
 
   const chosen = selectDistractors(target, pool, rng, "synonym");
 
@@ -153,13 +148,7 @@ Deno.test("VER-DISTRACTORS: selectDistractors prefers same lexname for definitio
     },
   ];
 
-  let seed = 42;
-  const rng = () => {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  const rng = seededRng(42);
 
   const chosen = selectDistractors(target, pool, rng, "definition");
 
@@ -218,19 +207,9 @@ Deno.test("VER-DISTRACTORS: selectDistractors runs deterministically under same 
     },
   ];
 
-  const getRng = (sVal: number) => {
-    let seed = sVal;
-    return () => {
-      let t = (seed += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  };
-
-  const out1 = selectDistractors(target, pool, getRng(42), "synonym");
-  const out2 = selectDistractors(target, pool, getRng(42), "synonym");
-  const out3 = selectDistractors(target, pool, getRng(99), "synonym");
+  const out1 = selectDistractors(target, pool, seededRng(42), "synonym");
+  const out2 = selectDistractors(target, pool, seededRng(42), "synonym");
+  const out3 = selectDistractors(target, pool, seededRng(99), "synonym");
 
   assertEquals(out1, out2);
   assertNotEquals(out1, out3);

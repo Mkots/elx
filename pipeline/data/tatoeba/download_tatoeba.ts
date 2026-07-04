@@ -1,13 +1,13 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run
 /**
- * magic-hat Tatoeba downloader & filter
+ * Tatoeba downloader & filter
  *
  * Downloads the English Tatoeba sentences archive (~33MB), extracts it,
  * filters it to keep only sentences matching words in the vocabulary,
  * and saves a small, pre-filtered subset in the repository.
  *
  * Usage:
- *   deno run --allow-all scripts/magic-hat/tatoeba/download_tatoeba.ts
+ *   deno run --allow-all pipeline/data/tatoeba/download_tatoeba.ts
  */
 
 import { parse as parseCsv } from "@std/csv";
@@ -18,7 +18,7 @@ async function main() {
   const archivePath = `${targetDir}/eng_sentences_detailed.tsv.bz2`;
   const tsvPath = `${targetDir}/eng_sentences_detailed.tsv`;
   const filteredPath = `${targetDir}/eng_sentences_filtered.tsv`;
-  const vocabularyPath = `${scriptDir}/../ALL.enriched.csv`;
+  const vocabularyPath = `${scriptDir}/../../out/ALL.enriched.csv`;
 
   // 1. Read the vocabulary words from ALL.enriched.csv
   console.log(`Reading vocabulary from ${vocabularyPath}...`);
