@@ -58,8 +58,10 @@ Guards:
 
 ## Admin panel (`/admin`)
 
-- Cookie-based auth (`admin_session` in KV); credentials from `ADMIN_USERNAME` /
-  `ADMIN_PASSWORD` (both default to `admin`).
+- Cookie-based auth (`admin_session` in KV); credentials come from
+  `ADMIN_USERNAME` / `ADMIN_PASSWORD` with no default — the admin panel is
+  disabled (503) if either is unset. Login is timing-safe and rate-limited (5
+  attempts / 15 min per IP).
 - `routes/admin/index.ts` is the composition root: each concern (auth,
   dashboard, words, review, tickets, ticket config, history) registers its
   handlers on one shared Hono router behind `adminAuthMiddleware`.

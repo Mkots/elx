@@ -7,37 +7,49 @@ description: Automates the end-to-end workflow of resolving GitHub issues. Use t
 
 Semi-autonomous workflow for resolving GitHub issues in this repository.
 
+## MANDATORY: use `scripts/issue_loop.ts`
+
+This skill MUST be executed through
+`deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts`. It is not an
+optional helper — it is the workflow. Do not reimplement its steps by hand
+(manually running `gh issue list`, creating branches, opening PRs, merging,
+etc.) as a substitute for calling the script.
+
+**Hard stop condition**: if for any reason the script cannot or should not be
+invoked at a required step (missing permissions, the agent judges the action
+unsafe, the script errors in a way that isn't a normal fix-and-retry case,
+etc.), the agent MUST stop all work immediately and report this to the user
+instead of falling back to manual steps or improvising. Do not silently
+downgrade to a manual workflow.
+
 ## Workflow
 
-1. **Selection**:
-   - If the user already provided an issue number, skip to Preparation.
-   - Otherwise list open issues with `gh issue list` and ask the user to pick
-     one. Confirm the selected issue before starting work.
-2. **Preparation**:
-   - Fetch issue details: `gh issue view <id>`.
-   - Ensure the working tree is clean (`git status`); stop and ask the user how
-     to proceed if it isn't.
-   - Branch from the up-to-date default branch:
-     `git fetch origin <default-branch> && git checkout -b issue-<id>-<kebab-description> origin/<default-branch>`.
-3. **Implementation**:
-   - Analyze the issue, plan the change, implement it.
-   - **Validation**: run `deno task ci` (fmt:check + lint + check + tests) and
-     fix failures until it passes.
-4. **Submission**:
-   - Commit using the conventional commit format used in this repo (`feat:`,
-     `fix:`, `build(deps):`, ...).
-   - Push the branch: `git push -u origin <branch-name>`.
-   - Create the PR with an explicit title and body — do not rely on `--fill`, it
-     never adds issue links on its own:
-     `gh pr create --title "<conventional title>" --body "<summary>` + blank
-     line + `Closes #<id>"`.
+1. **Start**: run
+   `deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --start [--label <label>]`.
+   This loads the open-issue queue into `state.json` and checks out the branch
+   for the next issue (or resumes `currentIssue` if one is already in progress).
+2. **Implementation**: analyze the issue and implement the fix on the
+   checked-out branch. Iterate with `deno task ci` locally until it passes.
+3. **Submit**: run
+   `deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --submit`.
+   This runs `deno task ci`, commits and pushes, opens the PR (with
+   `Closes #<id>`), waits for GitHub Actions checks, and merges the PR once
+   green. It then automatically advances to the next queued issue.
+4. **Status / recovery**: use `--status` to inspect `currentIssue`,
+   `remainingIssues`, and `completedIssues`; `--skip` to abandon the current
+   issue and move to the next one; `--reset` to clear the queue entirely.
 
 ## Standards
 
 - **Branch naming**: `issue-<number>-<kebab-description>` — lowercase, digits
-  and hyphens only (e.g. `issue-42-fix-stage2-redirect`).
-- **Quality gate**: never create a PR if `deno task ci` fails.
-- **Issue linking**: the PR body must contain `Closes #<id>` so merging closes
-  the issue automatically.
-- **Semi-autonomous**: confirm the selected issue with the user, then work
-  autonomously until the PR is ready or a major blocker is encountered.
+  and hyphens only (e.g. `issue-42-fix-stage2-redirect`). The script derives
+  this automatically from the issue title.
+- **Quality gate**: `--submit` refuses to proceed if `deno task ci` fails.
+- **Issue linking**: the PR body contains `Closes #<id>` so merging closes the
+  issue automatically.
+- **Autonomous merge**: `--submit` merges the PR itself once CI is green — there
+  is no manual approval gate. This is by design for this skill; do not add a
+  confirmation step around it.
+- **State persistence**: `state.json` is the only source of truth for
+  in-progress/queued/completed issues across invocations. Don't hand-edit it
+  except via `--reset`/`--skip`.
