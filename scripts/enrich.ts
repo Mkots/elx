@@ -103,6 +103,7 @@ interface EnrichedSense {
   definition: string;
   examples: string[];
   synonyms: string[];
+  antonyms: string[];
   hypernyms: { id: string; lemma?: string }[];
   frames?: string[];
 }
@@ -258,6 +259,15 @@ class Rabbits {
         const synonyms = members.filter(
           (m) => m.toLowerCase() !== headword.toLowerCase(),
         );
+        const antonyms = [
+          ...new Set(
+            (sense.antonym ?? [])
+              .map((key) => key.split("%")[0].replace(/_/g, " "))
+              .filter((lemma) =>
+                lemma.toLowerCase() !== headword.toLowerCase()
+              ),
+          ),
+        ];
         const hypernyms = (syn?.hypernym ?? []).map((id) => {
           const lemma = this.hypernymLemma(id);
           return lemma ? { id, lemma } : { id };
@@ -272,6 +282,7 @@ class Rabbits {
           definition: (syn?.definition ?? []).join("; "),
           examples: syn?.example ?? [],
           synonyms,
+          antonyms,
           hypernyms,
           ...(frames.length ? { frames } : {}),
         });
@@ -289,6 +300,7 @@ class Rabbits {
 function toCsvRow(
   row: EnrichedRow,
   originalColumns: string[],
+  withHypernyms?: boolean,
 ): Record<string, string> {
   const first = row.senses[0];
   const out: Record<string, string> = {};
@@ -296,6 +308,15 @@ function toCsvRow(
   out.lexname = first?.lexname ?? "";
   out.definition = first?.definition ?? "";
   out.synonyms = first ? first.synonyms.join("; ") : "";
+  out.antonyms = first ? first.antonyms.join("; ") : "";
+  if (withHypernyms) {
+    out.hypernyms = first
+      ? first.hypernyms
+        .map((h) => h.lemma)
+        .filter((l): l is string => Boolean(l))
+        .join("; ")
+      : "";
+  }
   out.examples = first ? first.examples.join(" | ") : "";
   out.pronunciation = row.pronunciation.join(", ");
   out.senseCount = String(row.senseCount);
@@ -384,16 +405,22 @@ Options:
 
   let outText: string;
   if (format === "csv") {
-    const rows = results.map((r) => toCsvRow(r, originalColumns));
+    const rows = results.map((r) =>
+      toCsvRow(r, originalColumns, Boolean(args.hypernyms))
+    );
     const columns = [
       ...originalColumns,
       "lexname",
       "definition",
       "synonyms",
+      "antonyms",
       "examples",
       "pronunciation",
       "senseCount",
     ];
+    if (args.hypernyms) {
+      columns.push("hypernyms");
+    }
     outText = stringifyCsv(rows, { columns });
   } else {
     outText = JSON.stringify(results, null, 2);
