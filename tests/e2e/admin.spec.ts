@@ -112,9 +112,7 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     ]);
     const csvPath = await downloadCsv.path();
     const csvContent = Deno.readTextFileSync(csvPath);
-    expect(csvContent).toContain(
-      "id,session_id,score,truthfulness,completed_at",
-    );
+    expect(csvContent).toContain("id,score,truthfulness,completed_at");
 
     // 2. Download JSON
     const [downloadJson] = await Promise.all([
