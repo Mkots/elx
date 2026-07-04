@@ -478,6 +478,13 @@ async function submitWorkflow() {
     Deno.exit(1);
   }
 
+  console.log(blue(`Merging Pull Request #${prNumber}...`));
+  await runCmd(
+    ["gh", "pr", "merge", String(prNumber), "--squash", "--delete-branch"],
+    "Failed to merge Pull Request",
+  );
+  console.log(green(`Pull Request #${prNumber} merged successfully.`));
+
   state.completedIssues.push(issue);
   state.currentIssue = null;
   await saveState(state);

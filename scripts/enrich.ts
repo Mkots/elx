@@ -114,6 +114,8 @@ interface EnrichedRow {
   pronunciation: string[];
   senseCount: number;
   senses: EnrichedSense[];
+  difficulty: number;
+  zipf: number | null;
   [key: string]: unknown; // original CSV columns
 }
 
@@ -297,6 +299,67 @@ class Rabbits {
   }
 }
 
+async function loadSubtlex(filePath: string): Promise<Map<string, number>> {
+  const subtlex = new Map<string, number>();
+  try {
+    const text = await Deno.readTextFile(filePath);
+    const lines = text.split("\n");
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split("\t");
+      const word = parts[0]?.toLowerCase();
+      const subtlwf = parseFloat(parts[5]);
+      if (word && !isNaN(subtlwf)) {
+        const zipf = Math.log10(subtlwf) + 3;
+        subtlex.set(word, zipf);
+      }
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error(
+        `Warning: Failed to load SUBTLEX from ${filePath}:`,
+        err.message,
+      );
+    } else {
+      console.error(`Warning: Failed to load SUBTLEX from ${filePath}:`, err);
+    }
+  }
+  return subtlex;
+}
+
+function getDifficultyAndZipf(
+  cefr: string,
+  word: string,
+  subtlex: Map<string, number>,
+): { difficulty: number; zipf: number | null } {
+  const normCefr = cefr.trim().toUpperCase();
+  if (normCefr === "A1") {
+    return { difficulty: 1, zipf: subtlex.get(word.toLowerCase()) ?? null };
+  }
+  if (normCefr === "A2") {
+    return { difficulty: 2, zipf: subtlex.get(word.toLowerCase()) ?? null };
+  }
+  if (normCefr === "B1") {
+    return { difficulty: 3, zipf: subtlex.get(word.toLowerCase()) ?? null };
+  }
+  if (normCefr === "B2") {
+    return { difficulty: 4, zipf: subtlex.get(word.toLowerCase()) ?? null };
+  }
+
+  const zipf = subtlex.get(word.toLowerCase());
+  if (zipf !== undefined && !isNaN(zipf)) {
+    let difficulty = 5;
+    if (zipf >= 4.5) difficulty = 1;
+    else if (zipf >= 4.0) difficulty = 2;
+    else if (zipf >= 3.5) difficulty = 3;
+    else if (zipf >= 3.0) difficulty = 4;
+    return { difficulty, zipf };
+  }
+
+  return { difficulty: 5, zipf: null };
+}
+
 function toCsvRow(
   row: EnrichedRow,
   originalColumns: string[],
@@ -320,6 +383,8 @@ function toCsvRow(
   out.examples = first ? first.examples.join(" | ") : "";
   out.pronunciation = row.pronunciation.join(", ");
   out.senseCount = String(row.senseCount);
+  out.difficulty = String(row.difficulty);
+  out.zipf = row.zipf !== null ? row.zipf.toFixed(4) : "";
   return out;
 }
 
@@ -359,6 +424,10 @@ Options:
   const rabbits = new Rabbits(rabbitsDir);
   await rabbits.init(Boolean(args.hypernyms));
 
+  const subtlexPath =
+    `${rabbitsDir}/../subtlex/SUBTLEXus74286wordstextversion.txt`;
+  const subtlex = await loadSubtlex(subtlexPath);
+
   const csvText = await Deno.readTextFile(input);
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
@@ -387,6 +456,12 @@ Options:
 
     if (!ok) continue;
 
+    const { difficulty, zipf } = getDifficultyAndZipf(
+      rec.CEFR ?? "",
+      headword,
+      subtlex,
+    );
+
     results.push({
       ...rec,
       headword,
@@ -394,6 +469,8 @@ Options:
       pronunciation,
       senseCount: senses.length,
       senses,
+      difficulty,
+      zipf,
     });
   }
 
@@ -417,6 +494,8 @@ Options:
       "examples",
       "pronunciation",
       "senseCount",
+      "difficulty",
+      "zipf",
     ];
     if (args.hypernyms) {
       columns.push("hypernyms");
