@@ -1,9 +1,8 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
-import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
 import * as ticketsRepo from "../db/repositories/tickets.ts";
 import { db } from "../db/client.ts";
-import { ticketConfigs, tickets } from "../db/schema.ts";
+import { adminSessions, ticketConfigs, tickets } from "../db/schema.ts";
 import type {
   SnapshotQuestion,
   SynonymSnapshotQuestion,
@@ -119,10 +118,11 @@ const app = createApp({
 });
 
 async function createAdminSession() {
-  const kv = await getKv();
   const sessionId = crypto.randomUUID();
-  await kv.set(["admin_session", sessionId], { username: "admin" }, {
-    expireIn: 60 * 1000,
+  await db.insert(adminSessions).values({
+    id: sessionId,
+    username: "admin",
+    expiresAt: new Date(Date.now() + 60 * 1000),
   });
   return sessionId;
 }

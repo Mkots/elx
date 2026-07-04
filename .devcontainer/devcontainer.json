@@ -11,8 +11,7 @@
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
   "containerEnv": {
-    "DATABASE_URL": "postgres://elx:elx@host.docker.internal:5432/elx",
-    "DENO_KV_PATH": "/workspaces/elx/.data/elx.sqlite3"
+    "DATABASE_URL": "postgres://elx:elx@host.docker.internal:5432/elx"
   },
   "forwardPorts": [
     8000,

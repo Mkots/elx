@@ -1,7 +1,9 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { getKv } from "../session.ts";
+import { eq } from "drizzle-orm";
 import { createApp } from "../app.ts";
+import { db } from "../db/client.ts";
 import { defaultServices, type Services } from "../db/services.ts";
+import { adminSessions } from "../db/schema.ts";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
 import type { TestRun } from "../db/repositories/history.ts";
 
@@ -477,10 +479,11 @@ const app = createApp(mockServices);
 
 // Setup helper for authenticated session
 async function createAdminSession() {
-  const kv = await getKv();
   const sessionId = crypto.randomUUID();
-  await kv.set(["admin_session", sessionId], { username: "admin" }, {
-    expireIn: 60 * 1000,
+  await db.insert(adminSessions).values({
+    id: sessionId,
+    username: "admin",
+    expiresAt: new Date(Date.now() + 60 * 1000),
   });
   return sessionId;
 }
@@ -558,9 +561,11 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
     const sessionId = match ? match[1] : "";
     assertEquals(sessionId !== "", true);
 
-    const kv = await getKv();
-    const sessionEntry = await kv.get(["admin_session", sessionId]);
-    assertEquals(sessionEntry.value !== null, true);
+    const sessionEntry = await db.select()
+      .from(adminSessions)
+      .where(eq(adminSessions.id, sessionId))
+      .limit(1);
+    assertEquals(sessionEntry.length, 1);
 
     const authenticatedResponse = await app.request("/admin", {
       headers: { "Cookie": `admin_session=${sessionId}` },
@@ -586,12 +591,31 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
     assertEquals(logoutResponse.status, 302);
     assertEquals(logoutResponse.headers.get("location"), "/admin/login");
 
-    const deletedEntry = await kv.get(["admin_session", sessionId]);
-    assertEquals(deletedEntry.value, null);
+    const deletedEntry = await db.select()
+      .from(adminSessions)
+      .where(eq(adminSessions.id, sessionId))
+      .limit(1);
+    assertEquals(deletedEntry.length, 0);
   } finally {
     Deno.env.delete("ADMIN_USERNAME");
     Deno.env.delete("ADMIN_PASSWORD");
   }
+});
+
+Deno.test("VER-ADMIN-AUTH: expired admin session redirects to login", async () => {
+  const sessionId = crypto.randomUUID();
+  await db.insert(adminSessions).values({
+    id: sessionId,
+    username: "admin",
+    expiresAt: new Date(Date.now() - 60 * 1000),
+  });
+
+  const response = await app.request("/admin", {
+    headers: { "Cookie": `admin_session=${sessionId}` },
+  });
+
+  assertEquals(response.status, 302);
+  assertEquals(response.headers.get("location"), "/admin/login");
 });
 
 Deno.test("VER-ADMIN-AUTH: GET /admin/login returns 503 when env vars not set", async () => {

@@ -14,7 +14,7 @@ default admin credentials, CSRF, secure cookies), an item-level answer log that
 enables the research goal (funnel/latency analysis, future adaptive testing),
 and a reproducible enrichment pipeline under `pipeline/` with a manifest. Done
 means: all work items below merged with green `deno task ci`, docs/SARA updated,
-and no references to Deno KV or `--unstable-kv` remain.
+and no references to the old KV runtime flag remain.
 
 ## Decisions
 
@@ -267,20 +267,19 @@ Fixed during brainstorm (2026-07-04) with the project owner; do not relitigate:
 
 - **Depends on**: 10
 - **Context**: sessions live in Deno KV (`session.ts`) — second storage engine,
-  `--unstable-kv` flag in tasks/Dockerfile, `DENO_KV_PATH` volumes in compose,
-  data invisible to SQL/Adminer; user-session keys never expire.
+  old KV runtime flag in tasks/Dockerfile, old KV path volumes in compose, data
+  invisible to SQL/Adminer; user-session keys never expire.
 - **Deliverable**:
   1. `session.ts` rewritten against `test_sessions`/`test_answers`; admin
      sessions in an `admin_sessions` table with `expires_at`.
-  2. All KV code and `--unstable-kv`/`DENO_KV_PATH` removed from `deno.json`,
+  2. All KV code and old KV runtime/path config removed from `deno.json`,
      `Dockerfile`, both compose files, deploy docs.
   3. Cleanup: scheduled task or on-login purge of expired admin sessions;
      abandoned test sessions kept (they are research data).
   4. New ADR `ADR-SESSION-STORE-POSTGRES` marking `ADR-SESSION-STORE`
      "superseded by" (SARA index updated).
 - **Acceptance criteria**:
-  - [ ] `grep -r "unstable-kv\|openKv\|DENO_KV" --exclude-dir=node_modules`
-        returns nothing.
+  - [ ] the repo-wide grep for the old KV runtime/path literals returns nothing.
   - [ ] Full test flow (home → stage1 → stage2 → result) green in e2e.
   - [ ] Expired admin session redirects to login.
   - [ ] `deno task ci` and `deno task e2e` green.

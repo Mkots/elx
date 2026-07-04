@@ -12,7 +12,7 @@ Markdown file with YAML frontmatter, managed by [SARA](../README.md).
 | [REQ-WORD-SELECTION](REQ-WORD-SELECTION.md)             | Core LexTALE word selection  | accepted |
 | [REQ-VERIFICATION-SCORING](REQ-VERIFICATION-SCORING.md) | Verification and scoring     | accepted |
 | [REQ-SSR-STAGE-FLOW](REQ-SSR-STAGE-FLOW.md)             | SSR rendering and stage flow | accepted |
-| [REQ-SESSION-STATE](REQ-SESSION-STATE.md)               | Session state (Deno KV)      | accepted |
+| [REQ-SESSION-STATE](REQ-SESSION-STATE.md)               | Session state (PostgreSQL)   | accepted |
 
 ### Optional Challenges
 

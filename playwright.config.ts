@@ -42,7 +42,6 @@ export default defineConfig({
     timeout: 30_000,
     env: {
       DATABASE_URL: getEnv("DATABASE_URL"),
-      DENO_KV_PATH: getEnv("DENO_KV_PATH") || ".data/elx.sqlite3",
       ADMIN_USERNAME: getEnv("ADMIN_USERNAME") || "admin",
       ADMIN_PASSWORD: getEnv("ADMIN_PASSWORD") || "admin",
     },

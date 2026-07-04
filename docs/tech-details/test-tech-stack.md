@@ -45,8 +45,8 @@ checking:
 
 State:
 
-- **Deno KV:** use an in-memory instance (`Deno.openKv(":memory:")`) for each
-  test.
+- **Session state:** use the PostgreSQL-backed session helpers against a test
+  database.
 - **PostgreSQL:** use a real test database in Docker through Testcontainers or
   Docker Compose and run Drizzle migrations. This tests real SQL queries rather
   than imitations.
@@ -151,7 +151,8 @@ blocks CI.
 - **`deno test`** with `@std/assert`, `@std/testing/mock`, and
   `@std/testing/snapshot` for unit and integration tests.
 - **Hono `app.request()`** for route and redirect tests.
-- **`Deno.openKv(":memory:")`** and **Testcontainers/Postgres** for state.
+- **PostgreSQL-backed session helpers** and **Testcontainers/Postgres** for
+  state.
 - **`deno-dom`** for HTML rendering checks.
 - **Playwright**, with Astral as an alternative, for E2E tests.
 - **`deno coverage`** for code coverage.

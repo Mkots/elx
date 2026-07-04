@@ -1,6 +1,8 @@
 import type { Context, Hono } from "@hono/hono";
+import { eq, lt } from "drizzle-orm";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { getKv } from "../../session.ts";
+import { db } from "../../db/client.ts";
+import { adminSessions } from "../../db/schema.ts";
 import { LoginPage } from "../../ui/pages/LoginPage.tsx";
 
 // ---------------------------------------------------------------------------
@@ -87,6 +89,19 @@ export function _loginAttemptsForTest(): Map<string, RateLimitEntry> {
   return loginAttempts;
 }
 
+async function purgeExpiredAdminSessions(now = new Date()): Promise<void> {
+  await db.delete(adminSessions).where(lt(adminSessions.expiresAt, now));
+}
+
+async function loadAdminSession(sessionId: string) {
+  await purgeExpiredAdminSessions();
+  const rows = await db.select()
+    .from(adminSessions)
+    .where(eq(adminSessions.id, sessionId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 // ---------------------------------------------------------------------------
 // Middleware
 // ---------------------------------------------------------------------------
@@ -107,14 +122,13 @@ export async function adminAuthMiddleware(
     return context.redirect("/admin/login");
   }
 
-  const kv = await getKv();
-  const sessionEntry = await kv.get(["admin_session", sessionId]);
-  if (!sessionEntry.value) {
+  const session = await loadAdminSession(sessionId);
+  if (!session) {
     deleteCookie(context, "admin_session");
     return context.redirect("/admin/login");
   }
 
-  context.set("adminSession", sessionEntry.value);
+  context.set("adminSession", session);
   await next();
 }
 
@@ -125,7 +139,7 @@ export async function adminAuthMiddleware(
 /** Registers the login/logout routes on the shared admin router. */
 export function registerAuthRoutes(route: Hono) {
   // GET /admin/login
-  route.get("/login", (context) => {
+  route.get("/login", async (context) => {
     const creds = getAdminCredentials();
     if (!creds) {
       return context.html(
@@ -134,9 +148,10 @@ export function registerAuthRoutes(route: Hono) {
       );
     }
     const sessionId = getCookie(context, "admin_session");
-    if (sessionId) {
+    if (sessionId && await loadAdminSession(sessionId)) {
       return context.redirect("/admin");
     }
+    if (sessionId) deleteCookie(context, "admin_session");
     return context.html(LoginPage());
   });
 
@@ -174,10 +189,14 @@ export function registerAuthRoutes(route: Hono) {
       resetRateLimit(ip);
 
       const sessionId = crypto.randomUUID();
-      const kv = await getKv();
+      const now = new Date();
 
-      await kv.set(["admin_session", sessionId], { username: creds.username }, {
-        expireIn: 24 * 60 * 60 * 1000,
+      await purgeExpiredAdminSessions(now);
+      await db.insert(adminSessions).values({
+        id: sessionId,
+        username: creds.username,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
       });
 
       setCookie(context, "admin_session", sessionId, {
@@ -197,8 +216,7 @@ export function registerAuthRoutes(route: Hono) {
   route.post("/logout", async (context) => {
     const sessionId = getCookie(context, "admin_session");
     if (sessionId) {
-      const kv = await getKv();
-      await kv.delete(["admin_session", sessionId]);
+      await db.delete(adminSessions).where(eq(adminSessions.id, sessionId));
       deleteCookie(context, "admin_session");
     }
     return context.redirect("/admin/login");

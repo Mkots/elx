@@ -69,6 +69,15 @@ export async function saveStage2Result(
     ticketId,
     completedAt: new Date(),
     stage1Selection,
+  }).onConflictDoUpdate({
+    target: testSessions.id,
+    set: {
+      score: result.score,
+      truthfulness: result.truthfulness,
+      ticketId,
+      completedAt: new Date(),
+      stage1Selection,
+    },
   });
 }
 

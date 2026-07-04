@@ -8,7 +8,6 @@ services:
     command: ["task", "dev"]
     environment:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx
-      DENO_KV_PATH: /data/kv/elx.sqlite3
       ENVIRONMENT: development
       PORT: "8000"
     ports:
@@ -16,7 +15,6 @@ services:
     volumes:
       - .:/app
       - deno_cache:/deno-dir
-      - kv_data:/data/kv
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,5 +45,4 @@ services:
 
 volumes:
   deno_cache:
-  kv_data:
   postgres_data:

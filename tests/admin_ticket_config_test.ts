@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
-import type { ticketConfigs } from "../db/schema.ts";
+import { db } from "../db/client.ts";
+import { adminSessions, type ticketConfigs } from "../db/schema.ts";
 import { defaultServices, type Services } from "../db/services.ts";
 import type {
   DatabaseWordStats,
@@ -65,10 +65,11 @@ const app = createApp({
 });
 
 async function createAdminSession() {
-  const kv = await getKv();
   const sessionId = crypto.randomUUID();
-  await kv.set(["admin_session", sessionId], { username: "admin" }, {
-    expireIn: 60 * 1000,
+  await db.insert(adminSessions).values({
+    id: sessionId,
+    username: "admin",
+    expiresAt: new Date(Date.now() + 60 * 1000),
   });
   return sessionId;
 }

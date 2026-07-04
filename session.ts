@@ -1,5 +1,8 @@
 import type { Context } from "@hono/hono";
+import { and, eq } from "drizzle-orm";
 import { getCookie, setCookie } from "hono/cookie";
+import { db } from "./db/client.ts";
+import { testAnswers, testSessions } from "./db/schema.ts";
 
 const COOKIE_NAME = "sessionId";
 
@@ -16,65 +19,93 @@ export function setSessionCookie(context: Context, sessionId: string): void {
   });
 }
 
-let kvInstance: Deno.Kv | null = null;
-
-export async function getKv(): Promise<Deno.Kv> {
-  if (!kvInstance) {
-    const kvPath = Deno.env.get("DENO_KV_PATH");
-    if (kvPath) {
-      const dir = kvPath.lastIndexOf("/");
-      if (dir > 0) await Deno.mkdir(kvPath.slice(0, dir), { recursive: true });
-    }
-    kvInstance = await Deno.openKv(kvPath);
-  }
-  return kvInstance;
-}
-
-function wordSelectionKey(sessionId: string): Deno.KvKey {
-  return ["session", sessionId, "stage1_selections"];
-}
-
 export async function saveWordSelection(
-  kv: Deno.Kv,
   sessionId: string,
   wordIds: number[],
 ): Promise<void> {
-  await kv.set(wordSelectionKey(sessionId), wordIds);
-  await kv.delete(stage2AnswersKey(sessionId));
-  await kv.delete(stage2ResultKey(sessionId));
+  await db.insert(testSessions).values({
+    id: sessionId,
+    stage1Selection: wordIds,
+    completedAt: null,
+    score: null,
+    truthfulness: null,
+  }).onConflictDoUpdate({
+    target: testSessions.id,
+    set: {
+      stage1Selection: wordIds,
+      completedAt: null,
+      score: null,
+      truthfulness: null,
+    },
+  });
+
+  await db.delete(testAnswers).where(
+    and(
+      eq(testAnswers.sessionId, sessionId),
+      eq(testAnswers.stage, 2),
+    ),
+  );
 }
 
 export async function loadWordSelection(
-  kv: Deno.Kv,
   sessionId: string,
 ): Promise<number[]> {
-  const result = await kv.get<number[]>(wordSelectionKey(sessionId));
-  return result.value ?? [];
+  const rows = await db.select({
+    stage1Selection: testSessions.stage1Selection,
+  })
+    .from(testSessions)
+    .where(eq(testSessions.id, sessionId))
+    .limit(1);
+  return rows[0]?.stage1Selection ?? [];
 }
 
 export type Stage2Answers = Record<string, boolean>;
 
-function stage2AnswersKey(sessionId: string): Deno.KvKey {
-  return ["session", sessionId, "stage2_answers"];
-}
-
 export async function loadStage2Answers(
-  kv: Deno.Kv,
   sessionId: string,
 ): Promise<Stage2Answers> {
-  const entry = await kv.get<Stage2Answers>(stage2AnswersKey(sessionId));
-  return entry.value ?? {};
+  const rows = await db.select({
+    questionIndex: testAnswers.questionIndex,
+    answer: testAnswers.answer,
+  })
+    .from(testAnswers)
+    .where(
+      and(
+        eq(testAnswers.sessionId, sessionId),
+        eq(testAnswers.stage, 2),
+      ),
+    );
+
+  return Object.fromEntries(
+    rows.map((row) => [String(row.questionIndex), row.answer === "know"]),
+  );
 }
 
 export async function saveStage2Answer(
-  kv: Deno.Kv,
   sessionId: string,
   wordId: number,
   known: boolean,
 ): Promise<void> {
-  const answers = await loadStage2Answers(kv, sessionId);
-  answers[String(wordId)] = known;
-  await kv.set(stage2AnswersKey(sessionId), answers);
+  const answer = known ? "know" : "dont_know";
+  await db.insert(testAnswers).values({
+    sessionId,
+    questionIndex: wordId,
+    questionType: "verification",
+    stage: 2,
+    answer,
+    isCorrect: null,
+    answeredAt: new Date(),
+  }).onConflictDoUpdate({
+    target: [
+      testAnswers.sessionId,
+      testAnswers.stage,
+      testAnswers.questionIndex,
+    ],
+    set: {
+      answer,
+      answeredAt: new Date(),
+    },
+  });
 }
 
 export interface Stage2Result {
@@ -82,42 +113,53 @@ export interface Stage2Result {
   truthfulness: number;
 }
 
-function stage2ResultKey(sessionId: string): Deno.KvKey {
-  return ["session", sessionId, "stage2_result"];
-}
-
 export async function saveStage2Result(
-  kv: Deno.Kv,
   sessionId: string,
   result: Stage2Result,
 ): Promise<void> {
-  await kv.set(stage2ResultKey(sessionId), result);
+  await db.update(testSessions)
+    .set({
+      score: result.score,
+      truthfulness: result.truthfulness,
+      completedAt: new Date(),
+    })
+    .where(eq(testSessions.id, sessionId));
 }
 
 export async function loadStage2Result(
-  kv: Deno.Kv,
   sessionId: string,
 ): Promise<Stage2Result | null> {
-  const entry = await kv.get<Stage2Result>(stage2ResultKey(sessionId));
-  return entry.value;
-}
-
-function ticketIdKey(sessionId: string): Deno.KvKey {
-  return ["session", sessionId, "ticket_id"];
+  const rows = await db.select({
+    score: testSessions.score,
+    truthfulness: testSessions.truthfulness,
+  })
+    .from(testSessions)
+    .where(eq(testSessions.id, sessionId))
+    .limit(1);
+  const row = rows[0];
+  if (!row || row.score === null || row.truthfulness === null) return null;
+  return { score: row.score, truthfulness: row.truthfulness };
 }
 
 export async function saveSessionTicketId(
-  kv: Deno.Kv,
   sessionId: string,
   ticketId: number,
 ): Promise<void> {
-  await kv.set(ticketIdKey(sessionId), ticketId);
+  await db.insert(testSessions).values({
+    id: sessionId,
+    ticketId,
+  }).onConflictDoUpdate({
+    target: testSessions.id,
+    set: { ticketId },
+  });
 }
 
 export async function loadSessionTicketId(
-  kv: Deno.Kv,
   sessionId: string,
 ): Promise<number | null> {
-  const entry = await kv.get<number>(ticketIdKey(sessionId));
-  return entry.value;
+  const rows = await db.select({ ticketId: testSessions.ticketId })
+    .from(testSessions)
+    .where(eq(testSessions.id, sessionId))
+    .limit(1);
+  return rows[0]?.ticketId ?? null;
 }
