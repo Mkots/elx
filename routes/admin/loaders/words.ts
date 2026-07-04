@@ -1,5 +1,5 @@
 import { and, eq, ilike, inArray, sql } from "drizzle-orm";
-import { type Database, withDb } from "../../../db/client.ts";
+import { type Database, db } from "../../../db/client.ts";
 import { words } from "../../../db/schema.ts";
 import {
   executeImport,
@@ -95,151 +95,133 @@ export interface AdminWordsLoader {
 }
 
 export const databaseAdminWordsLoader: AdminWordsLoader = {
-  listWords({ search, difficulty, isReal, reviewed, page, limit }) {
-    return withDb(async (db) => {
-      const whereClause = buildWordFilter({
-        search,
-        difficulty,
-        isReal,
-        reviewed,
-      });
-      const offset = (page - 1) * limit;
+  async listWords({ search, difficulty, isReal, reviewed, page, limit }) {
+    const whereClause = buildWordFilter({
+      search,
+      difficulty,
+      isReal,
+      reviewed,
+    });
+    const offset = (page - 1) * limit;
 
-      const totalCountResult = await db
-        .select({ count: sql<number>`count(${words.id})::integer` })
-        .from(words)
-        .where(whereClause);
-      const totalCount = totalCountResult[0]?.count ?? 0;
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(${words.id})::integer` })
+      .from(words)
+      .where(whereClause);
+    const totalCount = totalCountResult[0]?.count ?? 0;
 
-      const result = await db
-        .select()
-        .from(words)
-        .where(whereClause)
-        .orderBy(words.id)
-        .limit(limit)
-        .offset(offset);
+    const result = await db
+      .select()
+      .from(words)
+      .where(whereClause)
+      .orderBy(words.id)
+      .limit(limit)
+      .offset(offset);
 
-      return { words: result, totalCount };
+    return { words: result, totalCount };
+  },
+
+  async findWordIds(filter) {
+    const rows = await db
+      .select({ id: words.id })
+      .from(words)
+      .where(buildWordFilter(filter))
+      .orderBy(words.id);
+    return rows.map((r) => r.id);
+  },
+
+  async getWord(id) {
+    const result = await db
+      .select()
+      .from(words)
+      .where(eq(words.id, id))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async createWord(
+    { value, isReal, difficulty, synonyms, antonyms, definition },
+  ) {
+    await db.insert(words).values({
+      value,
+      isReal,
+      difficulty,
+      synonyms: synonyms ?? [],
+      antonyms: antonyms ?? [],
+      definition: definition ?? null,
     });
   },
 
-  findWordIds(filter) {
-    return withDb(async (db) => {
-      const rows = await db
-        .select({ id: words.id })
-        .from(words)
-        .where(buildWordFilter(filter))
-        .orderBy(words.id);
-      return rows.map((r) => r.id);
-    });
-  },
-
-  getWord(id) {
-    return withDb(async (db) => {
-      const result = await db
-        .select()
-        .from(words)
-        .where(eq(words.id, id))
-        .limit(1);
-      return result[0] ?? null;
-    });
-  },
-
-  createWord({ value, isReal, difficulty, synonyms, antonyms, definition }) {
-    return withDb(async (db) => {
-      await db.insert(words).values({
+  async updateWord(
+    id,
+    { value, isReal, difficulty, synonyms, antonyms, definition },
+  ) {
+    await db
+      .update(words)
+      .set({
         value,
         isReal,
         difficulty,
         synonyms: synonyms ?? [],
         antonyms: antonyms ?? [],
         definition: definition ?? null,
-      });
-    });
+      })
+      .where(eq(words.id, id));
   },
 
-  updateWord(
-    id,
-    { value, isReal, difficulty, synonyms, antonyms, definition },
-  ) {
-    return withDb(async (db) => {
-      await db
-        .update(words)
-        .set({
-          value,
-          isReal,
-          difficulty,
-          synonyms: synonyms ?? [],
-          antonyms: antonyms ?? [],
-          definition: definition ?? null,
-        })
-        .where(eq(words.id, id));
-    });
+  async deleteWord(id) {
+    const reason = await findWordReference(db, id);
+    if (reason) {
+      return { success: false, error: reason };
+    }
+    await db.delete(words).where(eq(words.id, id));
+    return { success: true };
   },
 
-  deleteWord(id) {
-    return withDb(async (db) => {
+  async bulkSetReviewed(ids, reviewed) {
+    if (ids.length === 0) return 0;
+    const updated = await db
+      .update(words)
+      .set({ reviewed, reviewedAt: reviewed ? new Date() : null })
+      .where(inArray(words.id, ids))
+      .returning({ id: words.id });
+    return updated.length;
+  },
+
+  async bulkSetIsReal(ids, isReal) {
+    if (ids.length === 0) return 0;
+    const updated = await db
+      .update(words)
+      .set({ isReal })
+      .where(inArray(words.id, ids))
+      .returning({ id: words.id });
+    return updated.length;
+  },
+
+  async bulkDelete(ids) {
+    const skipped: { id: number; reason: string }[] = [];
+    let deleted = 0;
+    for (const id of ids) {
       const reason = await findWordReference(db, id);
       if (reason) {
-        return { success: false, error: reason };
+        skipped.push({ id, reason });
+        continue;
       }
       await db.delete(words).where(eq(words.id, id));
-      return { success: true };
-    });
+      deleted++;
+    }
+    return { deleted, skipped };
   },
 
-  bulkSetReviewed(ids, reviewed) {
-    return withDb(async (db) => {
-      if (ids.length === 0) return 0;
-      const updated = await db
-        .update(words)
-        .set({ reviewed, reviewedAt: reviewed ? new Date() : null })
-        .where(inArray(words.id, ids))
-        .returning({ id: words.id });
-      return updated.length;
-    });
-  },
-
-  bulkSetIsReal(ids, isReal) {
-    return withDb(async (db) => {
-      if (ids.length === 0) return 0;
-      const updated = await db
-        .update(words)
-        .set({ isReal })
-        .where(inArray(words.id, ids))
-        .returning({ id: words.id });
-      return updated.length;
-    });
-  },
-
-  bulkDelete(ids) {
-    return withDb(async (db) => {
-      const skipped: { id: number; reason: string }[] = [];
-      let deleted = 0;
-      for (const id of ids) {
-        const reason = await findWordReference(db, id);
-        if (reason) {
-          skipped.push({ id, reason });
-          continue;
-        }
-        await db.delete(words).where(eq(words.id, id));
-        deleted++;
-      }
-      return { deleted, skipped };
-    });
-  },
-
-  importWords(fileContent, configJson, dryRun) {
-    return withDb(async (db) => {
-      let rawConfig: unknown;
-      try {
-        rawConfig = JSON.parse(configJson);
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        throw new Error("Invalid configuration JSON: " + errMsg);
-      }
-      const config = validateConfig(rawConfig);
-      return await executeImport(db, fileContent, config, dryRun);
-    });
+  async importWords(fileContent, configJson, dryRun) {
+    let rawConfig: unknown;
+    try {
+      rawConfig = JSON.parse(configJson);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      throw new Error("Invalid configuration JSON: " + errMsg);
+    }
+    const config = validateConfig(rawConfig);
+    return await executeImport(db, fileContent, config, dryRun);
   },
 };

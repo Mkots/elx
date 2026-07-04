@@ -1,6 +1,6 @@
 import { Hono } from "@hono/hono";
 import { eq } from "drizzle-orm";
-import { createDatabase } from "../db/client.ts";
+import { db } from "../db/client.ts";
 import { testHistory, tickets } from "../db/schema.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
@@ -39,17 +39,12 @@ export interface Stage2SessionStore {
 
 export const databaseStage2TicketLoader: Stage2TicketLoader = {
   async getTicketById(id) {
-    const { client, db } = createDatabase();
-    try {
-      const result = await db
-        .select()
-        .from(tickets)
-        .where(eq(tickets.id, id))
-        .limit(1);
-      return result[0] || null;
-    } finally {
-      await client.end();
-    }
+    const result = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, id))
+      .limit(1);
+    return result[0] || null;
   },
 };
 
@@ -74,17 +69,12 @@ export const kvStage2SessionStore: Stage2SessionStore = {
     const kv = await getKv();
     await saveStage2Result(kv, sessionId, result);
 
-    const { client, db } = createDatabase();
-    try {
-      await db.insert(testHistory).values({
-        sessionId,
-        score: result.score,
-        truthfulness: result.truthfulness,
-        ticketId,
-      });
-    } finally {
-      await client.end();
-    }
+    await db.insert(testHistory).values({
+      sessionId,
+      score: result.score,
+      truthfulness: result.truthfulness,
+      ticketId,
+    });
   },
 };
 

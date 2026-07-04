@@ -1,6 +1,6 @@
 import { Hono } from "@hono/hono";
 import { eq } from "drizzle-orm";
-import { createDatabase } from "../db/client.ts";
+import { db } from "../db/client.ts";
 import { tickets } from "../db/schema.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import {
@@ -25,17 +25,12 @@ export interface Stage1SessionStore {
 
 export const databaseStage1TicketLoader: Stage1TicketLoader = {
   async getTicketById(id) {
-    const { client, db } = createDatabase();
-    try {
-      const result = await db
-        .select()
-        .from(tickets)
-        .where(eq(tickets.id, id))
-        .limit(1);
-      return result[0] || null;
-    } finally {
-      await client.end();
-    }
+    const result = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, id))
+      .limit(1);
+    return result[0] || null;
   },
 };
 

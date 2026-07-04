@@ -5,7 +5,7 @@ import {
   databaseAdminTicketsLoader,
   generateSpellingCandidates,
 } from "../routes/admin/loaders/tickets.ts";
-import { withDb } from "../db/client.ts";
+import { db } from "../db/client.ts";
 import { ticketConfigs, tickets } from "../db/schema.ts";
 import type {
   SnapshotQuestion,
@@ -237,37 +237,35 @@ Deno.test({
     let ticketId = 0;
 
     try {
-      await withDb(async (db) => {
-        // Clear existing active configs
-        await db.update(ticketConfigs).set({ isActive: false });
+      // Clear existing active configs
+      await db.update(ticketConfigs).set({ isActive: false });
 
-        // Delete any leftover config from aborted tests to avoid uniqueness violations
-        await db.delete(ticketConfigs).where(
-          eq(ticketConfigs.name, testConfigName),
-        );
+      // Delete any leftover config from aborted tests to avoid uniqueness violations
+      await db.delete(ticketConfigs).where(
+        eq(ticketConfigs.name, testConfigName),
+      );
 
-        // Insert custom config matching seeded words
-        const [cfg] = await db
-          .insert(ticketConfigs)
-          .values({
-            name: testConfigName,
-            isActive: true,
-            difficulty1Count: 2,
-            difficulty2Count: 2,
-            difficulty3Count: 2,
-            difficulty4Count: 2,
-            difficulty5Count: 2,
-            realCount: 6,
-            pseudoCount: 4,
-            synonymsCount: 1,
-            spellingCount: 1,
-            definitionCount: 1,
-            randomizeOrder: true,
-          })
-          .returning();
+      // Insert custom config matching seeded words
+      const [cfg] = await db
+        .insert(ticketConfigs)
+        .values({
+          name: testConfigName,
+          isActive: true,
+          difficulty1Count: 2,
+          difficulty2Count: 2,
+          difficulty3Count: 2,
+          difficulty4Count: 2,
+          difficulty5Count: 2,
+          realCount: 6,
+          pseudoCount: 4,
+          synonymsCount: 1,
+          spellingCount: 1,
+          definitionCount: 1,
+          randomizeOrder: true,
+        })
+        .returning();
 
-        configId = cfg.id;
-      });
+      configId = cfg.id;
 
       // 1. Generate base ticket
       const ticket = await databaseAdminTicketsLoader.generateBaseTicket(
@@ -411,21 +409,19 @@ Deno.test({
       assertEquals(publishedTicket?.status, "published");
     } finally {
       // Cleanup db changes
-      await withDb(async (db) => {
-        if (ticketId > 0) {
-          await db.delete(tickets).where(eq(tickets.id, ticketId));
-        }
-        if (configId > 0) {
-          await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
-        }
-        // Re-enable the first default config as active
-        const firstConfig = await db.select().from(ticketConfigs).limit(1);
-        if (firstConfig[0]) {
-          await db.update(ticketConfigs).set({ isActive: true }).where(
-            eq(ticketConfigs.id, firstConfig[0].id),
-          );
-        }
-      });
+      if (ticketId > 0) {
+        await db.delete(tickets).where(eq(tickets.id, ticketId));
+      }
+      if (configId > 0) {
+        await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
+      }
+      // Re-enable the first default config as active
+      const firstConfig = await db.select().from(ticketConfigs).limit(1);
+      if (firstConfig[0]) {
+        await db.update(ticketConfigs).set({ isActive: true }).where(
+          eq(ticketConfigs.id, firstConfig[0].id),
+        );
+      }
     }
   },
 });
@@ -439,37 +435,35 @@ Deno.test({
     let ticketId = 0;
     const testConfigName = "20th Attempt Config";
 
-    await withDb(async (db) => {
-      // Clear existing active configs
-      await db.update(ticketConfigs).set({ isActive: false });
+    // Clear existing active configs
+    await db.update(ticketConfigs).set({ isActive: false });
 
-      // Delete any leftover config
-      await db.delete(ticketConfigs).where(
-        eq(ticketConfigs.name, testConfigName),
-      );
+    // Delete any leftover config
+    await db.delete(ticketConfigs).where(
+      eq(ticketConfigs.name, testConfigName),
+    );
 
-      // Insert custom config requiring 5 synonyms, 5 spellings, 5 definitions
-      const [cfg] = await db
-        .insert(ticketConfigs)
-        .values({
-          name: testConfigName,
-          isActive: true,
-          difficulty1Count: 2,
-          difficulty2Count: 2,
-          difficulty3Count: 2,
-          difficulty4Count: 2,
-          difficulty5Count: 2,
-          realCount: 6,
-          pseudoCount: 4,
-          synonymsCount: 1,
-          spellingCount: 1,
-          definitionCount: 1,
-          randomizeOrder: true,
-        })
-        .returning();
+    // Insert custom config requiring 5 synonyms, 5 spellings, 5 definitions
+    const [cfg] = await db
+      .insert(ticketConfigs)
+      .values({
+        name: testConfigName,
+        isActive: true,
+        difficulty1Count: 2,
+        difficulty2Count: 2,
+        difficulty3Count: 2,
+        difficulty4Count: 2,
+        difficulty5Count: 2,
+        realCount: 6,
+        pseudoCount: 4,
+        synonymsCount: 1,
+        spellingCount: 1,
+        definitionCount: 1,
+        randomizeOrder: true,
+      })
+      .returning();
 
-      configId = cfg.id;
-    });
+    configId = cfg.id;
 
     const originalFilter = Array.prototype.filter;
     let loopFilterCalls = 0;
@@ -523,21 +517,19 @@ Deno.test({
       Array.prototype.filter = originalFilter;
 
       // Cleanup db changes
-      await withDb(async (db) => {
-        if (ticketId > 0) {
-          await db.delete(tickets).where(eq(tickets.id, ticketId));
-        }
-        if (configId > 0) {
-          await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
-        }
-        // Re-enable the first default config as active
-        const firstConfig = await db.select().from(ticketConfigs).limit(1);
-        if (firstConfig[0]) {
-          await db.update(ticketConfigs).set({ isActive: true }).where(
-            eq(ticketConfigs.id, firstConfig[0].id),
-          );
-        }
-      });
+      if (ticketId > 0) {
+        await db.delete(tickets).where(eq(tickets.id, ticketId));
+      }
+      if (configId > 0) {
+        await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
+      }
+      // Re-enable the first default config as active
+      const firstConfig = await db.select().from(ticketConfigs).limit(1);
+      if (firstConfig[0]) {
+        await db.update(ticketConfigs).set({ isActive: true }).where(
+          eq(ticketConfigs.id, firstConfig[0].id),
+        );
+      }
     }
   },
 });

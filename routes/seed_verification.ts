@@ -1,8 +1,6 @@
 import { Hono } from "@hono/hono";
-import { createDatabase } from "../db/client.ts";
+import { db } from "../db/client.ts";
 import { words } from "../db/schema.ts";
-
-type Database = ReturnType<typeof createDatabase>["db"];
 
 export interface SeedWordVerificationItem {
   id: number;
@@ -40,67 +38,51 @@ export interface SeedVerificationLoader {
   loadMeanings(): Promise<SeedMeaningVerificationItem[]>;
 }
 
-async function withDatabase<T>(
-  run: (db: Database) => Promise<T>,
-): Promise<T> {
-  const { client, db } = createDatabase();
-
-  try {
-    return await run(db);
-  } finally {
-    await client.end();
-  }
-}
-
 export const databaseSeedVerificationLoader: SeedVerificationLoader = {
   async loadWords() {
-    const items = await withDatabase((db) =>
-      db.select({
-        id: words.id,
-        value: words.value,
-        isReal: words.isReal,
-        difficulty: words.difficulty,
-      }).from(words)
-    );
+    const items = await db.select({
+      id: words.id,
+      value: words.value,
+      isReal: words.isReal,
+      difficulty: words.difficulty,
+    }).from(words);
 
     return items.sort((left, right) => left.value.localeCompare(right.value));
   },
 
   async loadSynonyms() {
-    return await withDatabase(async (db) => {
-      const allWords = await db.select({
-        id: words.id,
-        value: words.value,
-        isReal: words.isReal,
-        synonyms: words.synonyms,
-        antonyms: words.antonyms,
-      }).from(words);
+    const allWords = await db.select({
+      id: words.id,
+      value: words.value,
+      isReal: words.isReal,
+      synonyms: words.synonyms,
+      antonyms: words.antonyms,
+    }).from(words);
 
-      const result: SeedSynonymVerificationItem[] = [];
-      let counter = 1;
-      for (const word of allWords) {
-        if (!word.isReal) continue;
-        for (const syn of word.synonyms) {
-          result.push({
-            id: counter++,
-            prompt: word.value,
-            target: syn,
-            relationType: "synonym",
-            distractors: [],
-          });
-        }
-        for (const ant of word.antonyms) {
-          result.push({
-            id: counter++,
-            prompt: word.value,
-            target: ant,
-            relationType: "antonym",
-            distractors: [],
-          });
-        }
+    const result: SeedSynonymVerificationItem[] = [];
+    let counter = 1;
+    for (const word of allWords) {
+      if (!word.isReal) continue;
+      for (const syn of word.synonyms) {
+        result.push({
+          id: counter++,
+          prompt: word.value,
+          target: syn,
+          relationType: "synonym",
+          distractors: [],
+        });
       }
-      return result;
-    });
+      for (const ant of word.antonyms) {
+        result.push({
+          id: counter++,
+          prompt: word.value,
+          target: ant,
+          relationType: "antonym",
+          distractors: [],
+        });
+      }
+    }
+    return result;
   },
 
   async loadSpelling() {
@@ -110,27 +92,25 @@ export const databaseSeedVerificationLoader: SeedVerificationLoader = {
   },
 
   async loadMeanings() {
-    return await withDatabase(async (db) => {
-      const allWords = await db.select({
-        id: words.id,
-        value: words.value,
-        isReal: words.isReal,
-        definition: words.definition,
-      }).from(words);
+    const allWords = await db.select({
+      id: words.id,
+      value: words.value,
+      isReal: words.isReal,
+      definition: words.definition,
+    }).from(words);
 
-      const result: SeedMeaningVerificationItem[] = [];
-      let counter = 1;
-      for (const word of allWords) {
-        if (!word.isReal || !word.definition) continue;
-        result.push({
-          id: counter++,
-          word: word.value,
-          definitionText: word.definition,
-          distractors: [],
-        });
-      }
-      return result;
-    });
+    const result: SeedMeaningVerificationItem[] = [];
+    let counter = 1;
+    for (const word of allWords) {
+      if (!word.isReal || !word.definition) continue;
+      result.push({
+        id: counter++,
+        word: word.value,
+        definitionText: word.definition,
+        distractors: [],
+      });
+    }
+    return result;
   },
 };
 

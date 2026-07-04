@@ -1,6 +1,6 @@
 import { parseArgs } from "@std/cli/parse-args";
 import { executeImport, validateConfig } from "./importer_core.ts";
-import { createDatabase } from "../db/client.ts";
+import { closeDatabase, db } from "../db/client.ts";
 
 async function main() {
   const args = parseArgs(Deno.args, {
@@ -64,7 +64,6 @@ async function main() {
     Deno.exit(1);
   }
 
-  const { client, db } = createDatabase();
   try {
     const result = await executeImport(db, fileContent, config, dryRun);
     console.log("\nImport Summary:");
@@ -84,7 +83,7 @@ async function main() {
     console.error(`Error during import: ${errMsg}`);
     Deno.exit(1);
   } finally {
-    await client.end();
+    await closeDatabase();
   }
 }
 
