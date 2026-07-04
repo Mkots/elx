@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "exports": "./main.ts",
   "nodeModulesDir": "auto",
+  "exclude": [
+    ".deno-cache"
+  ],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",

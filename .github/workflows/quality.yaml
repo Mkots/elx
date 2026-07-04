@@ -2,24 +2,30 @@ name: Quality
 
 on:
   workflow_call:
+    inputs:
+      event_name:
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Deno quality gates
+  format:
+    name: Format check
     runs-on: ubuntu-24.04
+    env:
+      DENO_DIR: .deno-cache
     steps:
       - uses: actions/checkout@v7
 
       - name: Cache Deno
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.deno
-            .deno-cache
+          path: .deno-cache
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
 
       - uses: denoland/setup-deno@v2
         with:
@@ -28,16 +34,80 @@ jobs:
       - name: Format check
         run: deno task fmt:check
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    env:
+      DENO_DIR: .deno-cache
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Deno
+        uses: actions/cache@v6
+        with:
+          path: .deno-cache
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.8.3
+
       - name: Lint
         run: deno task lint
 
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-24.04
+    env:
+      DENO_DIR: .deno-cache
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Deno
+        uses: actions/cache@v6
+        with:
+          path: .deno-cache
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.8.3
+
       - name: Type check
         run: deno task check
+
+  unit-tests:
+    name: Unit tests with coverage
+    runs-on: ubuntu-24.04
+    env:
+      DENO_DIR: .deno-cache
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Deno
+        uses: actions/cache@v6
+        with:
+          path: .deno-cache
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.8.3
 
       - name: Tests with coverage
         run: deno task test:coverage
 
       - name: Upload coverage
+        if: >-
+          inputs.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' ||
+          github.ref == 'refs/heads/master')
         uses: actions/upload-artifact@v7
         with:
           name: coverage

@@ -8,8 +8,6 @@ on:
       - master
     paths:
       - docs/**
-      - deno.json
-      - deno.lock
       - scripts/build_wiki.ts
       - scripts/sync-wiki.sh
       - .github/workflows/wiki-sync.yaml
