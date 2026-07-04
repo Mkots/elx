@@ -1,7 +1,7 @@
 import type { Hono } from "@hono/hono";
 import { AdminTicketsPage } from "../../ui/pages/AdminTicketsPage.tsx";
 import { AdminTicketDetailPage } from "../../ui/pages/AdminTicketDetailPage.tsx";
-import { generateSpellingCandidates } from "../../db/repositories/tickets.ts";
+import { generateSpellingCandidates } from "../../domain/ticket_generation.ts";
 import type { SnapshotQuestion } from "../../db/schema.ts";
 import type { Services } from "../../db/services.ts";
 

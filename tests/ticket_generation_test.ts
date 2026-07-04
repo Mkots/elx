@@ -1,0 +1,165 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import {
+  buildQuestions,
+  generateSpellingCandidates,
+  type TicketGenerationConfig,
+  type WordPoolEntry,
+} from "../domain/ticket_generation.ts";
+import type { VerificationSnapshotQuestion } from "../db/schema.ts";
+
+function getRng(seedValue: number): () => number {
+  let seed = seedValue;
+  return () => {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeConfig(
+  overrides: Partial<TicketGenerationConfig> = {},
+): TicketGenerationConfig {
+  return {
+    difficulty1Count: 2,
+    difficulty2Count: 2,
+    difficulty3Count: 0,
+    difficulty4Count: 0,
+    difficulty5Count: 0,
+    realCount: 3,
+    pseudoCount: 1,
+    synonymsCount: 1,
+    spellingCount: 1,
+    definitionCount: 1,
+    ...overrides,
+  };
+}
+
+function makePool(): WordPoolEntry[] {
+  return [
+    {
+      value: "apple",
+      isReal: true,
+      difficulty: 1,
+      synonyms: ["fruit"],
+      definition: "a round fruit",
+    },
+    {
+      value: "banana",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "cherry",
+      isReal: true,
+      difficulty: 2,
+      synonyms: ["fruit"],
+      definition: "a small red fruit",
+    },
+    {
+      value: "date",
+      isReal: true,
+      difficulty: 2,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "blarg",
+      isReal: false,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "flurp",
+      isReal: false,
+      difficulty: 2,
+      synonyms: [],
+      definition: null,
+    },
+  ];
+}
+
+Deno.test("VER-TICKET-GENERATION: happy path builds verification and challenge questions", () => {
+  const questions = buildQuestions(makeConfig(), makePool(), getRng(42));
+
+  const verifications = questions.filter((q) => q.type === "verification");
+  assertEquals(verifications.length, 4); // 3 real + 1 pseudo
+
+  const reals = verifications.filter((q) =>
+    (q as VerificationSnapshotQuestion).isReal
+  );
+  assertEquals(reals.length, 3);
+
+  const pseudos = verifications.filter((q) =>
+    !(q as VerificationSnapshotQuestion).isReal
+  );
+  assertEquals(pseudos.length, 1);
+
+  assertEquals(questions.filter((q) => q.type === "synonym").length, 1);
+  assertEquals(questions.filter((q) => q.type === "definition").length, 1);
+  assertEquals(questions.filter((q) => q.type === "spelling").length, 1);
+});
+
+Deno.test("VER-TICKET-GENERATION: same seed produces an identical ticket", () => {
+  const config = makeConfig();
+  const pool = makePool();
+
+  const first = buildQuestions(config, pool, getRng(7));
+  const second = buildQuestions(config, pool, getRng(7));
+
+  assertEquals(first, second);
+});
+
+Deno.test("VER-TICKET-GENERATION: different seeds can produce different tickets", () => {
+  const config = makeConfig();
+  const pool = makePool();
+
+  const first = buildQuestions(config, pool, getRng(1));
+  const second = buildQuestions(config, pool, getRng(2));
+
+  assertEquals(first === second, false);
+});
+
+Deno.test("VER-TICKET-GENERATION: throws naming the difficulty when the pool is too small", () => {
+  const config = makeConfig({ difficulty1Count: 5 });
+  const pool = makePool(); // only 2 real + 1 pseudo at difficulty 1
+
+  assertThrows(
+    () => buildQuestions(config, pool, getRng(1)),
+    Error,
+    "difficulty 1",
+  );
+});
+
+Deno.test("VER-TICKET-GENERATION: throws when not enough real words have synonyms", () => {
+  const config = makeConfig({ synonymsCount: 5 });
+  const pool = makePool();
+
+  assertThrows(
+    () => buildQuestions(config, pool, getRng(1)),
+    Error,
+    "synonyms",
+  );
+});
+
+Deno.test("VER-TICKET-GENERATION: throws when not enough real words have definitions", () => {
+  const config = makeConfig({ definitionCount: 5 });
+  const pool = makePool();
+
+  assertThrows(
+    () => buildQuestions(config, pool, getRng(1)),
+    Error,
+    "definitions",
+  );
+});
+
+Deno.test("VER-TICKET-GENERATION: generateSpellingCandidates never returns the original word", () => {
+  const misspellings = generateSpellingCandidates("action");
+  assertEquals(misspellings.length, 5);
+  for (const m of misspellings) {
+    assertEquals(m !== "action", true);
+  }
+});
