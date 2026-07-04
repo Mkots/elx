@@ -1,13 +1,11 @@
 import { Hono } from "@hono/hono";
+import type { Ticket } from "../db/repositories/tickets.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
-import {
-  getSessionId,
-  setSessionCookie,
-  type Stage2Answers,
-} from "../session.ts";
+import { setSessionCookie, type Stage2Answers } from "../session.ts";
 import { Stage2Card, Stage2Page } from "../ui/pages/Stage2Page.tsx";
 import type { Services } from "../db/services.ts";
+import { requireTestSession } from "./test_session.ts";
 
 type Stage2Word = { id: number; value: string; isReal: boolean };
 
@@ -16,6 +14,29 @@ function orderWordsBySelection(wordList: Stage2Word[], wordIds: number[]) {
   return [...wordList].sort((a, b) =>
     (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
     (order.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+  );
+}
+
+async function loadStage2WordList(
+  services: Services,
+  sessionId: string,
+  ticket: Ticket,
+): Promise<Stage2Word[] | null> {
+  const selectedIndices = await services.sessions.loadWordSelection(
+    sessionId,
+  );
+  if (selectedIndices.length === 0) return null;
+
+  return orderWordsBySelection(
+    selectedIndices.map((idx) => {
+      const q = ticket.questions[idx] as VerificationSnapshotQuestion;
+      return {
+        id: idx,
+        value: q.wordText,
+        isReal: q.isReal,
+      };
+    }),
+    selectedIndices,
   );
 }
 
@@ -43,32 +64,15 @@ export function createStage2Route(services: Services) {
   const route = new Hono();
 
   route.get("/", async (context) => {
-    const sessionId = getSessionId(context);
+    const session = await requireTestSession(context, services, {
+      noSessionRedirect: "/stage/1",
+      requireTicket: true,
+    });
+    if (session instanceof Response) return session;
+    const { sessionId, ticketId, ticket } = session;
 
-    if (!sessionId) return context.redirect("/stage/1", 302);
-
-    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
-    if (!ticketId) return context.redirect("/", 302);
-
-    const ticket = await services.tickets.getTicketById(ticketId);
-    if (!ticket) return context.redirect("/", 302);
-
-    const selectedIndices = await services.sessions.loadWordSelection(
-      sessionId,
-    );
-    if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
-
-    const wordList = orderWordsBySelection(
-      selectedIndices.map((idx) => {
-        const q = ticket.questions[idx] as VerificationSnapshotQuestion;
-        return {
-          id: idx,
-          value: q.wordText,
-          isReal: q.isReal,
-        };
-      }),
-      selectedIndices,
-    );
+    const wordList = await loadStage2WordList(services, sessionId, ticket);
+    if (!wordList) return context.redirect("/stage/1", 302);
 
     const answers = await services.sessions.loadStage2Answers(sessionId);
     const currentIndex = getNextWordIndex(wordList, answers);
@@ -92,32 +96,15 @@ export function createStage2Route(services: Services) {
   });
 
   route.post("/", async (context) => {
-    const sessionId = getSessionId(context);
+    const session = await requireTestSession(context, services, {
+      noSessionRedirect: "/stage/1",
+      requireTicket: true,
+    });
+    if (session instanceof Response) return session;
+    const { sessionId, ticketId, ticket } = session;
 
-    if (!sessionId) return context.redirect("/stage/1", 302);
-
-    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
-    if (!ticketId) return context.redirect("/", 302);
-
-    const ticket = await services.tickets.getTicketById(ticketId);
-    if (!ticket) return context.redirect("/", 302);
-
-    const selectedIndices = await services.sessions.loadWordSelection(
-      sessionId,
-    );
-    if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
-
-    const wordList = orderWordsBySelection(
-      selectedIndices.map((idx) => {
-        const q = ticket.questions[idx] as VerificationSnapshotQuestion;
-        return {
-          id: idx,
-          value: q.wordText,
-          isReal: q.isReal,
-        };
-      }),
-      selectedIndices,
-    );
+    const wordList = await loadStage2WordList(services, sessionId, ticket);
+    if (!wordList) return context.redirect("/stage/1", 302);
 
     const form = await context.req.formData();
     const submittedWordId = form.get("wordId")

@@ -98,6 +98,8 @@ session.ts            — Deno KV helpers: getSessionId, setSessionCookie,
                         saveWordSelection, saveStage2Result, ticket id, etc.
 routes/
   home.ts, stage1.ts, stage2.ts, result.ts   — public test flow
+  test_session.ts     — requireTestSession(): shared cookie → session →
+                        ticket → redirect preamble for stage1/stage2/result
   health.ts, logger.ts, seed_verification.ts
   admin/              — admin panel (see above); loaders/ for DI interfaces
 scoring/lextale.ts    — computeScore(WordAnswer[]) → { score, truthfulness }
