@@ -44,6 +44,7 @@ export default defineConfig({
       DATABASE_URL: getEnv("DATABASE_URL"),
       ADMIN_USERNAME: getEnv("ADMIN_USERNAME") || "admin",
       ADMIN_PASSWORD: getEnv("ADMIN_PASSWORD") || "admin",
+      GTM_CONTAINER_ID: getEnv("GTM_CONTAINER_ID") || "GTM-TEST123",
     },
   },
 });

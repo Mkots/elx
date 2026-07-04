@@ -42,6 +42,9 @@ function makeServices(
     loadSessionTicketId(_sessionId) {
       return Promise.resolve(42);
     },
+    loadConsentTimestamp() {
+      return Promise.resolve(new Date("2026-07-05T12:00:00Z"));
+    },
     ...sessionOverrides,
   };
 
@@ -99,9 +102,12 @@ Deno.test("VER-STAGE1-ROUTE: GET /stage/1 renders a form that POSTs to /stage/1"
   assertStringIncludes(body, 'type="submit"');
 });
 
-Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes session with ticket id", async () => {
+Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start redirects to consent without accepted consent", async () => {
   let startedTicketId: number | null = null;
   const services = makeServices({
+    loadConsentTimestamp() {
+      return Promise.resolve(null);
+    },
     saveSessionTicketId(_sessionId, ticketId) {
       startedTicketId = ticketId;
       return Promise.resolve();
@@ -122,7 +128,35 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes session with ticket
   });
 
   assertEquals(response.status, 302);
-  assertEquals(response.headers.get("location"), "/stage/1");
+  assertEquals(response.headers.get("location"), "/consent");
+  assertEquals(startedTicketId, 42);
+});
+
+Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes consented session", async () => {
+  let startedTicketId: number | null = null;
+  const services = makeServices({
+    saveSessionTicketId(_sessionId, ticketId) {
+      startedTicketId = ticketId;
+      return Promise.resolve();
+    },
+  });
+  const app = createApp(services);
+
+  const form = new URLSearchParams();
+  form.append("ticketId", "42");
+
+  const response = await app.request("/stage/1/start", {
+    method: "POST",
+    body: form.toString(),
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
+      "cookie": "sessionId=test-session-123",
+    },
+  });
+
+  assertEquals(response.status, 302);
+  assertEquals(response.headers.get("location"), "/stage/1?event=test_started");
   assertEquals(startedTicketId, 42);
 });
 
@@ -152,7 +186,10 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 saves selection and redirects to /sta
   });
 
   assertEquals(response.status, 302);
-  assertEquals(response.headers.get("location"), "/stage/2");
+  assertEquals(
+    response.headers.get("location"),
+    "/stage/2?event=stage1_submitted&selected=3",
+  );
   assertEquals(calls.length, 1);
   assertEquals(calls[0].sessionId, "test-session-123");
   assertEquals(calls[0].wordIds, [0, 2, 4]);
@@ -179,5 +216,9 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 handles empty selection (no words che
   });
 
   assertEquals(response.status, 302);
+  assertEquals(
+    response.headers.get("location"),
+    "/stage/2?event=stage1_submitted&selected=0",
+  );
   assertEquals(calls[0].wordIds, []);
 });

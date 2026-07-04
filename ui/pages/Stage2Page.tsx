@@ -1,4 +1,6 @@
 import { Layout } from "../components/Layout.tsx";
+import type { AnalyticsProps } from "../../analytics.ts";
+import { safeJson } from "../../analytics.ts";
 
 type Word = {
   id: number;
@@ -6,18 +8,32 @@ type Word = {
 };
 
 type Stage2CardProps = {
+  analytics?: AnalyticsProps;
   currentIndex: number;
   totalWords: number;
   word: Word;
   ticketCode: string;
 };
 
-type Stage2PageProps = Stage2CardProps;
+type Stage2PageProps = Stage2CardProps & {
+  pageAnalytics?: AnalyticsProps;
+};
+
+function dataLayerPushScript(events: AnalyticsProps["events"] = []) {
+  if (events.length === 0) return "";
+  return `
+    window.dataLayer = window.dataLayer || [];
+    for (const event of ${safeJson(events)}) {
+      window.dataLayer.push(event);
+    }
+  `;
+}
 
 export function Stage2Card(
-  { currentIndex, totalWords, word }: Stage2CardProps,
+  { analytics, currentIndex, totalWords, word }: Stage2CardProps,
 ) {
   const progressValue = currentIndex + 1;
+  const events = analytics?.events ?? [];
 
   return (
     <section
@@ -68,19 +84,25 @@ export function Stage2Card(
           </button>
         </div>
       </form>
+      {events.length > 0 && (
+        <script
+          nonce={analytics?.nonce}
+          dangerouslySetInnerHTML={{ __html: dataLayerPushScript(events) }}
+        />
+      )}
     </section>
   );
 }
 
 export function Stage2Page(props: Stage2PageProps) {
   return (
-    <Layout title="ELX – Verification" htmx>
+    <Layout analytics={props.pageAnalytics} title="ELX – Verification" htmx>
       <h1>Stage 2: Verification</h1>
       <p style="margin-top: -10px; font-size: 0.875rem; color: var(--pico-muted-color); margin-bottom: 20px;">
         Test Version: <strong>{props.ticketCode}</strong>
       </p>
       <p>Confirm which words you truly know.</p>
-      <Stage2Card {...props} />
+      <Stage2Card {...props} analytics={undefined} />
     </Layout>
   );
 }

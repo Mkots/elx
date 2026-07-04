@@ -1,17 +1,34 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
+import type { tickets } from "../db/schema.ts";
 import { defaultServices, type Services } from "../db/services.ts";
 import type { Stage2Result } from "../session.ts";
+
+const mockTicket: typeof tickets.$inferSelect = {
+  id: 42,
+  code: "ELX-T-0042",
+  status: "published",
+  title: "Mock Ticket",
+  notes: "Notes",
+  questions: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 function makeServices(result: Stage2Result | null): Services {
   return {
     ...defaultServices,
     sessions: {
       ...defaultServices.sessions,
+      loadConsentTimestamp: () =>
+        Promise.resolve(new Date("2026-07-05T12:00:00Z")),
+      loadSessionTicketId: () => Promise.resolve(42),
       loadStage2Result: () => Promise.resolve(result),
     },
     tickets: {
       ...defaultServices.tickets,
+      getTicketById: (id) =>
+        id === 42 ? Promise.resolve(mockTicket) : Promise.resolve(null),
       getPublishedTickets: () => Promise.resolve([]),
     },
   };

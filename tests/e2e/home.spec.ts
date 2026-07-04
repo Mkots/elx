@@ -12,10 +12,12 @@ test("VER-HOME-E2E: home page renders heading and start button", async ({ page }
   ).toBeVisible();
 });
 
-test("VER-HOME-E2E: start test button navigates to stage 1", async ({ page }) => {
+test("VER-HOME-E2E: start test button navigates to consent gate", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /start assessment/i }).click();
-  await expect(page).toHaveURL("/stage/1");
+  await expect(page).toHaveURL("/consent");
+  await expect(page.getByRole("heading", { name: /research consent/i }))
+    .toBeVisible();
 });
 
 test("VER-HOME-E2E: health endpoint returns ok", async ({ request }) => {

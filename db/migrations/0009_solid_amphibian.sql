@@ -1,0 +1,1 @@
+ALTER TABLE "test_sessions" ADD COLUMN "consented_at" timestamp;

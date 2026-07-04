@@ -10,6 +10,7 @@ Architecture, infrastructure, and tooling documentation for the ELX project.
 | [Operations Stack](ops-tech-stack.md) | Deployment, CI/CD, hosting, Docker Compose, observability                |
 | [Test Stack](test-tech-stack.md)      | Testing pyramid: deno test, Playwright E2E, SARA traceability            |
 | [Enrichment Pipeline](enrichers.md)   | Offline pipeline: data cleaning, semantic & phonetic distractors, gaps   |
+| [Analytics Contract](analytics.md)    | GTM consent mode and `dataLayer` event contract                          |
 
 ## Architecture Summary
 
