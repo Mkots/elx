@@ -1,10 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
 import type { tickets } from "../db/schema.ts";
-import type {
-  Stage1SessionStore,
-  Stage1TicketLoader,
-} from "../routes/stage1.ts";
+import { defaultServices, type Services } from "../db/services.ts";
 
 const mockTicket: typeof tickets.$inferSelect = {
   id: 42,
@@ -21,42 +18,54 @@ const mockTicket: typeof tickets.$inferSelect = {
   updatedAt: new Date(),
 };
 
-function createLoader(): Stage1TicketLoader {
-  return {
-    getTicketById: (id) => {
-      if (id === 42) return Promise.resolve(mockTicket);
-      return Promise.resolve(null);
-    },
-  };
-}
+type SessionStore = Services["sessions"];
 
-function createStore(): Stage1SessionStore & {
-  calls: Array<{ sessionId: string; wordIds: number[] }>;
-  startedTicketId: number | null;
-} {
+function makeServices(
+  sessionOverrides: Partial<SessionStore> & {
+    calls?: Array<{ sessionId: string; wordIds: number[] }>;
+    startedTicketId?: number | null;
+  } = {},
+): Services & { store: typeof sessionOverrides } {
   const calls: Array<{ sessionId: string; wordIds: number[] }> = [];
-  return {
-    calls,
-    startedTicketId: null,
+  let startedTicketId: number | null = null;
+
+  const sessions: SessionStore = {
+    ...defaultServices.sessions,
     saveWordSelection(sessionId, wordIds) {
       calls.push({ sessionId, wordIds });
       return Promise.resolve();
     },
     saveSessionTicketId(_sessionId, ticketId) {
-      this.startedTicketId = ticketId;
+      startedTicketId = ticketId;
       return Promise.resolve();
     },
     loadSessionTicketId(_sessionId) {
       return Promise.resolve(42);
     },
+    ...sessionOverrides,
   };
+
+  const store = { calls, startedTicketId, ...sessionOverrides };
+
+  const services: Services = {
+    ...defaultServices,
+    tickets: {
+      ...defaultServices.tickets,
+      getTicketById: (id) => {
+        if (id === 42) return Promise.resolve(mockTicket);
+        return Promise.resolve(null);
+      },
+      getPublishedTickets: () => Promise.resolve([]),
+    },
+    sessions,
+  };
+
+  return Object.assign(services, { store: store as typeof sessionOverrides });
 }
 
 Deno.test("VER-STAGE1-ROUTE: GET /stage/1 returns HTML with word grid", async () => {
-  const app = createApp({
-    stage1TicketLoader: createLoader(),
-    stage1SessionStore: createStore(),
-  });
+  const services = makeServices();
+  const app = createApp(services);
 
   const response = await app.request("/stage/1", {
     headers: { "cookie": "sessionId=test-session-123" },
@@ -75,10 +84,8 @@ Deno.test("VER-STAGE1-ROUTE: GET /stage/1 returns HTML with word grid", async ()
 });
 
 Deno.test("VER-STAGE1-ROUTE: GET /stage/1 renders a form that POSTs to /stage/1", async () => {
-  const app = createApp({
-    stage1TicketLoader: createLoader(),
-    stage1SessionStore: createStore(),
-  });
+  const services = makeServices();
+  const app = createApp(services);
 
   const response = await app.request("/stage/1", {
     headers: { "cookie": "sessionId=test-session-123" },
@@ -93,11 +100,14 @@ Deno.test("VER-STAGE1-ROUTE: GET /stage/1 renders a form that POSTs to /stage/1"
 });
 
 Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes session with ticket id", async () => {
-  const store = createStore();
-  const app = createApp({
-    stage1TicketLoader: createLoader(),
-    stage1SessionStore: store,
+  let startedTicketId: number | null = null;
+  const services = makeServices({
+    saveSessionTicketId(_sessionId, ticketId) {
+      startedTicketId = ticketId;
+      return Promise.resolve();
+    },
   });
+  const app = createApp(services);
 
   const form = new URLSearchParams();
   form.append("ticketId", "42");
@@ -112,15 +122,18 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1/start initializes session with ticket
 
   assertEquals(response.status, 302);
   assertEquals(response.headers.get("location"), "/stage/1");
-  assertEquals(store.startedTicketId, 42);
+  assertEquals(startedTicketId, 42);
 });
 
 Deno.test("VER-STAGE1-ROUTE: POST /stage/1 saves selection and redirects to /stage/2", async () => {
-  const store = createStore();
-  const app = createApp({
-    stage1TicketLoader: createLoader(),
-    stage1SessionStore: store,
+  const calls: Array<{ sessionId: string; wordIds: number[] }> = [];
+  const services = makeServices({
+    saveWordSelection(sessionId, wordIds) {
+      calls.push({ sessionId, wordIds });
+      return Promise.resolve();
+    },
   });
+  const app = createApp(services);
 
   const body = new URLSearchParams();
   body.append("word", "0");
@@ -138,17 +151,20 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 saves selection and redirects to /sta
 
   assertEquals(response.status, 302);
   assertEquals(response.headers.get("location"), "/stage/2");
-  assertEquals(store.calls.length, 1);
-  assertEquals(store.calls[0].sessionId, "test-session-123");
-  assertEquals(store.calls[0].wordIds, [0, 2, 4]);
+  assertEquals(calls.length, 1);
+  assertEquals(calls[0].sessionId, "test-session-123");
+  assertEquals(calls[0].wordIds, [0, 2, 4]);
 });
 
 Deno.test("VER-STAGE1-ROUTE: POST /stage/1 handles empty selection (no words checked)", async () => {
-  const store = createStore();
-  const app = createApp({
-    stage1TicketLoader: createLoader(),
-    stage1SessionStore: store,
+  const calls: Array<{ sessionId: string; wordIds: number[] }> = [];
+  const services = makeServices({
+    saveWordSelection(sessionId, wordIds) {
+      calls.push({ sessionId, wordIds });
+      return Promise.resolve();
+    },
   });
+  const app = createApp(services);
 
   const response = await app.request("/stage/1", {
     method: "POST",
@@ -160,5 +176,5 @@ Deno.test("VER-STAGE1-ROUTE: POST /stage/1 handles empty selection (no words che
   });
 
   assertEquals(response.status, 302);
-  assertEquals(store.calls[0].wordIds, []);
+  assertEquals(calls[0].wordIds, []);
 });

@@ -1,56 +1,69 @@
 import { assertEquals } from "@std/assert";
 import { createApp } from "../app.ts";
+import { defaultServices, type Services } from "../db/services.ts";
 import type {
   SeedMeaningVerificationItem,
   SeedSpellingVerificationItem,
   SeedSynonymVerificationItem,
-  SeedVerificationLoader,
   SeedWordVerificationItem,
-} from "../routes/seed_verification.ts";
+} from "../db/repositories/words.ts";
 
-function createLoader(
-  overrides: Partial<SeedVerificationLoader> = {},
-): SeedVerificationLoader {
-  const words: SeedWordVerificationItem[] = [
-    { id: 1, value: "alpha", isReal: true, difficulty: 1 },
-    { id: 2, value: "blarg", isReal: false, difficulty: 5 },
-  ];
-  const synonyms: SeedSynonymVerificationItem[] = [
-    {
-      id: 10,
-      prompt: "bright",
-      target: "shiny",
-      relationType: "synonym",
-      distractors: ["dark", "heavy", "quiet"],
-    },
-  ];
-  const spelling: SeedSpellingVerificationItem[] = [
-    {
-      id: 20,
-      contextSentence: "She planted a single red ___ in the garden.",
-      correctWord: "flower",
-      distractors: ["flour", "flauer", "flaur"],
-    },
-  ];
-  const meanings: SeedMeaningVerificationItem[] = [
-    {
-      id: 30,
-      word: "kitten",
-      definitionText: "a young domestic cat that is not yet an adult",
-      distractors: ["river", "forest", "castle"],
-    },
-  ];
+const mockWords: SeedWordVerificationItem[] = [
+  { id: 1, value: "alpha", isReal: true, difficulty: 1 },
+  { id: 2, value: "blarg", isReal: false, difficulty: 5 },
+];
+const mockSynonyms: SeedSynonymVerificationItem[] = [
+  {
+    id: 10,
+    prompt: "bright",
+    target: "shiny",
+    relationType: "synonym",
+    distractors: ["dark", "heavy", "quiet"],
+  },
+];
+const mockSpelling: SeedSpellingVerificationItem[] = [
+  {
+    id: 20,
+    contextSentence: "She planted a single red ___ in the garden.",
+    correctWord: "flower",
+    distractors: ["flour", "flauer", "flaur"],
+  },
+];
+const mockMeanings: SeedMeaningVerificationItem[] = [
+  {
+    id: 30,
+    word: "kitten",
+    definitionText: "a young domestic cat that is not yet an adult",
+    distractors: ["river", "forest", "castle"],
+  },
+];
 
+function makeServices(
+  wordsOverrides: Partial<Services["words"]> = {},
+): Services {
   return {
-    loadWords: overrides.loadWords ?? (() => Promise.resolve(words)),
-    loadSynonyms: overrides.loadSynonyms ?? (() => Promise.resolve(synonyms)),
-    loadSpelling: overrides.loadSpelling ?? (() => Promise.resolve(spelling)),
-    loadMeanings: overrides.loadMeanings ?? (() => Promise.resolve(meanings)),
+    ...defaultServices,
+    words: {
+      ...defaultServices.words,
+      loadWords: () => Promise.resolve(mockWords),
+      loadSynonyms: () => Promise.resolve(mockSynonyms),
+      loadSpelling: () => Promise.resolve(mockSpelling),
+      loadMeanings: () => Promise.resolve(mockMeanings),
+      ...wordsOverrides,
+    },
+    sessions: {
+      ...defaultServices.sessions,
+      loadStage2Result: () => Promise.resolve(null),
+    },
+    tickets: {
+      ...defaultServices.tickets,
+      getPublishedTickets: () => Promise.resolve([]),
+    },
   };
 }
 
 Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/words returns seeded words", async () => {
-  const app = createApp({ seedVerificationLoader: createLoader() });
+  const app = createApp(makeServices());
   const response = await app.request("/health/seeds/words");
 
   assertEquals(response.status, 200);
@@ -65,7 +78,7 @@ Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/words returns seeded w
 });
 
 Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/synonyms returns synonym challenges", async () => {
-  const app = createApp({ seedVerificationLoader: createLoader() });
+  const app = createApp(makeServices());
   const response = await app.request("/health/seeds/synonyms");
 
   assertEquals(response.status, 200);
@@ -85,7 +98,7 @@ Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/synonyms returns synon
 });
 
 Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/spelling returns spelling challenges", async () => {
-  const app = createApp({ seedVerificationLoader: createLoader() });
+  const app = createApp(makeServices());
   const response = await app.request("/health/seeds/spelling");
 
   assertEquals(response.status, 200);
@@ -104,7 +117,7 @@ Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/spelling returns spell
 });
 
 Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/meanings returns meaning challenges", async () => {
-  const app = createApp({ seedVerificationLoader: createLoader() });
+  const app = createApp(makeServices());
   const response = await app.request("/health/seeds/meanings");
 
   assertEquals(response.status, 200);
@@ -123,11 +136,9 @@ Deno.test("VER-SEED-VERIFICATION-ROUTE: GET /health/seeds/meanings returns meani
 });
 
 Deno.test("VER-SEED-VERIFICATION-ROUTE: seed verification routes propagate errors through app handler", async () => {
-  const app = createApp({
-    seedVerificationLoader: createLoader({
-      loadWords: () => Promise.reject(new Error("db offline")),
-    }),
-  });
+  const app = createApp(makeServices({
+    loadWords: () => Promise.reject(new Error("db offline")),
+  }));
 
   const response = await app.request("/health/seeds/words");
 

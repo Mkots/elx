@@ -1,82 +1,13 @@
 import { Hono } from "@hono/hono";
-import { eq } from "drizzle-orm";
-import { db } from "../db/client.ts";
-import { testHistory, tickets } from "../db/schema.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { computeScore } from "../scoring/lextale.ts";
 import {
-  getKv,
-  loadSessionTicketId,
-  loadStage2Answers,
-  loadWordSelection,
   parseSessionId,
-  saveStage2Answer,
-  saveStage2Result,
   sessionCookie,
   type Stage2Answers,
 } from "../session.ts";
 import { Stage2Card, Stage2Page } from "../ui/pages/Stage2Page.tsx";
-
-export interface Stage2TicketLoader {
-  getTicketById(id: number): Promise<typeof tickets.$inferSelect | null>;
-}
-
-export interface Stage2SessionStore {
-  loadStage2Answers(sessionId: string): Promise<Stage2Answers>;
-  loadWordSelection(sessionId: string): Promise<number[]>;
-  saveStage2Answer(
-    sessionId: string,
-    wordId: number,
-    known: boolean,
-  ): Promise<void>;
-  saveStage2Result(
-    sessionId: string,
-    result: { score: number; truthfulness: number },
-    ticketId: number,
-  ): Promise<void>;
-  loadSessionTicketId(sessionId: string): Promise<number | null>;
-}
-
-export const databaseStage2TicketLoader: Stage2TicketLoader = {
-  async getTicketById(id) {
-    const result = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, id))
-      .limit(1);
-    return result[0] || null;
-  },
-};
-
-export const kvStage2SessionStore: Stage2SessionStore = {
-  async loadStage2Answers(sessionId) {
-    const kv = await getKv();
-    return loadStage2Answers(kv, sessionId);
-  },
-  async loadWordSelection(sessionId) {
-    const kv = await getKv();
-    return loadWordSelection(kv, sessionId);
-  },
-  async saveStage2Answer(sessionId, wordId, known) {
-    const kv = await getKv();
-    await saveStage2Answer(kv, sessionId, wordId, known);
-  },
-  async loadSessionTicketId(sessionId) {
-    const kv = await getKv();
-    return await loadSessionTicketId(kv, sessionId);
-  },
-  async saveStage2Result(sessionId, result, ticketId) {
-    const kv = await getKv();
-    await saveStage2Result(kv, sessionId, result);
-
-    await db.insert(testHistory).values({
-      sessionId,
-      score: result.score,
-      truthfulness: result.truthfulness,
-      ticketId,
-    });
-  },
-};
+import type { Services } from "../db/services.ts";
 
 type Stage2Word = { id: number; value: string; isReal: boolean };
 
@@ -108,10 +39,7 @@ function isHtmxRequest(request: Request) {
   return request.headers.get("HX-Request") === "true";
 }
 
-export function createStage2Route(
-  loader: Stage2TicketLoader = databaseStage2TicketLoader,
-  store: Stage2SessionStore = kvStage2SessionStore,
-) {
+export function createStage2Route(services: Services) {
   const route = new Hono();
 
   route.get("/", async (context) => {
@@ -120,13 +48,15 @@ export function createStage2Route(
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
-    const ticketId = await store.loadSessionTicketId(sessionId);
+    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
     if (!ticketId) return context.redirect("/", 302);
 
-    const ticket = await loader.getTicketById(ticketId);
+    const ticket = await services.tickets.getTicketById(ticketId);
     if (!ticket) return context.redirect("/", 302);
 
-    const selectedIndices = await store.loadWordSelection(sessionId);
+    const selectedIndices = await services.sessions.loadWordSelection(
+      sessionId,
+    );
     if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
 
     const wordList = orderWordsBySelection(
@@ -141,12 +71,13 @@ export function createStage2Route(
       selectedIndices,
     );
 
-    const answers = await store.loadStage2Answers(sessionId);
+    const answers = await services.sessions.loadStage2Answers(sessionId);
     const currentIndex = getNextWordIndex(wordList, answers);
 
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result, ticketId);
+      await services.sessions.saveStage2Result(sessionId, result);
+      await services.history.saveStage2Result(sessionId, result, ticketId);
       context.header("Set-Cookie", sessionCookie(sessionId));
       return context.redirect("/result", 302);
     }
@@ -167,13 +98,15 @@ export function createStage2Route(
 
     if (!sessionId) return context.redirect("/stage/1", 302);
 
-    const ticketId = await store.loadSessionTicketId(sessionId);
+    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
     if (!ticketId) return context.redirect("/", 302);
 
-    const ticket = await loader.getTicketById(ticketId);
+    const ticket = await services.tickets.getTicketById(ticketId);
     if (!ticket) return context.redirect("/", 302);
 
-    const selectedIndices = await store.loadWordSelection(sessionId);
+    const selectedIndices = await services.sessions.loadWordSelection(
+      sessionId,
+    );
     if (selectedIndices.length === 0) return context.redirect("/stage/1", 302);
 
     const wordList = orderWordsBySelection(
@@ -202,7 +135,8 @@ export function createStage2Route(
         ]),
       );
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result, ticketId);
+      await services.sessions.saveStage2Result(sessionId, result);
+      await services.history.saveStage2Result(sessionId, result, ticketId);
 
       context.header("Set-Cookie", sessionCookie(sessionId));
       return context.redirect("/result", 302);
@@ -215,14 +149,14 @@ export function createStage2Route(
       return context.text("Invalid Stage 2 answer", 400);
     }
 
-    await store.saveStage2Answer(
+    await services.sessions.saveStage2Answer(
       sessionId,
       submittedWordId,
       submittedAnswer === "know",
     );
 
     const answers = {
-      ...await store.loadStage2Answers(sessionId),
+      ...await services.sessions.loadStage2Answers(sessionId),
       [String(submittedWordId)]: submittedAnswer === "know",
     };
     const currentIndex = getNextWordIndex(wordList, answers);
@@ -231,7 +165,8 @@ export function createStage2Route(
 
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
-      await store.saveStage2Result(sessionId, result, ticketId);
+      await services.sessions.saveStage2Result(sessionId, result);
+      await services.history.saveStage2Result(sessionId, result, ticketId);
 
       if (isHtmxRequest(context.req.raw)) {
         context.header("HX-Redirect", "/result");

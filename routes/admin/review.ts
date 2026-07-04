@@ -4,19 +4,14 @@ import {
   AdminWordsReviewEmpty,
   AdminWordsReviewPage,
 } from "../../ui/pages/AdminWordsReviewPage.tsx";
-import type { AdminReviewLoader } from "./loaders/review.ts";
-import type { AdminWordsLoader } from "./loaders/words.ts";
+import type { Services } from "../../db/services.ts";
 
 /** Registers the one-at-a-time word review routes. */
-export function registerReviewRoutes(
-  route: Hono,
-  reviewLoader: AdminReviewLoader,
-  wordsLoader: AdminWordsLoader,
-) {
+export function registerReviewRoutes(route: Hono, services: Services) {
   // GET /admin/words/review
   route.get("/words/review", async (context) => {
-    const word = await reviewLoader.getNextUnreviewed();
-    const prog = await reviewLoader.progress();
+    const word = await services.words.getNextUnreviewed();
+    const prog = await services.words.progress();
 
     let cardHtml;
     if (!word) {
@@ -42,11 +37,11 @@ export function registerReviewRoutes(
     const difficulty = Number(body.difficulty);
 
     try {
-      await reviewLoader.reviewWord(id, { value, isReal, difficulty });
+      await services.words.reviewWord(id, { value, isReal, difficulty });
 
       // Load next card
-      const word = await reviewLoader.getNextUnreviewed(id);
-      const prog = await reviewLoader.progress();
+      const word = await services.words.getNextUnreviewed(id);
+      const prog = await services.words.progress();
 
       if (!word) {
         return context.html(AdminWordsReviewEmpty());
@@ -62,8 +57,8 @@ export function registerReviewRoutes(
       );
     } catch (err) {
       // Re-render the current card with validation error
-      const prog = await reviewLoader.progress();
-      const currentWord = await wordsLoader.getWord(id);
+      const prog = await services.words.progress();
+      const currentWord = await services.words.getWord(id);
       const errMsg = err instanceof Error ? err.message : String(err);
 
       return context.html(
@@ -81,8 +76,8 @@ export function registerReviewRoutes(
   // POST /admin/words/review/:id/skip (Skip & Next)
   route.post("/words/review/:id/skip", async (context) => {
     const id = Number(context.req.param("id"));
-    const word = await reviewLoader.skipWord(id);
-    const prog = await reviewLoader.progress();
+    const word = await services.words.skipWord(id);
+    const prog = await services.words.progress();
 
     if (!word) {
       return context.html(AdminWordsReviewEmpty());

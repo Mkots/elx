@@ -2,7 +2,7 @@ import type { Hono } from "@hono/hono";
 import { AdminWordsPage } from "../../ui/pages/AdminWordsPage.tsx";
 import { AdminWordEditPage } from "../../ui/pages/AdminWordEditPage.tsx";
 import { AdminWordsImportPage } from "../../ui/pages/AdminWordsImportPage.tsx";
-import type { AdminWordsLoader } from "./loaders/words.ts";
+import type { Services } from "../../db/services.ts";
 
 /** Parses a `"true" | "false" | undefined` query/form value into a boolean. */
 function parseTriState(value: string | undefined): boolean | undefined {
@@ -14,7 +14,7 @@ function parseTriState(value: string | undefined): boolean | undefined {
 /** Registers the words CRUD + import routes. */
 export function registerWordsRoutes(
   route: Hono,
-  wordsLoader: AdminWordsLoader,
+  services: Services,
 ) {
   // GET /admin/words
   route.get("/words", async (context) => {
@@ -27,7 +27,7 @@ export function registerWordsRoutes(
     const reviewed = parseTriState(context.req.query("reviewed"));
 
     const limit = 20;
-    const { words: wordList, totalCount } = await wordsLoader.listWords({
+    const { words: wordList, totalCount } = await services.words.listWords({
       search,
       difficulty,
       isReal,
@@ -95,7 +95,7 @@ export function registerWordsRoutes(
     // explicitly checked rows.
     let ids: number[];
     if (body.selectAllMatching === "true") {
-      ids = await wordsLoader.findWordIds(filter);
+      ids = await services.words.findWordIds(filter);
     } else {
       const raw = body.ids;
       const rawList = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
@@ -111,7 +111,7 @@ export function registerWordsRoutes(
     try {
       switch (action) {
         case "delete": {
-          const { deleted, skipped } = await wordsLoader.bulkDelete(ids);
+          const { deleted, skipped } = await services.words.bulkDelete(ids);
           let msg = `Deleted ${deleted} word(s).`;
           if (skipped.length > 0) {
             msg += ` Skipped ${skipped.length} still referenced elsewhere.`;
@@ -119,19 +119,19 @@ export function registerWordsRoutes(
           return backTo("success", msg);
         }
         case "set_real": {
-          const n = await wordsLoader.bulkSetIsReal(ids, true);
+          const n = await services.words.bulkSetIsReal(ids, true);
           return backTo("success", `Marked ${n} word(s) as Real.`);
         }
         case "set_pseudo": {
-          const n = await wordsLoader.bulkSetIsReal(ids, false);
+          const n = await services.words.bulkSetIsReal(ids, false);
           return backTo("success", `Marked ${n} word(s) as Pseudoword.`);
         }
         case "mark_reviewed": {
-          const n = await wordsLoader.bulkSetReviewed(ids, true);
+          const n = await services.words.bulkSetReviewed(ids, true);
           return backTo("success", `Marked ${n} word(s) as reviewed.`);
         }
         case "mark_unreviewed": {
-          const n = await wordsLoader.bulkSetReviewed(ids, false);
+          const n = await services.words.bulkSetReviewed(ids, false);
           return backTo("success", `Marked ${n} word(s) as unreviewed.`);
         }
         default:
@@ -199,7 +199,7 @@ export function registerWordsRoutes(
     }
 
     try {
-      await wordsLoader.createWord(wordData);
+      await services.words.createWord(wordData);
       return context.redirect(
         "/admin/words?success=" +
           encodeURIComponent(`Word "${value}" was successfully created.`),
@@ -248,7 +248,7 @@ export function registerWordsRoutes(
 
       const fileContent = await fileObj.text();
 
-      const result = await wordsLoader.importWords(
+      const result = await services.words.importWords(
         fileContent,
         configStr,
         dryRun,
@@ -284,7 +284,7 @@ export function registerWordsRoutes(
         "/admin/words?error=" + encodeURIComponent("Invalid word ID."),
       );
     }
-    const word = await wordsLoader.getWord(id);
+    const word = await services.words.getWord(id);
     if (!word) {
       return context.redirect(
         "/admin/words?error=" + encodeURIComponent("Word not found."),
@@ -302,7 +302,7 @@ export function registerWordsRoutes(
       );
     }
 
-    const word = await wordsLoader.getWord(id);
+    const word = await services.words.getWord(id);
     if (!word) {
       return context.redirect(
         "/admin/words?error=" + encodeURIComponent("Word not found."),
@@ -359,7 +359,7 @@ export function registerWordsRoutes(
     }
 
     try {
-      await wordsLoader.updateWord(id, wordData);
+      await services.words.updateWord(id, wordData);
       return context.redirect(
         "/admin/words?success=" +
           encodeURIComponent(`Word "${value}" was successfully updated.`),
@@ -392,7 +392,7 @@ export function registerWordsRoutes(
       );
     }
 
-    const res = await wordsLoader.deleteWord(id);
+    const res = await services.words.deleteWord(id);
     if (res.success) {
       return context.redirect(
         "/admin/words?success=" +

@@ -1,20 +1,24 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createApp } from "../app.ts";
-import type { ResultSessionStore } from "../routes/result.ts";
+import { defaultServices, type Services } from "../db/services.ts";
 import type { Stage2Result } from "../session.ts";
 
-function createStore(
-  result: Stage2Result | null,
-): ResultSessionStore {
+function makeServices(result: Stage2Result | null): Services {
   return {
-    loadStage2Result: () => Promise.resolve(result),
+    ...defaultServices,
+    sessions: {
+      ...defaultServices.sessions,
+      loadStage2Result: () => Promise.resolve(result),
+    },
+    tickets: {
+      ...defaultServices.tickets,
+      getPublishedTickets: () => Promise.resolve([]),
+    },
   };
 }
 
 Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/1 when no session cookie", async () => {
-  const app = createApp({
-    resultSessionStore: createStore(null),
-  });
+  const app = createApp(makeServices(null));
 
   const response = await app.request("/result");
 
@@ -23,9 +27,7 @@ Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/1 when no session c
 });
 
 Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/2 when no result in session", async () => {
-  const app = createApp({
-    resultSessionStore: createStore(null),
-  });
+  const app = createApp(makeServices(null));
 
   const response = await app.request("/result", {
     headers: { "cookie": "sessionId=test-session" },
@@ -36,9 +38,7 @@ Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/2 when no result in
 });
 
 Deno.test("VER-RESULT-ROUTE: GET /result renders score and truthfulness", async () => {
-  const app = createApp({
-    resultSessionStore: createStore({ score: 42, truthfulness: 87 }),
-  });
+  const app = createApp(makeServices({ score: 42, truthfulness: 87 }));
 
   const response = await app.request("/result", {
     headers: { "cookie": "sessionId=test-session" },
@@ -54,9 +54,7 @@ Deno.test("VER-RESULT-ROUTE: GET /result renders score and truthfulness", async 
 });
 
 Deno.test("VER-RESULT-ROUTE: GET /result renders a link to restart", async () => {
-  const app = createApp({
-    resultSessionStore: createStore({ score: 10, truthfulness: 100 }),
-  });
+  const app = createApp(makeServices({ score: 10, truthfulness: 100 }));
 
   const response = await app.request("/result", {
     headers: { "cookie": "sessionId=test-session" },

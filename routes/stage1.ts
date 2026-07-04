@@ -1,69 +1,20 @@
 import { Hono } from "@hono/hono";
-import { eq } from "drizzle-orm";
-import { db } from "../db/client.ts";
-import { tickets } from "../db/schema.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
-import {
-  getKv,
-  loadSessionTicketId,
-  parseSessionId,
-  saveSessionTicketId,
-  saveWordSelection,
-  sessionCookie,
-} from "../session.ts";
+import { parseSessionId, sessionCookie } from "../session.ts";
 import { Stage1Page } from "../ui/pages/Stage1Page.tsx";
+import type { Services } from "../db/services.ts";
 
-export interface Stage1TicketLoader {
-  getTicketById(id: number): Promise<typeof tickets.$inferSelect | null>;
-}
-
-export interface Stage1SessionStore {
-  saveWordSelection(sessionId: string, wordIds: number[]): Promise<void>;
-  saveSessionTicketId(sessionId: string, ticketId: number): Promise<void>;
-  loadSessionTicketId(sessionId: string): Promise<number | null>;
-}
-
-export const databaseStage1TicketLoader: Stage1TicketLoader = {
-  async getTicketById(id) {
-    const result = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, id))
-      .limit(1);
-    return result[0] || null;
-  },
-};
-
-export const kvStage1SessionStore: Stage1SessionStore = {
-  async saveWordSelection(sessionId, wordIds) {
-    const kv = await getKv();
-    await saveWordSelection(kv, sessionId, wordIds);
-  },
-  async saveSessionTicketId(sessionId, ticketId) {
-    const kv = await getKv();
-    await saveSessionTicketId(kv, sessionId, ticketId);
-  },
-  async loadSessionTicketId(sessionId) {
-    const kv = await getKv();
-    return await loadSessionTicketId(kv, sessionId);
-  },
-};
-
-export function createStage1Route(
-  loader: Stage1TicketLoader = databaseStage1TicketLoader,
-  store: Stage1SessionStore = kvStage1SessionStore,
-) {
+export function createStage1Route(services: Services) {
   const route = new Hono();
 
-  // Route to initialize session with selected ticket
   route.post("/start", async (context) => {
     const form = await context.req.formData();
     const ticketId = Number(form.get("ticketId"));
     if (!ticketId) return context.redirect("/", 302);
 
     const sessionId = crypto.randomUUID();
-    await store.saveSessionTicketId(sessionId, ticketId);
-    await store.saveWordSelection(sessionId, []);
+    await services.sessions.saveSessionTicketId(sessionId, ticketId);
+    await services.sessions.saveWordSelection(sessionId, []);
 
     context.header("Set-Cookie", sessionCookie(sessionId));
     return context.redirect("/stage/1", 302);
@@ -75,10 +26,10 @@ export function createStage1Route(
 
     if (!sessionId) return context.redirect("/", 302);
 
-    const ticketId = await store.loadSessionTicketId(sessionId);
+    const ticketId = await services.sessions.loadSessionTicketId(sessionId);
     if (!ticketId) return context.redirect("/", 302);
 
-    const ticket = await loader.getTicketById(ticketId);
+    const ticket = await services.tickets.getTicketById(ticketId);
     if (!ticket) return context.redirect("/", 302);
 
     const verificationWords = ticket.questions
@@ -106,7 +57,7 @@ export function createStage1Route(
     const form = await context.req.formData();
     const wordIds = form.getAll("word").map((v) => Number(v));
 
-    await store.saveWordSelection(sessionId, wordIds);
+    await services.sessions.saveWordSelection(sessionId, wordIds);
 
     context.header("Set-Cookie", sessionCookie(sessionId));
     return context.redirect("/stage/2", 302);
