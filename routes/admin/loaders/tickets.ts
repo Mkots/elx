@@ -218,6 +218,7 @@ export const databaseAdminTicketsLoader: AdminTicketsLoader = {
       let attempts = 0;
       let finalRealWords: (typeof words.$inferSelect)[] = [];
       let finalPseudoWords: (typeof words.$inferSelect)[] = [];
+      let success = false;
 
       while (attempts < 20) {
         attempts++;
@@ -256,11 +257,12 @@ export const databaseAdminTicketsLoader: AdminTicketsLoader = {
           defCandidates.length >= config.definitionCount &&
           finalRealWords.length >= config.spellingCount
         ) {
+          success = true;
           break; // Found a valid set!
         }
       }
 
-      if (attempts >= 20) {
+      if (!success) {
         throw new Error(
           "Failed to select a word set with enough synonyms or definitions. Try seeding more words or lowering challenge counts.",
         );

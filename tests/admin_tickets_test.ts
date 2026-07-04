@@ -429,3 +429,115 @@ Deno.test({
     }
   },
 });
+
+Deno.test({
+  name:
+    "VER-ADMIN-TICKETS: generateBaseTicket retry loop 20th attempt success regression",
+  ignore: !Deno.env.get("DATABASE_URL"),
+  fn: async () => {
+    let configId = 0;
+    let ticketId = 0;
+    const testConfigName = "20th Attempt Config";
+
+    await withDb(async (db) => {
+      // Clear existing active configs
+      await db.update(ticketConfigs).set({ isActive: false });
+
+      // Delete any leftover config
+      await db.delete(ticketConfigs).where(
+        eq(ticketConfigs.name, testConfigName),
+      );
+
+      // Insert custom config requiring 5 synonyms, 5 spellings, 5 definitions
+      const [cfg] = await db
+        .insert(ticketConfigs)
+        .values({
+          name: testConfigName,
+          isActive: true,
+          difficulty1Count: 2,
+          difficulty2Count: 2,
+          difficulty3Count: 2,
+          difficulty4Count: 2,
+          difficulty5Count: 2,
+          realCount: 6,
+          pseudoCount: 4,
+          synonymsCount: 1,
+          spellingCount: 1,
+          definitionCount: 1,
+          randomizeOrder: true,
+        })
+        .returning();
+
+      configId = cfg.id;
+    });
+
+    const originalFilter = Array.prototype.filter;
+    let loopFilterCalls = 0;
+
+    // deno-lint-ignore no-explicit-any
+    const filterMock = function (this: any, callback: any, thisArg?: any) {
+      const callbackStr = callback.toString();
+      const isSynOrDefFilter = callbackStr.includes("synonyms") ||
+        callbackStr.includes("definition");
+
+      if (isSynOrDefFilter) {
+        loopFilterCalls++;
+        // The loop does 2 filter calls per attempt (one for synonyms, one for definitions).
+        // Return empty array for the first 19 attempts (38 calls) to force retry.
+        if (loopFilterCalls <= 38) {
+          return [];
+        }
+        // Mutate the elements to guarantee synonyms and definitions exist for the 20th attempt
+        for (const w of this) {
+          if (!w.synonyms || w.synonyms.length === 0) {
+            w.synonyms = ["mock_synonym"];
+          }
+          if (!w.definition || w.definition.trim() === "") {
+            w.definition = "mock definition";
+          }
+        }
+      }
+
+      return originalFilter.call(this, callback, thisArg);
+    };
+    Array.prototype.filter = filterMock;
+
+    try {
+      // Generate base ticket. It should retry 19 times (failing) and succeed on the 20th attempt.
+      let ticket;
+      try {
+        ticket = await databaseAdminTicketsLoader.generateBaseTicket(
+          "Retry Loop Test Ticket",
+          "Notes",
+        );
+      } catch (err) {
+        throw err;
+      }
+      ticketId = ticket.id;
+
+      assertEquals(ticket.status, "base");
+      // Verify that it reached the 20th attempt (loopFilterCalls > 38)
+      assertEquals(loopFilterCalls > 38, true);
+    } finally {
+      // Restore original filter
+      Array.prototype.filter = originalFilter;
+
+      // Cleanup db changes
+      await withDb(async (db) => {
+        if (ticketId > 0) {
+          await db.delete(tickets).where(eq(tickets.id, ticketId));
+        }
+        if (configId > 0) {
+          await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
+        }
+        // Re-enable the first default config as active
+        const firstConfig = await db.select().from(ticketConfigs).limit(1);
+        if (firstConfig[0]) {
+          await db.update(ticketConfigs).set({ isActive: true }).where(
+            eq(ticketConfigs.id, firstConfig[0].id),
+          );
+        }
+      });
+    }
+  },
+});
