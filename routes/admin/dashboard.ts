@@ -10,6 +10,13 @@ export function registerDashboardRoutes(route: Hono, services: Services) {
     return context.html(
       AdminDashboardPage({
         ...stats,
+        recentRuns: stats.recentRuns.map((run) => ({
+          id: run.id,
+          score: run.score ?? 0,
+          truthfulness: run.truthfulness ?? 0,
+          completedAt: run.completedAt ?? run.createdAt,
+          ticketId: run.ticketId,
+        })),
         unreviewedCount: reviewProg.remaining,
       }),
     );

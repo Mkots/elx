@@ -31,7 +31,12 @@ export function registerHistoryRoutes(route: Hono, services: Services) {
 
       return context.html(
         AdminHistoryPage({
-          history: historyList,
+          history: historyList.map((run) => ({
+            id: run.id,
+            score: run.score ?? 0,
+            truthfulness: run.truthfulness ?? 0,
+            completedAt: run.completedAt ?? run.createdAt,
+          })),
           totalCount,
           page,
           totalPages,
@@ -70,20 +75,12 @@ export function registerHistoryRoutes(route: Hono, services: Services) {
       const allHistory = await services.history.exportAllHistory();
 
       if (format === "csv") {
-        let csvContent = "id,session_id,score,truthfulness,completed_at\n";
+        let csvContent = "id,score,truthfulness,completed_at\n";
         for (const run of allHistory) {
-          const dateStr = run.completedAt instanceof Date
-            ? run.completedAt.toISOString()
-            : new Date(run.completedAt).toISOString();
-          let safeSessionId = run.sessionId;
-          if (
-            safeSessionId.includes(",") || safeSessionId.includes('"') ||
-            safeSessionId.includes("\n")
-          ) {
-            safeSessionId = `"${safeSessionId.replace(/"/g, '""')}"`;
-          }
-          csvContent +=
-            `${run.id},${safeSessionId},${run.score},${run.truthfulness},${dateStr}\n`;
+          const dateStr = run.completedAt ? run.completedAt.toISOString() : "";
+          csvContent += `${run.id},${run.score ?? ""},${
+            run.truthfulness ?? ""
+          },${dateStr}\n`;
         }
 
         context.header("Content-Type", "text/csv");

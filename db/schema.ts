@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export type QuestionType =
@@ -79,13 +80,27 @@ export const tickets = pgTable("tickets", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const testHistory = pgTable("test_history", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  sessionId: text("session_id").notNull(),
-  score: integer().notNull(),
-  truthfulness: integer().notNull(),
-  completedAt: timestamp("completed_at").notNull().defaultNow(),
+export const testSessions = pgTable("test_sessions", {
+  id: uuid("id").primaryKey(),
   ticketId: integer("ticket_id").references(() => tickets.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  score: integer("score"),
+  truthfulness: integer("truthfulness"),
+  stage1Selection: jsonb("stage1_selection").$type<number[]>(),
+});
+
+export const testAnswers = pgTable("test_answers", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  sessionId: uuid("session_id").notNull().references(() => testSessions.id, {
+    onDelete: "cascade",
+  }),
+  questionIndex: integer("question_index").notNull(),
+  questionType: text("question_type").notNull(),
+  stage: integer("stage").notNull(),
+  answer: text("answer"),
+  isCorrect: boolean("is_correct"),
+  answeredAt: timestamp("answered_at").notNull().defaultNow(),
 });
 
 export const ticketConfigs = pgTable("ticket_configs", {

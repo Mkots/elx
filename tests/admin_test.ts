@@ -3,27 +3,29 @@ import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
 import { defaultServices, type Services } from "../db/services.ts";
 import { executeImport, validateConfig } from "../scripts/importer_core.ts";
-import type { TestRun } from "../ui/pages/AdminDashboardPage.tsx";
+import type { TestRun } from "../db/repositories/history.ts";
 
 const mockDashboardLoader: Pick<Services["history"], "getDashboardStats"> = {
   async getDashboardStats() {
     await Promise.resolve();
     const recentRuns: TestRun[] = [
       {
-        id: 1,
-        sessionId: "mock-session-1",
+        id: "mock-session-1",
+        ticketId: null,
+        createdAt: new Date("2026-06-19T12:00:00Z"),
+        completedAt: new Date("2026-06-19T12:00:00Z"),
         score: 80,
         truthfulness: 90,
-        completedAt: new Date("2026-06-19T12:00:00Z"),
-        ticketId: null,
+        stage1Selection: null,
       },
       {
-        id: 2,
-        sessionId: "mock-session-2",
+        id: "mock-session-2",
+        ticketId: null,
+        createdAt: new Date("2026-06-19T13:00:00Z"),
+        completedAt: new Date("2026-06-19T13:00:00Z"),
         score: 60,
         truthfulness: 80,
-        completedAt: new Date("2026-06-19T13:00:00Z"),
-        ticketId: null,
+        stage1Selection: null,
       },
     ];
     return {
@@ -369,28 +371,31 @@ function resetMockData() {
   mockHistoryList.length = 0;
   mockHistoryList.push(
     {
-      id: 1,
-      sessionId: "session-abc-123",
+      id: "session-abc-123",
+      ticketId: null,
+      createdAt: new Date("2026-06-19T10:00:00Z"),
+      completedAt: new Date("2026-06-19T10:00:00Z"),
       score: 80,
       truthfulness: 90,
-      completedAt: new Date("2026-06-19T10:00:00Z"),
-      ticketId: null,
+      stage1Selection: null,
     },
     {
-      id: 2,
-      sessionId: "session-def-456",
+      id: "session-def-456",
+      ticketId: null,
+      createdAt: new Date("2026-06-19T11:00:00Z"),
+      completedAt: new Date("2026-06-19T11:00:00Z"),
       score: 70,
       truthfulness: 85,
-      completedAt: new Date("2026-06-19T11:00:00Z"),
-      ticketId: null,
+      stage1Selection: null,
     },
     {
-      id: 3,
-      sessionId: "session-ghi-789",
+      id: "session-ghi-789",
+      ticketId: null,
+      createdAt: new Date("2026-06-19T12:00:00Z"),
+      completedAt: new Date("2026-06-19T12:00:00Z"),
       score: 95,
       truthfulness: 100,
-      completedAt: new Date("2026-06-19T12:00:00Z"),
-      ticketId: null,
+      stage1Selection: null,
     },
   );
 }
@@ -401,20 +406,21 @@ const mockHistoryLoader: Services["history"] = {
     await Promise.resolve();
     let filtered = [...mockHistoryList];
     if (search) {
-      filtered = filtered.filter((r) => r.sessionId.includes(search));
+      filtered = filtered.filter((r) => r.id.includes(search));
     }
 
     if (orderBy === "score") {
-      filtered.sort((
-        a,
-        b,
-      ) => (orderDir === "asc" ? a.score - b.score : b.score - a.score));
+      filtered.sort((a, b) => {
+        const scoreA = a.score ?? 0;
+        const scoreB = b.score ?? 0;
+        return orderDir === "asc" ? scoreA - scoreB : scoreB - scoreA;
+      });
     } else {
-      filtered.sort((a, b) =>
-        orderDir === "asc"
-          ? a.completedAt.getTime() - b.completedAt.getTime()
-          : b.completedAt.getTime() - a.completedAt.getTime()
-      );
+      filtered.sort((a, b) => {
+        const timeA = (a.completedAt ?? a.createdAt).getTime();
+        const timeB = (b.completedAt ?? b.createdAt).getTime();
+        return orderDir === "asc" ? timeA - timeB : timeB - timeA;
+      });
     }
 
     const totalCount = filtered.length;
@@ -897,7 +903,7 @@ Deno.test("VER-ADMIN-ROUTE: GET /admin/history/export exports CSV and JSON forma
   );
   assertStringIncludes(
     csvBody,
-    "id,session_id,score,truthfulness,completed_at",
+    "id,score,truthfulness,completed_at",
   );
   assertStringIncludes(csvBody, "session-abc-123");
   assertStringIncludes(csvBody, "session-def-456");
@@ -914,7 +920,7 @@ Deno.test("VER-ADMIN-ROUTE: GET /admin/history/export exports CSV and JSON forma
     "attachment; filename=elx-test-history.json",
   );
   assertEquals(jsonBody.length, 3);
-  assertEquals(jsonBody[0].sessionId, "session-abc-123");
+  assertEquals(jsonBody[0].id, "session-abc-123");
 
   // 3. Invalid format
   const invalidRes = await app.request("/admin/history/export?format=invalid", {

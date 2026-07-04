@@ -80,7 +80,12 @@ export function createStage2Route(services: Services) {
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
       await services.sessions.saveStage2Result(sessionId, result);
-      await services.history.saveStage2Result(sessionId, result, ticketId);
+      await services.history.saveStage2Result(
+        sessionId,
+        result,
+        ticketId,
+        wordList.map((word) => word.id),
+      );
       setSessionCookie(context, sessionId);
       return context.redirect("/result", 302);
     }
@@ -121,7 +126,12 @@ export function createStage2Route(services: Services) {
       );
       const result = computeStage2Result(wordList, answers);
       await services.sessions.saveStage2Result(sessionId, result);
-      await services.history.saveStage2Result(sessionId, result, ticketId);
+      await services.history.saveStage2Result(
+        sessionId,
+        result,
+        ticketId,
+        wordList.map((word) => word.id),
+      );
 
       setSessionCookie(context, sessionId);
       return context.redirect("/result", 302);
@@ -151,7 +161,12 @@ export function createStage2Route(services: Services) {
     if (currentIndex === -1) {
       const result = computeStage2Result(wordList, answers);
       await services.sessions.saveStage2Result(sessionId, result);
-      await services.history.saveStage2Result(sessionId, result, ticketId);
+      await services.history.saveStage2Result(
+        sessionId,
+        result,
+        ticketId,
+        wordList.map((word) => word.id),
+      );
 
       if (isHtmxRequest(context.req.raw)) {
         context.header("HX-Redirect", "/result");
