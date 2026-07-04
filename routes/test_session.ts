@@ -8,6 +8,8 @@ interface RequireTestSessionOptions {
   noSessionRedirect: string;
   /** Whether the route needs the session's ticket resolved too. */
   requireTicket?: boolean;
+  /** Whether the route requires the session consent gate to be complete. */
+  requireConsent?: boolean;
 }
 
 type WithTicket = { sessionId: string; ticketId: number; ticket: Ticket };
@@ -30,6 +32,11 @@ export async function requireTestSession(
 ): Promise<WithTicket | WithoutTicket | Response> {
   const sessionId = getSessionId(context);
   if (!sessionId) return context.redirect(options.noSessionRedirect, 302);
+
+  if (options.requireConsent) {
+    const consentedAt = await services.sessions.loadConsentTimestamp(sessionId);
+    if (!consentedAt) return context.redirect("/consent", 302);
+  }
 
   if (!options.requireTicket) {
     return { sessionId, ticketId: null, ticket: null };

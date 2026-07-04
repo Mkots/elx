@@ -1,4 +1,5 @@
 import { Hono } from "@hono/hono";
+import { analyticsEvent, analyticsProps, safeJson } from "../analytics.ts";
 import type { Ticket } from "../db/repositories/tickets.ts";
 import type { VerificationSnapshotQuestion } from "../db/schema.ts";
 import { setSessionCookie, type Stage2Answers } from "../session.ts";
@@ -64,6 +65,7 @@ export function createStage2Route(services: Services) {
   route.get("/", async (context) => {
     const session = await requireTestSession(context, services, {
       noSessionRedirect: "/stage/1",
+      requireConsent: true,
       requireTicket: true,
     });
     if (session instanceof Response) return session;
@@ -81,9 +83,21 @@ export function createStage2Route(services: Services) {
       return context.redirect("/result", 302);
     }
 
+    const events = context.req.query("event") === "stage1_submitted"
+      ? [
+        analyticsEvent("stage1_submitted", sessionId, ticket.code, {
+          selected_count: Number(context.req.query("selected") ?? 0),
+        }),
+      ]
+      : [];
+
     return context.html(
       Stage2Page({
         currentIndex,
+        pageAnalytics: analyticsProps(context, {
+          consentGranted: true,
+          events,
+        }),
         totalWords: wordList.length,
         word: wordList[currentIndex],
         ticketCode: ticket.code,
@@ -94,6 +108,7 @@ export function createStage2Route(services: Services) {
   route.post("/", async (context) => {
     const session = await requireTestSession(context, services, {
       noSessionRedirect: "/stage/1",
+      requireConsent: true,
       requireTicket: true,
     });
     if (session instanceof Response) return session;
@@ -155,8 +170,30 @@ export function createStage2Route(services: Services) {
     }
 
     if (isHtmxRequest(context.req.raw)) {
+      const submittedQuestion = wordList.find((word) =>
+        word.id === submittedWordId
+      );
+      const answeredEvent = analyticsEvent(
+        "stage2_answered",
+        sessionId,
+        ticket.code,
+        {
+          answer: submittedAnswer,
+          question_index: submittedWordId,
+          question_type: "verification",
+          word_is_real: submittedQuestion?.isReal ?? false,
+        },
+      );
+      context.header(
+        "HX-Trigger",
+        safeJson({ "elx:analytics": answeredEvent }),
+      );
       return context.html(
         Stage2Card({
+          analytics: analyticsProps(context, {
+            consentGranted: true,
+            events: [answeredEvent],
+          }),
           currentIndex,
           totalWords: wordList.length,
           word: wordList[currentIndex],

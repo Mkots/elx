@@ -6,6 +6,7 @@ import { testAnswers, testSessions, tickets } from "../db/schema.ts";
 import {
   completeStage2Result,
   getSessionId,
+  saveConsentTimestamp,
   saveSessionTicketId,
   saveStage2Answer,
   saveWordSelection,
@@ -169,6 +170,30 @@ Deno.test({
       if (ticketId > 0) {
         await db.delete(tickets).where(eq(tickets.id, ticketId));
       }
+    }
+  },
+});
+
+Deno.test({
+  name: "VER-CONSENT: consented_at is recorded once per session",
+  ignore: !Deno.env.get("DATABASE_URL"),
+  async fn() {
+    const sessionId = crypto.randomUUID();
+
+    try {
+      const first = await saveConsentTimestamp(sessionId);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const second = await saveConsentTimestamp(sessionId);
+
+      assertEquals(second.getTime(), first.getTime());
+
+      const rows = await db.select({ consentedAt: testSessions.consentedAt })
+        .from(testSessions)
+        .where(eq(testSessions.id, sessionId))
+        .limit(1);
+      assertEquals(rows[0].consentedAt?.getTime(), first.getTime());
+    } finally {
+      await db.delete(testSessions).where(eq(testSessions.id, sessionId));
     }
   },
 });

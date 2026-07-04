@@ -129,6 +129,10 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     // 1. Complete a test run to ensure we have at least one history entry
     await page.goto("/");
     await page.getByRole("button", { name: /start assessment/i }).click();
+    await expect(page).toHaveURL("/consent");
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: /continue to assessment/i }).click();
+    await expect(page).toHaveURL(/\/stage\/1/);
     const checkboxes = page.locator('.word-grid input[type="checkbox"]');
     await checkboxes.nth(0).check();
     await page.getByRole("button", { name: /next/i }).click();

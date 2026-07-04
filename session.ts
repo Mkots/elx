@@ -211,3 +211,30 @@ export async function loadSessionTicketId(
     .limit(1);
   return rows[0]?.ticketId ?? null;
 }
+
+export async function loadConsentTimestamp(
+  sessionId: string,
+): Promise<Date | null> {
+  const rows = await db.select({ consentedAt: testSessions.consentedAt })
+    .from(testSessions)
+    .where(eq(testSessions.id, sessionId))
+    .limit(1);
+  return rows[0]?.consentedAt ?? null;
+}
+
+export async function saveConsentTimestamp(
+  sessionId: string,
+): Promise<Date> {
+  const existing = await loadConsentTimestamp(sessionId);
+  if (existing) return existing;
+
+  const consentedAt = new Date();
+  await db.insert(testSessions).values({
+    id: sessionId,
+    consentedAt,
+  }).onConflictDoUpdate({
+    target: testSessions.id,
+    set: { consentedAt },
+  });
+  return await loadConsentTimestamp(sessionId) ?? consentedAt;
+}

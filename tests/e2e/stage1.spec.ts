@@ -1,8 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
-test("VER-STAGE1-E2E: stage 1 renders word grid with checkboxes", async ({ page }) => {
+async function acceptConsent(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: /start assessment/i }).click();
+  await expect(page).toHaveURL("/consent");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: /continue to assessment/i }).click();
+  await expect(page).toHaveURL(/\/stage\/1/);
+}
+
+test("VER-STAGE1-E2E: stage 1 renders word grid with checkboxes", async ({ page }) => {
+  await acceptConsent(page);
 
   await expect(
     page.getByRole("heading", { name: /stage 1/i }),
@@ -14,8 +22,7 @@ test("VER-STAGE1-E2E: stage 1 renders word grid with checkboxes", async ({ page 
 });
 
 test("VER-STAGE1-E2E: stage 1 form submits and redirects to stage 2", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: /start assessment/i }).click();
+  await acceptConsent(page);
 
   const checkboxes = page.locator('.word-grid input[type="checkbox"]');
   await checkboxes.nth(0).check();
@@ -24,12 +31,11 @@ test("VER-STAGE1-E2E: stage 1 form submits and redirects to stage 2", async ({ p
 
   await page.getByRole("button", { name: /next/i }).click();
 
-  await expect(page).toHaveURL("/stage/2");
+  await expect(page).toHaveURL(/\/stage\/2/);
 });
 
 test("VER-STAGE1-E2E: stage 1 sets sessionId cookie on submit", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: /start assessment/i }).click();
+  await acceptConsent(page);
   await page.getByRole("button", { name: /next/i }).click();
 
   const cookies = await page.context().cookies();
@@ -46,6 +52,9 @@ test("VER-STAGE1-E2E: stage 1 is accessible without JavaScript", async ({ browse
 
   await page.goto("/");
   await page.getByRole("button", { name: /start assessment/i }).click();
+  await expect(page).toHaveURL("/consent");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: /continue to assessment/i }).click();
 
   await expect(
     page.getByRole("heading", { name: /stage 1/i }),

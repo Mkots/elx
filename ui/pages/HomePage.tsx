@@ -1,4 +1,5 @@
 import { Layout } from "../components/Layout.tsx";
+import type { AnalyticsProps } from "../../analytics.ts";
 
 type PublishedTicket = {
   id: number;
@@ -7,14 +8,15 @@ type PublishedTicket = {
 };
 
 type HomePageProps = {
+  analytics?: AnalyticsProps;
   publishedTickets: PublishedTicket[];
 };
 
-export function HomePage({ publishedTickets = [] }: HomePageProps) {
+export function HomePage({ analytics, publishedTickets = [] }: HomePageProps) {
   const hasTickets = publishedTickets.length > 0;
 
   return (
-    <Layout title="ELX Vocabulary Assessment">
+    <Layout analytics={analytics} title="ELX Vocabulary Assessment">
       <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
         <h1 style="text-align: center; margin-bottom: 10px;">
           ELX Vocabulary Assessment

@@ -1,4 +1,5 @@
 import { Hono } from "@hono/hono";
+import { analyticsEvent, analyticsProps } from "../analytics.ts";
 import { ResultPage } from "../ui/pages/ResultPage.tsx";
 import type { Services } from "../db/services.ts";
 import { requireTestSession } from "./test_session.ts";
@@ -9,14 +10,29 @@ export function createResultRoute(services: Services) {
   route.get("/", async (context) => {
     const session = await requireTestSession(context, services, {
       noSessionRedirect: "/stage/1",
+      requireConsent: true,
+      requireTicket: true,
     });
     if (session instanceof Response) return session;
-    const { sessionId } = session;
+    const { sessionId, ticket } = session;
 
     const result = await services.sessions.loadStage2Result(sessionId);
     if (!result) return context.redirect("/stage/2", 302);
 
-    return context.html(ResultPage(result));
+    return context.html(
+      ResultPage({
+        ...result,
+        analytics: analyticsProps(context, {
+          consentGranted: true,
+          events: [
+            analyticsEvent("test_completed", sessionId, ticket.code, {
+              score: result.score,
+              truthfulness: result.truthfulness,
+            }),
+          ],
+        }),
+      }),
+    );
   });
 
   return route;

@@ -1,6 +1,8 @@
 import { Layout } from "../components/Layout.tsx";
+import type { AnalyticsProps } from "../../analytics.ts";
 
 type ResultPageProps = {
+  analytics?: AnalyticsProps;
   score: number;
   truthfulness: number;
 };
@@ -11,9 +13,11 @@ function confidenceLabel(truthfulness: number) {
   return "Review recommended";
 }
 
-export function ResultPage({ score, truthfulness }: ResultPageProps) {
+export function ResultPage(
+  { analytics, score, truthfulness }: ResultPageProps,
+) {
   return (
-    <Layout title="ELX – Results">
+    <Layout analytics={analytics} title="ELX – Results">
       <section class="result-shell">
         <div class="result-header">
           <p class="result-kicker">Assessment complete</p>

@@ -15,6 +15,12 @@ export const defaultSessionsService = {
   async loadSessionTicketId(sessionId: string) {
     return await sessionHelpers.loadSessionTicketId(sessionId);
   },
+  async loadConsentTimestamp(sessionId: string) {
+    return await sessionHelpers.loadConsentTimestamp(sessionId);
+  },
+  async saveConsentTimestamp(sessionId: string) {
+    return await sessionHelpers.saveConsentTimestamp(sessionId);
+  },
   async loadWordSelection(sessionId: string) {
     return await sessionHelpers.loadWordSelection(sessionId);
   },

@@ -69,6 +69,8 @@ function makeServices(
       return Promise.resolve(result);
     },
     loadSessionTicketId: () => Promise.resolve(42),
+    loadConsentTimestamp: () =>
+      Promise.resolve(new Date("2026-07-05T12:00:00Z")),
   };
 
   const services: Services = {

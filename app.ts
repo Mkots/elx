@@ -2,7 +2,7 @@ import { Hono } from "@hono/hono";
 import { serveStatic } from "@hono/hono/deno";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
-import { secureHeaders } from "hono/secure-headers";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { healthRoute } from "./routes/health.ts";
 import { createHomeRoute } from "./routes/home.ts";
 import { requestLogger } from "./routes/logger.ts";
@@ -11,6 +11,8 @@ import { createSeedVerificationRoute } from "./routes/seed_verification.ts";
 import { createStage1Route } from "./routes/stage1.ts";
 import { createStage2Route } from "./routes/stage2.ts";
 import { createAdminRoute } from "./routes/admin/index.ts";
+import { createConsentRoute } from "./routes/consent.ts";
+import { legalRoute } from "./routes/legal.ts";
 import { defaultServices, type Services } from "./db/services.ts";
 import { NotFoundPage } from "./ui/pages/NotFoundPage.tsx";
 
@@ -20,11 +22,33 @@ export function createApp(services: Services = defaultServices) {
   app.use("*", requestLogger);
   const appOrigin = Deno.env.get("APP_ORIGIN");
   app.use("*", csrf(appOrigin ? { origin: appOrigin } : undefined));
-  app.use("*", secureHeaders());
+  app.use(
+    "*",
+    secureHeaders({
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        connectSrc: ["'self'", "https://www.googletagmanager.com"],
+        frameAncestors: ["'self'"],
+        frameSrc: ["'self'", "https://www.googletagmanager.com"],
+        imgSrc: ["'self'", "data:", "https://www.googletagmanager.com"],
+        objectSrc: ["'none'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          NONCE,
+          "https://www.googletagmanager.com",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+      },
+    }),
+  );
   app.use("/static/*", serveStatic({ root: "./" }));
   app.route("/", createHomeRoute(services));
   app.route("/health", healthRoute);
   app.route("/health/seeds", createSeedVerificationRoute(services));
+  app.route("/", legalRoute());
+  app.route("/consent", createConsentRoute(services));
   app.route("/stage/1", createStage1Route(services));
   app.route("/stage/2", createStage2Route(services));
   app.route("/result", createResultRoute(services));

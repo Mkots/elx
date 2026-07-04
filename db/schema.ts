@@ -85,6 +85,7 @@ export const testSessions = pgTable("test_sessions", {
   id: uuid("id").primaryKey(),
   ticketId: integer("ticket_id").references(() => tickets.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  consentedAt: timestamp("consented_at"),
   completedAt: timestamp("completed_at"),
   score: integer("score"),
   truthfulness: integer("truthfulness"),
