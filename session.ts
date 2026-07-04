@@ -1,8 +1,9 @@
 import type { Context } from "@hono/hono";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getCookie, setCookie } from "hono/cookie";
 import { db } from "./db/client.ts";
 import { testAnswers, testSessions } from "./db/schema.ts";
+import { computeScore } from "./scoring/lextale.ts";
 
 const COOKIE_NAME = "sessionId";
 
@@ -23,6 +24,7 @@ export async function saveWordSelection(
   sessionId: string,
   wordIds: number[],
 ): Promise<void> {
+  const now = new Date();
   await db.insert(testSessions).values({
     id: sessionId,
     stage1Selection: wordIds,
@@ -39,17 +41,42 @@ export async function saveWordSelection(
     },
   });
 
-  await db.delete(testAnswers).where(
-    and(
-      eq(testAnswers.sessionId, sessionId),
-      eq(testAnswers.stage, 2),
-    ),
-  );
+  await db.delete(testAnswers).where(eq(testAnswers.sessionId, sessionId));
+
+  if (wordIds.length > 0) {
+    await db.insert(testAnswers).values(
+      wordIds.map((wordId) => ({
+        sessionId,
+        questionIndex: wordId,
+        questionType: "verification",
+        stage: 1,
+        answer: "selected",
+        isCorrect: null,
+        answeredAt: now,
+      })),
+    );
+  }
 }
 
 export async function loadWordSelection(
   sessionId: string,
 ): Promise<number[]> {
+  const answerRows = await db.select({
+    questionIndex: testAnswers.questionIndex,
+  })
+    .from(testAnswers)
+    .where(
+      and(
+        eq(testAnswers.sessionId, sessionId),
+        eq(testAnswers.stage, 1),
+      ),
+    )
+    .orderBy(asc(testAnswers.id));
+
+  if (answerRows.length > 0) {
+    return answerRows.map((row) => row.questionIndex);
+  }
+
   const rows = await db.select({
     stage1Selection: testSessions.stage1Selection,
   })
@@ -87,6 +114,7 @@ export async function saveStage2Answer(
   known: boolean,
 ): Promise<void> {
   const answer = known ? "know" : "dont_know";
+  const now = new Date();
   await db.insert(testAnswers).values({
     sessionId,
     questionIndex: wordId,
@@ -94,7 +122,7 @@ export async function saveStage2Answer(
     stage: 2,
     answer,
     isCorrect: null,
-    answeredAt: new Date(),
+    answeredAt: now,
   }).onConflictDoUpdate({
     target: [
       testAnswers.sessionId,
@@ -103,7 +131,7 @@ export async function saveStage2Answer(
     ],
     set: {
       answer,
-      answeredAt: new Date(),
+      answeredAt: now,
     },
   });
 }
@@ -124,6 +152,26 @@ export async function saveStage2Result(
       completedAt: new Date(),
     })
     .where(eq(testSessions.id, sessionId));
+}
+
+export interface Stage2ScoringWord {
+  id: number;
+  isReal: boolean;
+}
+
+export async function completeStage2Result(
+  sessionId: string,
+  words: Stage2ScoringWord[],
+): Promise<Stage2Result> {
+  const answers = await loadStage2Answers(sessionId);
+  const result = computeScore(
+    words.map((word) => ({
+      isReal: word.isReal,
+      known: answers[String(word.id)] === true,
+    })),
+  );
+  await saveStage2Result(sessionId, result);
+  return result;
 }
 
 export async function loadStage2Result(

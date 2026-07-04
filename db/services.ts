@@ -30,6 +30,12 @@ export const defaultSessionsService = {
   ) {
     await sessionHelpers.saveStage2Result(sessionId, result);
   },
+  async completeStage2(
+    sessionId: string,
+    words: sessionHelpers.Stage2ScoringWord[],
+  ) {
+    return await sessionHelpers.completeStage2Result(sessionId, words);
+  },
   async loadStage2Result(sessionId: string) {
     return await sessionHelpers.loadStage2Result(sessionId);
   },
