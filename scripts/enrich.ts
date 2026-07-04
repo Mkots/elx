@@ -119,7 +119,7 @@ interface EnrichedRow {
   [key: string]: unknown; // original CSV columns
 }
 
-class Rabbits {
+export class Rabbits {
   private entriesCache = new Map<string, EntryFile | null>();
   private lowerCache = new Map<string, Map<string, string[]>>();
   private synsetCache = new Map<string, Record<string, Synset> | null>();
@@ -218,6 +218,11 @@ class Rabbits {
 
   frameFor(key: string): string | undefined {
     return this.frames[key];
+  }
+
+  async hasEntry(headword: string): Promise<boolean> {
+    const entry = await this.resolveEntry(headword);
+    return entry !== null;
   }
 
   private async synsetFromSense(sense: Sense): Promise<Synset | null> {

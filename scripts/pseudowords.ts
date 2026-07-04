@@ -1,0 +1,260 @@
+#!/usr/bin/env -S deno run --allow-read --allow-write
+/**
+ * magic-hat pseudoword generator
+ *
+ * Generates English-looking pseudowords using a bigram Markov model
+ * trained on the real word list, matching length and CV-pattern,
+ * and filtering out any real words using the rabbits dictionary.
+ *
+ * Example:
+ *   deno run --allow-read --allow-write scripts/pseudowords.ts \
+ *     --input scripts/magic-hat/ALL.enriched.csv \
+ *     --rabbits scripts/magic-hat/rabbits \
+ *     --output scripts/magic-hat/pseudowords.csv \
+ *     --count 100 --seed 42
+ */
+
+import { parseArgs } from "@std/cli/parse-args";
+import { parse as parseCsv, stringify as stringifyCsv } from "@std/csv";
+import { Rabbits } from "./enrich.ts";
+
+function seededRng(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getCvPattern(word: string): string {
+  return word
+    .toLowerCase()
+    .split("")
+    .map((c) => ("aeiou".includes(c) ? "V" : "C"))
+    .join("");
+}
+
+function sampleNext(
+  current: string,
+  transitions: Record<string, Record<string, number>>,
+  rng: () => number,
+): string {
+  const nextMap = transitions[current];
+  if (!nextMap) return "$";
+  const items = Object.entries(nextMap);
+  const total = items.reduce((sum, [_, count]) => sum + count, 0);
+  let r = rng() * total;
+  for (const [char, count] of items) {
+    r -= count;
+    if (r <= 0) return char;
+  }
+  return items[items.length - 1][0];
+}
+
+function generateCandidate(
+  transitions: Record<string, Record<string, number>>,
+  rng: () => number,
+): string {
+  let current = "^";
+  let word = "";
+  while (true) {
+    const next = sampleNext(current, transitions, rng);
+    if (next === "$") break;
+    word += next;
+    current = next;
+    if (word.length > 20) break;
+  }
+  return word;
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "rabbits", "output", "count", "seed", "help"],
+    alias: { i: "input", o: "output", c: "count", s: "seed", h: "help" },
+  });
+
+  if (args.help) {
+    console.error(
+      `magic-hat pseudoword generator
+
+Usage:
+  deno run --allow-read --allow-write scripts/pseudowords.ts [options]
+
+Options:
+  -i, --input <path>     input enriched CSV (defaults to scripts/magic-hat/ALL.enriched.csv)
+      --rabbits <dir>    data directory (defaults to ./magic-hat/rabbits next to the script)
+  -o, --output <path>    result CSV file (defaults to stdout)
+  -c, --count <number>   number of pseudowords to generate (defaults to 100)
+  -s, --seed <value>     random seed for determinism (defaults to 12345)
+  -h, --help             show this help`,
+    );
+    Deno.exit(0);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const inputPath = args.input ?? `${scriptDir}/magic-hat/ALL.enriched.csv`;
+  const rabbitsDir = args.rabbits ?? `${scriptDir}/magic-hat/rabbits`;
+  const count = parseInt(args.count ?? "100", 10);
+  const seedVal = args.seed ? parseInt(args.seed, 10) : 12345;
+
+  if (isNaN(count) || count <= 0) {
+    console.error("Error: --count must be a positive integer");
+    Deno.exit(1);
+  }
+
+  const rabbits = new Rabbits(rabbitsDir);
+  await rabbits.init(false);
+
+  // Read input real words
+  let csvText: string;
+  try {
+    csvText = await Deno.readTextFile(inputPath);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: Failed to read input file ${inputPath}: ${msg}`);
+    Deno.exit(1);
+  }
+
+  const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
+    string,
+    string
+  >[];
+
+  const realWords: { word: string; difficulty: number }[] = [];
+  for (const rec of records) {
+    const word = (rec.headword ?? "").trim().toLowerCase();
+    const diff = parseInt(rec.difficulty ?? "1", 10);
+    if (word && !isNaN(diff)) {
+      realWords.push({ word, difficulty: diff });
+    }
+  }
+
+  if (realWords.length === 0) {
+    console.error("Error: No valid real words found in the input CSV");
+    Deno.exit(1);
+  }
+
+  console.error(
+    `Generating ${count} unique pseudowords using seed ${seedVal}...`,
+  );
+
+  const generated = await generatePseudowordsList(
+    realWords,
+    rabbits,
+    count,
+    seedVal,
+  );
+
+  if (generated.size < count) {
+    console.error(
+      `Warning: Only generated ${generated.size}/${count} pseudowords after reaching limit.`,
+    );
+  }
+
+  // Format output rows
+  const rows = [...generated.entries()].map(([value, difficulty]) => ({
+    value,
+    is_real: "false",
+    difficulty: String(difficulty),
+    synonyms: "",
+    antonyms: "",
+    definition: "",
+  }));
+
+  const columns = [
+    "value",
+    "is_real",
+    "difficulty",
+    "synonyms",
+    "antonyms",
+    "definition",
+  ];
+  const outText = stringifyCsv(rows, { columns });
+
+  if (args.output) {
+    await Deno.writeTextFile(args.output, outText);
+    console.error(`Result written to ${args.output}`);
+  } else {
+    console.log(outText);
+  }
+}
+
+export async function generatePseudowordsList(
+  realWords: { word: string; difficulty: number }[],
+  rabbits: Rabbits,
+  count: number,
+  seed: number,
+): Promise<Map<string, number>> {
+  const rng = seededRng(seed);
+
+  // Build transition matrix
+  const transitions: Record<string, Record<string, number>> = {};
+  const addTransition = (from: string, to: string) => {
+    if (!transitions[from]) transitions[from] = {};
+    transitions[from][to] = (transitions[from][to] || 0) + 1;
+  };
+
+  for (const item of realWords) {
+    const chars = ["^", ...item.word.split(""), "$"];
+    for (let i = 0; i < chars.length - 1; i++) {
+      addTransition(chars[i], chars[i + 1]);
+    }
+  }
+
+  const generated = new Map<string, number>();
+  let attemptsTotal = 0;
+  const maxAttemptsTotal = count * 2000;
+
+  while (generated.size < count && attemptsTotal < maxAttemptsTotal) {
+    attemptsTotal++;
+
+    const targetIdx = Math.floor(rng() * realWords.length);
+    const target = realWords[targetIdx];
+    const targetLength = target.word.length;
+    const targetCv = getCvPattern(target.word);
+
+    let candidate = "";
+
+    // 1. Try with matching CV pattern
+    let cvAttempts = 0;
+    while (cvAttempts < 300) {
+      cvAttempts++;
+      const cand = generateCandidate(transitions, rng);
+      if (
+        cand.length === targetLength &&
+        cand !== target.word &&
+        getCvPattern(cand) === targetCv
+      ) {
+        candidate = cand;
+        break;
+      }
+    }
+
+    // 2. Fall back to just length if no CV match
+    if (!candidate) {
+      let lenAttempts = 0;
+      while (lenAttempts < 100) {
+        lenAttempts++;
+        const cand = generateCandidate(transitions, rng);
+        if (cand.length === targetLength && cand !== target.word) {
+          candidate = cand;
+          break;
+        }
+      }
+    }
+
+    if (candidate && !generated.has(candidate)) {
+      const exists = await rabbits.hasEntry(candidate);
+      if (!exists) {
+        generated.set(candidate, target.difficulty);
+      }
+    }
+  }
+
+  return generated;
+}
+
+if (import.meta.main) {
+  await main();
+}
