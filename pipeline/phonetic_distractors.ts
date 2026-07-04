@@ -1,14 +1,14 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat phonetic distractor generator
+ * pipeline phonetic distractor generator
  *
  * Operating on the enriched CSV, selects 3 phonetically and visually similar spelling distractors
  * per headword using edit distance over IPA and orthography, plus Metaphone equivalence.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/phonetic_distractors.ts \
- *     --input scripts/magic-hat/ALL.enriched.csv \
- *     --output scripts/magic-hat/phonetic_distractors.csv
+ *   deno run --allow-read --allow-write pipeline/phonetic_distractors.ts \
+ *     --input pipeline/out/ALL.enriched.csv \
+ *     --output pipeline/out/phonetic_distractors.csv
  */
 
 import { parseArgs } from "@std/cli/parse-args";
@@ -269,38 +269,16 @@ export function selectPhoneticDistractors(
   return similarCandidates.slice(0, 3).map((c) => c.record.headword);
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["input", "output", "help"],
-    alias: { i: "input", o: "output", h: "help" },
-  });
+export interface PhoneticDistractorsOptions {
+  input: string;
+  output?: string;
+}
 
-  if (args.help) {
-    console.error(
-      `magic-hat phonetic distractor generator
-
-Usage:
-  deno run --allow-read --allow-write scripts/phonetic_distractors.ts [options]
-
-Options:
-  -i, --input <path>     input enriched CSV (defaults to scripts/magic-hat/ALL.enriched.csv)
-  -o, --output <path>    result CSV file (defaults to stdout)
-  -h, --help             show this help`,
-    );
-    Deno.exit(0);
-  }
-
-  const scriptDir = import.meta.dirname ?? ".";
-  const inputPath = args.input ?? `${scriptDir}/magic-hat/ALL.enriched.csv`;
-
-  let csvText: string;
-  try {
-    csvText = await Deno.readTextFile(inputPath);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`Error: Failed to read input file ${inputPath}: ${msg}`);
-    Deno.exit(1);
-  }
+/** Generates phonetic/spelling distractors for every IPA-tagged word in `input`, writes `output`. Used by both the CLI and the orchestrator. */
+export async function runPhoneticDistractors(
+  opts: PhoneticDistractorsOptions,
+): Promise<{ rowCount: number }> {
+  const csvText = await Deno.readTextFile(opts.input);
 
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
@@ -323,8 +301,7 @@ Options:
   }
 
   if (pool.length === 0) {
-    console.error("Error: No valid records found in the input CSV");
-    Deno.exit(1);
+    throw new Error("No valid records found in the input CSV");
   }
 
   const rows = [];
@@ -365,11 +342,46 @@ Options:
   ];
   const outText = stringifyCsv(rows, { columns });
 
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
+  }
+
+  return { rowCount: rows.length };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "output", "help"],
+    alias: { i: "input", o: "output", h: "help" },
+  });
+
+  if (args.help) {
+    console.error(
+      `pipeline phonetic distractor generator
+
+Usage:
+  deno run --allow-read --allow-write pipeline/phonetic_distractors.ts [options]
+
+Options:
+  -i, --input <path>     input enriched CSV (defaults to pipeline/out/ALL.enriched.csv)
+  -o, --output <path>    result CSV file (defaults to stdout)
+  -h, --help             show this help`,
+    );
+    Deno.exit(0);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
+
+  try {
+    await runPhoneticDistractors({ input: inputPath, output: args.output });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${msg}`);
+    Deno.exit(1);
   }
 }
 

@@ -12,7 +12,7 @@ source plan is in another language.
 ## Workflow
 
 1. **Input**: identify the plan (file path like
-   `scripts/magic-hat/ENRICHERS_PLAN.md`, or a description from the user). If no
+   `pipeline/notes/ENRICHERS_PLAN.md`, or a description from the user). If no
    plan is given, ask for one.
 2. **Research**:
    - Read the plan fully, plus any docs/requirements it references.
@@ -43,7 +43,7 @@ groups the plan's issues; `n` is the execution order.
 ### Context
 
 How things work today and why this change is needed. Name concrete files,
-tables, and tasks (e.g. `scripts/enrich.ts`, `words.difficulty`).
+tables, and tasks (e.g. `pipeline/enrich.ts`, `words.difficulty`).
 
 ### Confirmed decisions
 

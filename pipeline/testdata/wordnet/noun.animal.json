@@ -1,0 +1,8 @@
+{
+  "syn-animal-1": {
+    "definition": ["a living organism characterized by voluntary movement"],
+    "example": ["The zoo keeper fed the animal every morning."],
+    "hypernym": [],
+    "members": ["animal", "creature"]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "syn-abandon-1": {
+    "definition": ["stop maintaining or insisting on; relinquish"],
+    "example": ["They decided to abandon the old policy."],
+    "hypernym": [],
+    "members": ["abandon", "forsake", "relinquish"]
+  },
+  "syn-acquire-1": {
+    "definition": [
+      "come into the possession of something concrete or abstract"
+    ],
+    "example": ["She managed to acquire a rare book."],
+    "hypernym": [],
+    "members": ["acquire", "obtain"]
+  }
+}

@@ -1,14 +1,14 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 /**
- * magic-hat enricher
+ * pipeline enricher
  *
- * Reads a CSV word list ,
- * adds enrichment from the lexical data in magic-hat/rabbits/*.json
+ * Reads a CSV word list, adds enrichment from the lexical data in
+ * data/wordnet/*.json.
  *
  * Example:
- *   deno run --allow-read --allow-write scripts/enrich.ts \
- *     --input  scripts/magic-hat/magicians/A1.noun.csv \
- *     --rabbits scripts/magic-hat/rabbits \
+ *   deno run --allow-read --allow-write pipeline/enrich.ts \
+ *     --input  pipeline/data/wordlists/A1.noun.csv \
+ *     --rabbits pipeline/data/wordnet \
  *     --output A1.enriched.csv --format csv [--hypernyms]
  */
 
@@ -393,47 +393,27 @@ function toCsvRow(
   return out;
 }
 
-async function main() {
-  const args = parseArgs(Deno.args, {
-    string: ["input", "rabbits", "output", "format"],
-    boolean: ["hypernyms", "help"],
-    alias: { i: "input", o: "output", h: "help" },
-    default: { format: "csv" },
-  });
+export interface EnrichOptions {
+  input: string;
+  rabbitsDir: string;
+  subtlexPath: string;
+  output?: string;
+  format?: "csv" | "json";
+  hypernyms?: boolean;
+}
 
-  // Input may be passed via --input or as the first positional argument.
-  const input = args.input ?? args._[0]?.toString();
+/** Enriches `input` against the WordNet + SUBTLEX data, writes `output`. Used by both the CLI and the orchestrator. */
+export async function runEnrich(
+  opts: EnrichOptions,
+): Promise<{ rowCount: number; processed: number; found: number }> {
+  const format = opts.format === "json" ? "json" : "csv";
 
-  if (args.help || !input) {
-    console.error(
-      `magic-hat enricher
+  const rabbits = new Rabbits(opts.rabbitsDir);
+  await rabbits.init(Boolean(opts.hypernyms));
 
-Usage:
-  deno run --allow-read --allow-write scripts/enrich.ts <input.csv> [options]
+  const subtlex = await loadSubtlex(opts.subtlexPath);
 
-Options:
-  -i, --input <path>     input CSV (or pass it as the first positional arg)
-      --rabbits <dir>    data directory (defaults to ./magic-hat/rabbits next to the script)
-  -o, --output <path>    result file (defaults to stdout)
-      --format <fmt>     csv | json (defaults to csv)
-      --hypernyms        resolve hypernyms to lemmas (loads all synsets once)
-  -h, --help             show this help`,
-    );
-    Deno.exit(args.help ? 0 : 1);
-  }
-
-  const format = args.format === "json" ? "json" : "csv";
-  const scriptDir = import.meta.dirname ?? ".";
-  const rabbitsDir = args.rabbits ?? `${scriptDir}/magic-hat/rabbits`;
-
-  const rabbits = new Rabbits(rabbitsDir);
-  await rabbits.init(Boolean(args.hypernyms));
-
-  const subtlexPath =
-    `${rabbitsDir}/../subtlex/SUBTLEXus74286wordstextversion.txt`;
-  const subtlex = await loadSubtlex(subtlexPath);
-
-  const csvText = await Deno.readTextFile(input);
+  const csvText = await Deno.readTextFile(opts.input);
   const records = parseCsv(csvText, { skipFirstRow: true }) as Record<
     string,
     string
@@ -488,7 +468,7 @@ Options:
   let outText: string;
   if (format === "csv") {
     const rows = results.map((r) =>
-      toCsvRow(r, originalColumns, Boolean(args.hypernyms))
+      toCsvRow(r, originalColumns, Boolean(opts.hypernyms))
     );
     const columns = [
       ...originalColumns,
@@ -502,7 +482,7 @@ Options:
       "difficulty",
       "zipf",
     ];
-    if (args.hypernyms) {
+    if (opts.hypernyms) {
       columns.push("hypernyms");
     }
     outText = stringifyCsv(rows, { columns });
@@ -510,12 +490,59 @@ Options:
     outText = JSON.stringify(results, null, 2);
   }
 
-  if (args.output) {
-    await Deno.writeTextFile(args.output, outText);
-    console.error(`Result written to ${args.output}`);
+  if (opts.output) {
+    await Deno.writeTextFile(opts.output, outText);
+    console.error(`Result written to ${opts.output}`);
   } else {
     console.log(outText);
   }
+
+  return { rowCount: results.length, processed, found };
+}
+
+async function main() {
+  const args = parseArgs(Deno.args, {
+    string: ["input", "rabbits", "subtlex", "output", "format"],
+    boolean: ["hypernyms", "help"],
+    alias: { i: "input", o: "output", h: "help" },
+    default: { format: "csv" },
+  });
+
+  // Input may be passed via --input or as the first positional argument.
+  const input = args.input ?? args._[0]?.toString();
+
+  if (args.help || !input) {
+    console.error(
+      `pipeline enricher
+
+Usage:
+  deno run --allow-read --allow-write pipeline/enrich.ts <input.csv> [options]
+
+Options:
+  -i, --input <path>     input CSV (or pass it as the first positional arg)
+      --rabbits <dir>    WordNet data directory (defaults to data/wordnet next to the script)
+      --subtlex <path>   SUBTLEX frequency file (defaults to data/subtlex/SUBTLEXus74286wordstextversion.txt next to the script)
+  -o, --output <path>    result file (defaults to stdout)
+      --format <fmt>     csv | json (defaults to csv)
+      --hypernyms        resolve hypernyms to lemmas (loads all synsets once)
+  -h, --help             show this help`,
+    );
+    Deno.exit(args.help ? 0 : 1);
+  }
+
+  const scriptDir = import.meta.dirname ?? ".";
+  const rabbitsDir = args.rabbits ?? `${scriptDir}/data/wordnet`;
+  const subtlexPath = args.subtlex ??
+    `${scriptDir}/data/subtlex/SUBTLEXus74286wordstextversion.txt`;
+
+  await runEnrich({
+    input,
+    rabbitsDir,
+    subtlexPath,
+    output: args.output,
+    format: args.format === "json" ? "json" : "csv",
+    hypernyms: Boolean(args.hypernyms),
+  });
 }
 
 if (import.meta.main) {

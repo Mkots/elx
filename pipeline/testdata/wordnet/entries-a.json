@@ -1,0 +1,38 @@
+{
+  "abandon": {
+    "v": {
+      "pronunciation": [{ "value": "əˈbændən" }],
+      "sense": [{ "id": "abandon%2:40:00::", "synset": "syn-abandon-1" }]
+    }
+  },
+  "acquire": {
+    "v": {
+      "pronunciation": [{ "value": "əˈkwaɪər" }],
+      "sense": [{ "id": "acquire%2:40:00::", "synset": "syn-acquire-1" }]
+    }
+  },
+  "arrange": {
+    "v": {
+      "pronunciation": [{ "value": "əˈreɪndʒ" }],
+      "sense": [{ "id": "arrange%2:32:00::", "synset": "syn-arrange-1" }]
+    }
+  },
+  "ability": {
+    "n": {
+      "pronunciation": [{ "value": "əˈbɪləti" }],
+      "sense": [{ "id": "ability%1:07:00::", "synset": "syn-ability-1" }]
+    }
+  },
+  "anger": {
+    "n": {
+      "pronunciation": [{ "value": "ˈæŋgər" }],
+      "sense": [{ "id": "anger%1:12:00::", "synset": "syn-anger-1" }]
+    }
+  },
+  "animal": {
+    "n": {
+      "pronunciation": [{ "value": "ˈænɪməl" }],
+      "sense": [{ "id": "animal%1:05:00::", "synset": "syn-animal-1" }]
+    }
+  }
+}

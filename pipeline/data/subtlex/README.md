@@ -18,6 +18,6 @@ and Zipf calculations during vocabulary enrichment.
 To fetch the file manually, run the following command in the repository root:
 
 ```bash
-mkdir -p scripts/magic-hat/subtlex
-curl -sSfL "https://raw.githubusercontent.com/cltl/python-for-text-analysis/master/Data/SUBTLEX-US/SUBTLEXus74286wordstextversion.txt" -o scripts/magic-hat/subtlex/SUBTLEXus74286wordstextversion.txt
+mkdir -p pipeline/data/subtlex
+curl -sSfL "https://raw.githubusercontent.com/cltl/python-for-text-analysis/master/Data/SUBTLEX-US/SUBTLEXus74286wordstextversion.txt" -o pipeline/data/subtlex/SUBTLEXus74286wordstextversion.txt
 ```
