@@ -9,6 +9,7 @@ Architecture, infrastructure, and tooling documentation for the ELX project.
 | [Technology Stack](tech-stack.md)     | Core architecture: Deno + Hono SSR/MPA, Deno KV, PostgreSQL, Drizzle ORM |
 | [Operations Stack](ops-tech-stack.md) | Deployment, CI/CD, hosting, Docker Compose, observability                |
 | [Test Stack](test-tech-stack.md)      | Testing pyramid: deno test, Playwright E2E, SARA traceability            |
+| [Enrichment Pipeline](enrichers.md)   | Offline pipeline: data cleaning, semantic & phonetic distractors, gaps   |
 
 ## Architecture Summary
 
