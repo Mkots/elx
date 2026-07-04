@@ -184,6 +184,7 @@ export function registerAuthRoutes(route: Hono) {
         httpOnly: true,
         path: "/",
         sameSite: "Lax",
+        secure: Deno.env.get("APP_ENV") === "production",
       });
 
       return context.redirect("/admin");

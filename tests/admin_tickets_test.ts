@@ -162,6 +162,7 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/generate creates a new 
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: form.toString(),
   });
@@ -197,6 +198,7 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/edit-question/:inde
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: form.toString(),
   });
@@ -212,7 +214,10 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/publish updates sta
   const sessionId = await createAdminSession();
   const response = await app.request("/admin/tickets/1/publish", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
   });
   assertEquals(response.status, 302);
   assertEquals(mockTicketsList[0].status, "published");
@@ -222,7 +227,10 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/delete removes tick
   const sessionId = await createAdminSession();
   const response = await app.request("/admin/tickets/1/delete", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
   });
   assertEquals(response.status, 302);
   const deleted = mockTicketsList.find((t) => t.id === 1);

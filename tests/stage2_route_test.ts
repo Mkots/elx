@@ -160,7 +160,10 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 redirects to /stage/1 when no session
   const response = await app.request("/stage/2", {
     method: "POST",
     body: new URLSearchParams(),
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
+    },
   });
 
   assertEquals(response.status, 302);
@@ -180,6 +183,7 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 htmx request stores answer and return
     body,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=test-session",
       "HX-Request": "true",
     },
@@ -207,6 +211,7 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 final htmx request stores result and 
     body,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=test-session",
       "HX-Request": "true",
     },
@@ -234,6 +239,7 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 computes score and redirects to /resu
     body,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=test-session",
     },
   });
@@ -261,6 +267,7 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 applies pseudoword penalty when pseud
     body,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=test-session",
     },
   });
@@ -279,6 +286,7 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 sets session cookie in response", asy
     body: new URLSearchParams(),
     headers: {
       "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
       "cookie": "sessionId=my-session",
     },
   });

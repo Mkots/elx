@@ -520,7 +520,10 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
 
     const failResponse = await app.request("/admin/login", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "http://localhost",
+      },
       body: invalidFormData.toString(),
     });
     const failBody = await failResponse.text();
@@ -533,7 +536,10 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
 
     const successResponse = await app.request("/admin/login", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "http://localhost",
+      },
       body: validFormData.toString(),
     });
     assertEquals(successResponse.status, 302);
@@ -566,7 +572,10 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/login handles authentication and session
 
     const logoutResponse = await app.request("/admin/logout", {
       method: "POST",
-      headers: { "Cookie": `admin_session=${sessionId}` },
+      headers: {
+        "Cookie": `admin_session=${sessionId}`,
+        "Origin": "http://localhost",
+      },
     });
     assertEquals(logoutResponse.status, 302);
     assertEquals(logoutResponse.headers.get("location"), "/admin/login");
@@ -599,7 +608,10 @@ Deno.test("VER-ADMIN-AUTH: POST /admin/login returns 503 when env vars not set",
 
   const response = await app.request("/admin/login", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
+    },
     body: form.toString(),
   });
   assertEquals(response.status, 503);
@@ -623,6 +635,7 @@ Deno.test("VER-ADMIN-AUTH: 6th rapid login attempt returns 429", async () => {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
+          "Origin": "http://localhost",
           "x-forwarded-for": uniqueIp,
         },
         body: form.toString(),
@@ -635,6 +648,7 @@ Deno.test("VER-ADMIN-AUTH: 6th rapid login attempt returns 429", async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "http://localhost",
         "x-forwarded-for": uniqueIp,
       },
       body: form.toString(),
@@ -696,6 +710,7 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/new validation and creation", asyn
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: emptyForm.toString(),
   });
@@ -714,6 +729,7 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/new validation and creation", asyn
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: dupForm.toString(),
   });
@@ -732,6 +748,7 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/new validation and creation", asyn
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: successForm.toString(),
   });
@@ -771,6 +788,7 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/:id/edit prefill and updat
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: updateForm.toString(),
   });
@@ -791,7 +809,10 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/:id/delete safe checks", async () 
   // 1. Delete with reference error (simulating id 1 check)
   const failDelete = await app.request("/admin/words/1/delete", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
   });
   assertEquals(failDelete.status, 302);
   assertStringIncludes(
@@ -802,7 +823,10 @@ Deno.test("VER-ADMIN-ROUTE: POST /admin/words/:id/delete safe checks", async () 
   // 2. Success delete
   const successDelete = await app.request("/admin/words/3/delete", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
   });
   assertEquals(successDelete.status, 302);
   assertStringIncludes(
@@ -940,6 +964,7 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/import routes", async () =
     method: "POST",
     headers: {
       "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
     },
     body: formData,
   });
@@ -974,7 +999,10 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/review and skip routes", a
 
   const postRes = await app.request("/admin/words/review/1", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
     body: formData,
   });
   const postBody = await postRes.text();
@@ -991,7 +1019,10 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/review and skip routes", a
   // 3. POST /admin/words/review/:id/skip skips the word without marking reviewed, returns next card
   const skipRes = await app.request("/admin/words/review/2/skip", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
   });
   const skipBody = await skipRes.text();
   assertEquals(skipRes.status, 200);
@@ -1010,7 +1041,10 @@ Deno.test("VER-ADMIN-ROUTE: GET and POST /admin/words/review and skip routes", a
 
   const errRes = await app.request("/admin/words/review/3", {
     method: "POST",
-    headers: { "Cookie": `admin_session=${sessionId}` },
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
     body: invalidForm,
   });
   const errBody = await errRes.text();
@@ -1033,6 +1067,7 @@ async function createWordViaApi(
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: form.toString(),
   });
@@ -1045,6 +1080,7 @@ function bulkRequest(sessionId: string, fields: Record<string, string>) {
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: form.toString(),
     redirect: "manual",

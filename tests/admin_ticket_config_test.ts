@@ -108,6 +108,7 @@ Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit updates confi
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: validForm.toString(),
   });
@@ -137,6 +138,7 @@ Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit validates mis
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: invalidForm.toString(),
   });
@@ -168,6 +170,7 @@ Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit validates exc
     headers: {
       "Cookie": `admin_session=${sessionId}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
     },
     body: invalidForm.toString(),
   });
