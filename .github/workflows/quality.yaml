@@ -2,6 +2,10 @@ name: Quality
 
 on:
   workflow_call:
+    inputs:
+      event_name:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -101,7 +105,7 @@ jobs:
 
       - name: Upload coverage
         if: >-
-          github.event_name == 'push' &&
+          inputs.event_name == 'push' &&
           (github.ref == 'refs/heads/main' ||
           github.ref == 'refs/heads/master')
         uses: actions/upload-artifact@v7

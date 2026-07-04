@@ -22,9 +22,8 @@ function loadEnvFile(path: string): Record<string, string> {
 const envFile = loadEnvFile(".env");
 const getEnv = (key: string) => Deno.env.get(key) ?? envFile[key] ?? "";
 const isCI = Deno.env.get("CI") === "true";
-const retries = Number(
-  Deno.env.get("PLAYWRIGHT_RETRIES") ?? (isCI ? "2" : "0"),
-);
+const parsedRetries = parseInt(Deno.env.get("PLAYWRIGHT_RETRIES") ?? "", 10);
+const retries = isNaN(parsedRetries) ? (isCI ? 2 : 0) : parsedRetries;
 
 export default defineConfig({
   testDir: "./tests/e2e",

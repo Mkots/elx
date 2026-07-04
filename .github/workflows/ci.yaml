@@ -78,6 +78,8 @@ jobs:
     needs:
       - filter
     uses: ./.github/workflows/quality.yaml
+    with:
+      event_name: ${{ github.event_name }}
 
   e2e:
     needs:
@@ -86,6 +88,8 @@ jobs:
       startsWith(github.ref, 'refs/tags/v') ||
       needs.filter.outputs.e2e == 'true'
     uses: ./.github/workflows/e2e.yaml
+    with:
+      event_name: ${{ github.event_name }}
 
   requirements:
     needs:
@@ -103,6 +107,7 @@ jobs:
       - requirements
     if: >-
       always() &&
+      needs.filter.result == 'success' &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
@@ -125,6 +130,7 @@ jobs:
       - image
     if: >-
       always() &&
+      needs.filter.result == 'success' &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||

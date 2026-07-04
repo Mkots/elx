@@ -2,6 +2,10 @@ name: E2E
 
 on:
   workflow_call:
+    inputs:
+      event_name:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -27,7 +31,7 @@ jobs:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
       DENO_KV_PATH: .data/elx.sqlite3
       DENO_DIR: .deno-cache
-      PLAYWRIGHT_RETRIES: ${{ github.event_name == 'pull_request' && '1' || '2' }}
+      PLAYWRIGHT_RETRIES: ${{ inputs.event_name == 'pull_request' && '1' || '2' }}
     steps:
       - uses: actions/checkout@v7
 
