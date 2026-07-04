@@ -1,5 +1,5 @@
 import { and, desc, ilike, sql } from "drizzle-orm";
-import { withDb } from "../../../db/client.ts";
+import { db } from "../../../db/client.ts";
 import { testHistory } from "../../../db/schema.ts";
 
 export interface AdminHistoryLoader {
@@ -16,52 +16,46 @@ export interface AdminHistoryLoader {
 }
 
 export const databaseAdminHistoryLoader: AdminHistoryLoader = {
-  listHistory({ search, orderBy, orderDir, page, limit }) {
-    return withDb(async (db) => {
-      // deno-lint-ignore no-explicit-any
-      const conditions: any[] = [];
-      if (search) {
-        conditions.push(ilike(testHistory.sessionId, `%${search}%`));
-      }
+  async listHistory({ search, orderBy, orderDir, page, limit }) {
+    // deno-lint-ignore no-explicit-any
+    const conditions: any[] = [];
+    if (search) {
+      conditions.push(ilike(testHistory.sessionId, `%${search}%`));
+    }
 
-      const whereClause = conditions.length > 0
-        ? and(...conditions)
-        : undefined;
-      const offset = (page - 1) * limit;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const offset = (page - 1) * limit;
 
-      const totalCountResult = await db
-        .select({ count: sql<number>`count(${testHistory.id})::integer` })
-        .from(testHistory)
-        .where(whereClause);
-      const totalCount = totalCountResult[0]?.count ?? 0;
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(${testHistory.id})::integer` })
+      .from(testHistory)
+      .where(whereClause);
+    const totalCount = totalCountResult[0]?.count ?? 0;
 
-      // deno-lint-ignore no-explicit-any
-      let orderByClause: any;
-      if (orderBy === "score") {
-        orderByClause = orderDir === "asc"
-          ? testHistory.score
-          : desc(testHistory.score);
-      } else {
-        orderByClause = orderDir === "asc"
-          ? testHistory.completedAt
-          : desc(testHistory.completedAt);
-      }
+    // deno-lint-ignore no-explicit-any
+    let orderByClause: any;
+    if (orderBy === "score") {
+      orderByClause = orderDir === "asc"
+        ? testHistory.score
+        : desc(testHistory.score);
+    } else {
+      orderByClause = orderDir === "asc"
+        ? testHistory.completedAt
+        : desc(testHistory.completedAt);
+    }
 
-      const result = await db
-        .select()
-        .from(testHistory)
-        .where(whereClause)
-        .orderBy(orderByClause)
-        .limit(limit)
-        .offset(offset);
+    const result = await db
+      .select()
+      .from(testHistory)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset);
 
-      return { history: result, totalCount };
-    });
+    return { history: result, totalCount };
   },
 
   exportAllHistory() {
-    return withDb((db) =>
-      db.select().from(testHistory).orderBy(desc(testHistory.completedAt))
-    );
+    return db.select().from(testHistory).orderBy(desc(testHistory.completedAt));
   },
 };

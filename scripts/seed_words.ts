@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { createDatabase } from "../db/client.ts";
+import { closeDatabase, type Database, db } from "../db/client.ts";
 import { words } from "../db/schema.ts";
 
 export interface WordSeed {
@@ -863,10 +863,7 @@ const pseudoWords: WordSeed[] = [
     "definition": null,
   },
 ];
-
 export const wordSeeds: WordSeed[] = [...realWords, ...pseudoWords];
-
-type Database = ReturnType<typeof createDatabase>["db"];
 
 export async function seedWords(db: Database): Promise<number> {
   await db
@@ -887,11 +884,10 @@ export async function seedWords(db: Database): Promise<number> {
 }
 
 if (import.meta.main) {
-  const { client, db } = createDatabase();
   try {
     const count = await seedWords(db);
     console.log(`Seeded ${count} words (real + pseudowords).`);
   } finally {
-    await client.end();
+    await closeDatabase();
   }
 }

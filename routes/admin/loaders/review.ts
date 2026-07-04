@@ -1,5 +1,5 @@
 import { and, eq, gt, ne } from "drizzle-orm";
-import { withDb } from "../../../db/client.ts";
+import { db } from "../../../db/client.ts";
 import { words } from "../../../db/schema.ts";
 
 export interface AdminReviewLoader {
@@ -15,34 +15,32 @@ export interface AdminReviewLoader {
 }
 
 export const databaseAdminReviewLoader: AdminReviewLoader = {
-  getNextUnreviewed(afterId?: number) {
-    return withDb(async (db) => {
-      if (afterId !== undefined) {
-        const nextWords = await db
-          .select()
-          .from(words)
-          .where(and(eq(words.reviewed, false), gt(words.id, afterId)))
-          .orderBy(words.id)
-          .limit(1);
-        if (nextWords.length > 0) {
-          return nextWords[0];
-        }
-      }
-      const firstWords = await db
+  async getNextUnreviewed(afterId?: number) {
+    if (afterId !== undefined) {
+      const nextWords = await db
         .select()
         .from(words)
-        .where(eq(words.reviewed, false))
+        .where(and(eq(words.reviewed, false), gt(words.id, afterId)))
         .orderBy(words.id)
         .limit(1);
-      return firstWords[0] || null;
-    });
+      if (nextWords.length > 0) {
+        return nextWords[0];
+      }
+    }
+    const firstWords = await db
+      .select()
+      .from(words)
+      .where(eq(words.reviewed, false))
+      .orderBy(words.id)
+      .limit(1);
+    return firstWords[0] || null;
   },
 
   skipWord(id: number) {
     return this.getNextUnreviewed(id);
   },
 
-  reviewWord(id, { value, isReal, difficulty }) {
+  async reviewWord(id, { value, isReal, difficulty }) {
     const trimmedVal = value.trim().toLowerCase();
     if (!trimmedVal) {
       throw new Error("Word value cannot be empty");
@@ -51,38 +49,34 @@ export const databaseAdminReviewLoader: AdminReviewLoader = {
       throw new Error("Difficulty must be between 1 and 5");
     }
 
-    return withDb(async (db) => {
-      const existing = await db
-        .select()
-        .from(words)
-        .where(and(eq(words.value, trimmedVal), ne(words.id, id)))
-        .limit(1);
-      if (existing.length > 0) {
-        throw new Error(`Word '${trimmedVal}' already exists`);
-      }
+    const existing = await db
+      .select()
+      .from(words)
+      .where(and(eq(words.value, trimmedVal), ne(words.id, id)))
+      .limit(1);
+    if (existing.length > 0) {
+      throw new Error(`Word '${trimmedVal}' already exists`);
+    }
 
-      await db
-        .update(words)
-        .set({
-          value: trimmedVal,
-          isReal,
-          difficulty,
-          reviewed: true,
-          reviewedAt: new Date(),
-        })
-        .where(eq(words.id, id));
-    });
+    await db
+      .update(words)
+      .set({
+        value: trimmedVal,
+        isReal,
+        difficulty,
+        reviewed: true,
+        reviewedAt: new Date(),
+      })
+      .where(eq(words.id, id));
   },
 
-  progress() {
-    return withDb(async (db) => {
-      const allWords = await db
-        .select()
-        .from(words);
-      const total = allWords.length;
-      const reviewed = allWords.filter((w) => w.reviewed).length;
-      const remaining = total - reviewed;
-      return { reviewed, total, remaining };
-    });
+  async progress() {
+    const allWords = await db
+      .select()
+      .from(words);
+    const total = allWords.length;
+    const reviewed = allWords.filter((w) => w.reviewed).length;
+    const remaining = total - reviewed;
+    return { reviewed, total, remaining };
   },
 };
