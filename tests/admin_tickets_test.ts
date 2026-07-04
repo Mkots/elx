@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { getKv } from "../session.ts";
 import { createApp } from "../app.ts";
-import { generateSpellingCandidates } from "../db/repositories/tickets.ts";
+import * as ticketsRepo from "../db/repositories/tickets.ts";
 import { db } from "../db/client.ts";
 import { ticketConfigs, tickets } from "../db/schema.ts";
 import type {
@@ -11,7 +11,6 @@ import type {
   VerificationSnapshotQuestion,
 } from "../db/schema.ts";
 import { defaultServices, type Services } from "../db/services.ts";
-import { databaseAdminTicketsLoader } from "../routes/admin/loaders/tickets.ts";
 import { eq } from "drizzle-orm";
 
 // Load environment variables from .env if not present (for local testing)
@@ -36,17 +35,6 @@ function populateEnv() {
   }
 }
 populateEnv();
-
-// Misspelled word generator utility test
-Deno.test("VER-ADMIN-TICKETS: spelling distractor generator heuristic", () => {
-  const word = "action";
-  const misspellings = generateSpellingCandidates(word);
-  assertEquals(misspellings.length, 5);
-  // All suggestions should be different from the word itself
-  for (const m of misspellings) {
-    assertEquals(m !== word, true);
-  }
-});
 
 // --- Mock Routing Tests ---
 
@@ -280,7 +268,7 @@ Deno.test({
       configId = cfg.id;
 
       // 1. Generate base ticket
-      const ticket = await databaseAdminTicketsLoader.generateBaseTicket(
+      const ticket = await ticketsRepo.generateBaseTicket(
         "Integration Ticket",
         "Notes from integration test",
       );
@@ -329,14 +317,14 @@ Deno.test({
       // 2. Try to publish base ticket immediately -> should throw error (guardrail check)
       await assertRejects(
         async () => {
-          await databaseAdminTicketsLoader.publishTicket(ticketId);
+          await ticketsRepo.publishTicket(ticketId);
         },
         Error,
         "Cannot publish",
       );
 
       // 3. Randomization Check: generating a second ticket should produce a different set of verification words
-      const ticket2 = await databaseAdminTicketsLoader.generateBaseTicket(
+      const ticket2 = await ticketsRepo.generateBaseTicket(
         "Second Integration Ticket",
       );
       const verifications2 = ticket2.questions.filter((q) =>
@@ -344,7 +332,7 @@ Deno.test({
       );
 
       // Cleanup ticket2 immediately
-      await databaseAdminTicketsLoader.deleteTicket(ticket2.id);
+      await ticketsRepo.deleteTicket(ticket2.id);
 
       const words1 = verifications
         .map((q) => (q as VerificationSnapshotQuestion).wordText)
@@ -366,7 +354,7 @@ Deno.test({
       assertEquals(identical, false);
 
       // 4. Enrich/Verify all challenges
-      const ticketDetails = await databaseAdminTicketsLoader.getTicketById(
+      const ticketDetails = await ticketsRepo.getTicketById(
         ticketId,
       );
       assertEquals(ticketDetails !== null, true);
@@ -404,18 +392,18 @@ Deno.test({
           };
         }
 
-        await databaseAdminTicketsLoader.updateQuestion(ticketId, i, updatedQ);
+        await ticketsRepo.updateQuestion(ticketId, i, updatedQ);
       }
 
       // 5. Verify status auto-changed to "complete"
-      const enrichedTicket = await databaseAdminTicketsLoader.getTicketById(
+      const enrichedTicket = await ticketsRepo.getTicketById(
         ticketId,
       );
       assertEquals(enrichedTicket?.status, "complete");
 
       // 6. Publish ticket -> should succeed
-      await databaseAdminTicketsLoader.publishTicket(ticketId);
-      const publishedTicket = await databaseAdminTicketsLoader.getTicketById(
+      await ticketsRepo.publishTicket(ticketId);
+      const publishedTicket = await ticketsRepo.getTicketById(
         ticketId,
       );
       assertEquals(publishedTicket?.status, "published");
@@ -440,102 +428,50 @@ Deno.test({
 
 Deno.test({
   name:
-    "VER-ADMIN-TICKETS: generateBaseTicket retry loop 20th attempt success regression",
+    "VER-ADMIN-TICKETS-DB: generateBaseTicket fails fast when the active config can't be satisfied",
   ignore: !Deno.env.get("DATABASE_URL"),
-  fn: async () => {
+  async fn() {
+    const testConfigName = "Impossible Config";
     let configId = 0;
-    let ticketId = 0;
-    const testConfigName = "20th Attempt Config";
-
-    // Clear existing active configs
-    await db.update(ticketConfigs).set({ isActive: false });
-
-    // Delete any leftover config
-    await db.delete(ticketConfigs).where(
-      eq(ticketConfigs.name, testConfigName),
-    );
-
-    // Insert custom config requiring 5 synonyms, 5 spellings, 5 definitions
-    const [cfg] = await db
-      .insert(ticketConfigs)
-      .values({
-        name: testConfigName,
-        isActive: true,
-        difficulty1Count: 2,
-        difficulty2Count: 2,
-        difficulty3Count: 2,
-        difficulty4Count: 2,
-        difficulty5Count: 2,
-        realCount: 6,
-        pseudoCount: 4,
-        synonymsCount: 1,
-        spellingCount: 1,
-        definitionCount: 1,
-        randomizeOrder: true,
-      })
-      .returning();
-
-    configId = cfg.id;
-
-    const originalFilter = Array.prototype.filter;
-    let loopFilterCalls = 0;
-
-    // deno-lint-ignore no-explicit-any
-    const filterMock = function (this: any, callback: any, thisArg?: any) {
-      const callbackStr = callback.toString();
-      const isSynOrDefFilter = callbackStr.includes("synonyms") ||
-        callbackStr.includes("definition");
-
-      if (isSynOrDefFilter) {
-        loopFilterCalls++;
-        // The loop does 2 filter calls per attempt (one for synonyms, one for definitions).
-        // Return empty array for the first 19 attempts (38 calls) to force retry.
-        if (loopFilterCalls <= 38) {
-          return [];
-        }
-        // Mutate the elements to guarantee synonyms and definitions exist for the 20th attempt
-        for (const w of this) {
-          if (!w.synonyms || w.synonyms.length === 0) {
-            w.synonyms = ["mock_synonym"];
-          }
-          if (!w.definition || w.definition.trim() === "") {
-            w.definition = "mock definition";
-          }
-        }
-      }
-
-      return originalFilter.call(this, callback, thisArg);
-    };
-    Array.prototype.filter = filterMock;
 
     try {
-      // Generate base ticket. It should retry 19 times (failing) and succeed on the 20th attempt.
-      let ticket;
-      try {
-        ticket = await databaseAdminTicketsLoader.generateBaseTicket(
-          "Retry Loop Test Ticket",
-          "Notes",
-        );
-      } catch (err) {
-        throw err;
-      }
-      ticketId = ticket.id;
+      await db.update(ticketConfigs).set({ isActive: false });
+      await db.delete(ticketConfigs).where(
+        eq(ticketConfigs.name, testConfigName),
+      );
 
-      assertEquals(ticket.status, "base");
-      // Verify that it reached the 20th attempt (loopFilterCalls > 38)
-      assertEquals(loopFilterCalls > 38, true);
+      // No seeded word pool can plausibly satisfy 100k words at difficulty 1.
+      const [cfg] = await db
+        .insert(ticketConfigs)
+        .values({
+          name: testConfigName,
+          isActive: true,
+          difficulty1Count: 100_000,
+          difficulty2Count: 0,
+          difficulty3Count: 0,
+          difficulty4Count: 0,
+          difficulty5Count: 0,
+          realCount: 100_000,
+          pseudoCount: 0,
+          synonymsCount: 0,
+          spellingCount: 0,
+          definitionCount: 0,
+          randomizeOrder: true,
+        })
+        .returning();
+      configId = cfg.id;
+
+      await assertRejects(
+        async () => {
+          await ticketsRepo.generateBaseTicket("Impossible ticket");
+        },
+        Error,
+        "difficulty 1",
+      );
     } finally {
-      // Restore original filter
-      Array.prototype.filter = originalFilter;
-
-      // Cleanup db changes
-      if (ticketId > 0) {
-        await db.delete(tickets).where(eq(tickets.id, ticketId));
-      }
       if (configId > 0) {
         await db.delete(ticketConfigs).where(eq(ticketConfigs.id, configId));
       }
-      // Re-enable the first default config as active
       const firstConfig = await db.select().from(ticketConfigs).limit(1);
       if (firstConfig[0]) {
         await db.update(ticketConfigs).set({ isActive: true }).where(

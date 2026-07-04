@@ -75,6 +75,12 @@ Guards:
   tickets are served to test takers. A ticket stores a frozen JSONB snapshot of
   its questions (`SnapshotQuestion[]` in `db/schema.ts`), so later word edits
   don't affect existing tickets.
+- `generateBaseTicket` (`db/repositories/tickets.ts`) fetches the active config
+  and the whole word pool in one query each, then delegates selection to the
+  pure `buildQuestions()` in `domain/ticket_generation.ts`. It's greedy (pseudo
+  words first per difficulty, since they're scarcer than real words; real-word
+  picks favor synonym/definition-rich words) and throws a specific error instead
+  of retrying when the pool can't satisfy the config.
 
 ## File map
 
@@ -89,6 +95,8 @@ routes/
   health.ts, logger.ts, seed_verification.ts
   admin/              — admin panel (see above); loaders/ for DI interfaces
 scoring/lextale.ts    — computeScore(WordAnswer[]) → { score, truthfulness }
+domain/
+  ticket_generation.ts — pure buildQuestions(config, wordPool, random); no DB
 ui/
   components/         — Layout, AdminLayout, WordGrid
   pages/              — one TSX page per screen (public + Admin*); NotFoundPage

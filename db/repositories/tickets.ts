@@ -2,6 +2,8 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../client.ts";
 import { ticketConfigs, tickets, words } from "../schema.ts";
 import type { SnapshotQuestion } from "../schema.ts";
+import { buildQuestions } from "../../domain/ticket_generation.ts";
+import type { TicketGenerationConfig } from "../../domain/ticket_generation.ts";
 
 export type Ticket = typeof tickets.$inferSelect;
 
@@ -14,32 +16,19 @@ export function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
-export function generateSpellingCandidates(word: string): string[] {
-  const candidates = new Set<string>();
-  const lower = word.toLowerCase();
-
-  if (lower.length > 3) {
-    for (let i = 0; i < lower.length - 1; i++) {
-      const arr = lower.split("");
-      const temp = arr[i];
-      arr[i] = arr[i + 1];
-      arr[i + 1] = temp;
-      candidates.add(arr.join(""));
-    }
-    for (let i = 0; i < lower.length; i++) {
-      candidates.add(lower.slice(0, i + 1) + lower[i] + lower.slice(i + 1));
-    }
-    for (let i = 0; i < lower.length; i++) {
-      candidates.add(lower.slice(0, i) + lower.slice(i + 1));
-    }
-  } else {
-    candidates.add(lower + "e");
-    candidates.add(lower + "s");
-  }
-
-  candidates.delete(lower);
-  return Array.from(candidates).slice(0, 5);
-}
+const DEFAULT_TICKET_CONFIG: TicketGenerationConfig & { name: string } = {
+  name: "Default Config",
+  difficulty1Count: 8,
+  difficulty2Count: 10,
+  difficulty3Count: 10,
+  difficulty4Count: 9,
+  difficulty5Count: 8,
+  realCount: 30,
+  pseudoCount: 15,
+  synonymsCount: 5,
+  spellingCount: 5,
+  definitionCount: 5,
+};
 
 export async function getTickets(): Promise<Ticket[]> {
   return await db.select().from(tickets).orderBy(desc(tickets.createdAt));
@@ -120,258 +109,33 @@ export async function generateBaseTicket(
   title?: string,
   notes?: string,
 ): Promise<Ticket> {
-  // 1. Get active config
+  // 1. Get active config (falls back to a hardcoded default).
   const activeConfigs = await db
     .select()
     .from(ticketConfigs)
     .where(eq(ticketConfigs.isActive, true))
     .limit(1);
+  const config = activeConfigs[0] ?? DEFAULT_TICKET_CONFIG;
 
-  let config = activeConfigs[0];
-  if (!config) {
-    config = {
-      id: 0,
-      name: "Default Config",
-      isActive: true,
-      difficulty1Count: 8,
-      difficulty2Count: 10,
-      difficulty3Count: 10,
-      difficulty4Count: 9,
-      difficulty5Count: 8,
-      realCount: 30,
-      pseudoCount: 15,
-      synonymsCount: 5,
-      spellingCount: 5,
-      definitionCount: 5,
-      randomizeOrder: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
-  // 2. Query available word counts grouped by difficulty and isReal
-  const poolRows = await db
+  // 2. Fetch the entire word pool in a single query.
+  const wordPool = await db
     .select({
-      difficulty: words.difficulty,
+      value: words.value,
       isReal: words.isReal,
-      count: sql<number>`count(${words.id})::integer`,
+      difficulty: words.difficulty,
+      synonyms: words.synonyms,
+      definition: words.definition,
     })
-    .from(words)
-    .groupBy(words.difficulty, words.isReal);
+    .from(words);
 
-  const available: Record<number, { real: number; pseudo: number }> = {};
-  for (let d = 1; d <= 5; d++) {
-    available[d] = { real: 0, pseudo: 0 };
-  }
-  for (const row of poolRows) {
-    const d = row.difficulty;
-    if (d >= 1 && d <= 5) {
-      if (row.isReal) {
-        available[d].real = row.count;
-      } else {
-        available[d].pseudo = row.count;
-      }
-    }
-  }
+  const questions = buildQuestions(config, wordPool, Math.random);
 
-  // 3. Find valid partition of real/pseudo counts per difficulty level using backtracking
-  function findPartition(
-    diffIdx: number,
-    remReal: number,
-    remPseudo: number,
-    current: { real: number; pseudo: number }[],
-  ): { real: number; pseudo: number }[] | null {
-    if (diffIdx > 5) {
-      return remReal === 0 && remPseudo === 0 ? current : null;
-    }
-
-    const targetDiffCount = Number(
-      config[`difficulty${diffIdx}Count` as keyof typeof config] ?? 0,
-    );
-    const availReal = available[diffIdx].real;
-    const availPseudo = available[diffIdx].pseudo;
-
-    const possibleReals: number[] = [];
-    for (let r = 0; r <= targetDiffCount; r++) {
-      const p = targetDiffCount - r;
-      if (
-        r <= availReal && p <= availPseudo && r <= remReal && p <= remPseudo
-      ) {
-        possibleReals.push(r);
-      }
-    }
-
-    const shuffledReals = shuffle(possibleReals);
-    for (const r of shuffledReals) {
-      const p = targetDiffCount - r;
-      const res = findPartition(diffIdx + 1, remReal - r, remPseudo - p, [
-        ...current,
-        { real: r, pseudo: p },
-      ]);
-      if (res) return res;
-    }
-
-    return null;
-  }
-
-  const partition = findPartition(
-    1,
-    config.realCount,
-    config.pseudoCount,
-    [],
-  );
-  if (!partition) {
-    throw new Error(
-      "Database words pool does not have a valid combinations of words to satisfy the active configuration. Adjust counts or seed more words.",
-    );
-  }
-
-  let attempts = 0;
-  let finalRealWords: (typeof words.$inferSelect)[] = [];
-  let finalPseudoWords: (typeof words.$inferSelect)[] = [];
-  let success = false;
-
-  while (attempts < 20) {
-    attempts++;
-    finalRealWords = [];
-    finalPseudoWords = [];
-
-    for (let d = 1; d <= 5; d++) {
-      const part = partition[d - 1];
-      const realRows = await db
-        .select()
-        .from(words)
-        .where(sql`difficulty = ${d} AND is_real = true`);
-      const pseudoRows = await db
-        .select()
-        .from(words)
-        .where(sql`difficulty = ${d} AND is_real = false`);
-
-      if (realRows.length < part.real || pseudoRows.length < part.pseudo) {
-        continue;
-      }
-
-      finalRealWords.push(...shuffle(realRows).slice(0, part.real));
-      finalPseudoWords.push(...shuffle(pseudoRows).slice(0, part.pseudo));
-    }
-
-    const synCandidates = finalRealWords.filter((w) =>
-      w.synonyms && w.synonyms.length > 0
-    );
-    const defCandidates = finalRealWords.filter((w) =>
-      w.definition && w.definition.trim() !== ""
-    );
-
-    if (
-      synCandidates.length >= config.synonymsCount &&
-      defCandidates.length >= config.definitionCount &&
-      finalRealWords.length >= config.spellingCount
-    ) {
-      success = true;
-      break;
-    }
-  }
-
-  if (!success) {
-    throw new Error(
-      "Failed to select a word set with enough synonyms or definitions. Try seeding more words or lowering challenge counts.",
-    );
-  }
-
+  // 3. Generate the human-readable ticket code.
   const maxIdResult = await db.select({
     maxId: sql<number>`max(${tickets.id})`,
   }).from(tickets);
   const maxId = maxIdResult[0]?.maxId ?? 0;
   const code = `ELX-T-${String(maxId + 1).padStart(4, "0")}`;
-
-  const synonymWords = shuffle(
-    finalRealWords.filter((w) => w.synonyms && w.synonyms.length > 0),
-  ).slice(0, config.synonymsCount);
-
-  const definitionWords = shuffle(
-    finalRealWords.filter((w) => w.definition && w.definition.trim() !== ""),
-  ).slice(0, config.definitionCount);
-
-  const spellingWords = shuffle(finalRealWords).slice(
-    0,
-    config.spellingCount,
-  );
-
-  const usedWordValues = [
-    ...finalRealWords.map((w) => w.value),
-    ...finalPseudoWords.map((w) => w.value),
-  ];
-
-  const allRealWordsResult = await db.select({ value: words.value }).from(
-    words,
-  ).where(eq(words.isReal, true));
-  const poolRealWords = allRealWordsResult.map((w) => w.value).filter((
-    val,
-  ) => !usedWordValues.includes(val));
-
-  function getProposedDistractors(
-    count: number,
-    correct: string,
-    exclude: string[] = [],
-  ): string[] {
-    const candidates = poolRealWords.filter((w) =>
-      w !== correct && !exclude.includes(w)
-    );
-    return shuffle(candidates).slice(0, count);
-  }
-
-  const questions: SnapshotQuestion[] = [];
-
-  const allSelectedWords = shuffle([
-    ...finalRealWords,
-    ...finalPseudoWords,
-  ]);
-  for (const w of allSelectedWords) {
-    questions.push({
-      type: "verification",
-      wordText: w.value,
-      isReal: w.isReal,
-    });
-  }
-
-  for (const w of synonymWords) {
-    const correctSynonym = w.synonyms[0] || "";
-    const proposedDistractors = getProposedDistractors(3, correctSynonym, [
-      w.value,
-    ]);
-    questions.push({
-      type: "synonym",
-      promptText: w.value,
-      correctText: correctSynonym,
-      distractors: proposedDistractors,
-      verified: false,
-    });
-  }
-
-  for (const w of definitionWords) {
-    const proposedDistractors = getProposedDistractors(3, w.value);
-    questions.push({
-      type: "definition",
-      definitionText: w.definition || "",
-      correctText: w.value,
-      distractors: proposedDistractors,
-      verified: false,
-    });
-  }
-
-  for (const w of spellingWords) {
-    const spellingCandidates = generateSpellingCandidates(w.value);
-    while (spellingCandidates.length < 3) {
-      spellingCandidates.push(w.value + "x");
-    }
-    questions.push({
-      type: "spelling",
-      contextSentence: `Example sentence with ___ for word ${w.value}.`,
-      correctText: w.value,
-      distractors: spellingCandidates.slice(0, 3),
-      verified: false,
-    });
-  }
 
   const [newTicket] = await db
     .insert(tickets)
