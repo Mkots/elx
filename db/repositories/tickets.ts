@@ -4,6 +4,7 @@ import { ticketConfigs, tickets, words } from "../schema.ts";
 import type { SnapshotQuestion } from "../schema.ts";
 import { buildQuestions } from "../../domain/ticket_generation.ts";
 import type { TicketGenerationConfig } from "../../domain/ticket_generation.ts";
+import { validateForPublish } from "../../domain/ticket_publish.ts";
 
 export type Ticket = typeof tickets.$inferSelect;
 
@@ -43,7 +44,7 @@ export async function getTicketById(id: number): Promise<Ticket | null> {
 export async function getPublishedTickets(): Promise<
   { id: number; code: string; title: string | null }[]
 > {
-  let publishedTickets = await db
+  return await db
     .select({
       id: tickets.id,
       code: tickets.code,
@@ -51,41 +52,6 @@ export async function getPublishedTickets(): Promise<
     })
     .from(tickets)
     .where(eq(tickets.status, "published"));
-
-  if (publishedTickets.length === 0) {
-    try {
-      const baseTicket = await generateBaseTicket(
-        "Default E2E assessment ticket",
-        "Auto-generated to ensure immediate usability",
-      );
-      const verifiedQuestions = baseTicket.questions.map((q) => {
-        if (q.type !== "verification") {
-          return { ...q, verified: true };
-        }
-        return q;
-      });
-
-      await db
-        .update(tickets)
-        .set({ questions: verifiedQuestions, status: "published" })
-        .where(eq(tickets.id, baseTicket.id));
-
-      publishedTickets = [
-        {
-          id: baseTicket.id,
-          code: baseTicket.code,
-          title: "Default E2E assessment ticket",
-        },
-      ];
-    } catch (err) {
-      console.error(
-        "Failed to auto-generate default published ticket:",
-        err,
-      );
-    }
-  }
-
-  return publishedTickets;
 }
 
 export async function getRandomRealWords(
@@ -184,47 +150,9 @@ export async function publishTicket(ticketId: number): Promise<void> {
   const ticket = await getTicketById(ticketId);
   if (!ticket) throw new Error("Ticket not found");
 
-  const challenges = ticket.questions.filter((q) => q.type !== "verification");
-
-  for (let i = 0; i < challenges.length; i++) {
-    const q = challenges[i];
-    if (!q.verified) {
-      throw new Error(
-        `Cannot publish: Question #${i + 1} (${q.type}) is unverified.`,
-      );
-    }
-    if (!q.correctText || q.correctText.trim() === "") {
-      throw new Error(
-        `Cannot publish: Question #${i + 1} (${q.type}) has no correct text.`,
-      );
-    }
-    if (!q.distractors || q.distractors.length !== 3) {
-      throw new Error(
-        `Cannot publish: Question #${
-          i + 1
-        } (${q.type}) must have exactly 3 distractors.`,
-      );
-    }
-    if (
-      q.type === "spelling" &&
-      (!q.contextSentence || !q.contextSentence.includes("___"))
-    ) {
-      throw new Error(
-        `Cannot publish: Question #${
-          i + 1
-        } (spelling) context sentence must contain '___'.`,
-      );
-    }
-    if (
-      q.type === "definition" &&
-      (!q.definitionText || q.definitionText.trim() === "")
-    ) {
-      throw new Error(
-        `Cannot publish: Question #${
-          i + 1
-        } (definition) has no definition text.`,
-      );
-    }
+  const problems = validateForPublish(ticket);
+  if (problems.length > 0) {
+    throw new Error(`Cannot publish: ${problems.join(" ")}`);
   }
 
   await db

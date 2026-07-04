@@ -13,7 +13,7 @@ deno task ci          # fmt:check + lint + check + test:coverage — run before 
 deno task test        # unit/route tests only
 deno task dev         # dev server with --watch (needs DATABASE_URL)
 deno task e2e         # Playwright e2e (needs running server + DB + seed)
-deno task seed:e2e    # db:migrate + seed:words (prepares DB for e2e)
+deno task seed:e2e    # db:migrate + seed:words + seed:ticket (prepares DB for e2e)
 deno task start:e2e   # server for e2e with KV stored in .data/
 deno task db:generate # drizzle-kit generate (after editing db/schema.ts)
 deno task db:migrate  # apply migrations
@@ -81,6 +81,12 @@ Guards:
   words first per difficulty, since they're scarcer than real words; real-word
   picks favor synonym/definition-rich words) and throws a specific error instead
   of retrying when the pool can't satisfy the config.
+- `publishTicket` guardrails live in the pure `validateForPublish()` in
+  `domain/ticket_publish.ts`, which returns every problem across every challenge
+  question at once (not just the first one). `GET /` never writes to the DB —
+  `routes/home.ts` shows an empty state when there are no published tickets
+  instead of auto-generating one; `deno task seed:e2e` seeds and publishes a
+  ticket for e2e via `scripts/seed_ticket.ts`.
 
 ## File map
 
@@ -97,6 +103,7 @@ routes/
 scoring/lextale.ts    — computeScore(WordAnswer[]) → { score, truthfulness }
 domain/
   ticket_generation.ts — pure buildQuestions(config, wordPool, random); no DB
+  ticket_publish.ts    — pure validateForPublish(ticket) -> problems[]; no DB
 ui/
   components/         — Layout, AdminLayout, WordGrid
   pages/              — one TSX page per screen (public + Admin*); NotFoundPage
