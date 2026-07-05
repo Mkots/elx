@@ -15,6 +15,22 @@ const mockTicket: typeof tickets.$inferSelect = {
     { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
     { type: "verification", wordText: "blurp", isReal: false, difficulty: 1 },
     { type: "verification", wordText: "chair", isReal: true, difficulty: 1 },
+    {
+      type: "verification",
+      wordText: "pseudocookie",
+      isReal: false,
+      difficulty: 2,
+      similarWord: "cookie",
+      similarWordIsReal: true,
+    },
+    {
+      type: "verification",
+      wordText: "banana",
+      isReal: true,
+      difficulty: 2,
+      similarWord: "bananasss",
+      similarWordIsReal: false,
+    },
   ],
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -307,4 +323,46 @@ Deno.test("VER-STAGE2-ROUTE: POST /stage/2 sets session cookie in response", asy
     response.headers.get("set-cookie") ?? "",
     "sessionId=my-session",
   );
+});
+
+Deno.test("VER-STAGE2-ROUTE: GET /stage/2 renders similarWord instead of wordText, and scoring uses similarWordIsReal", async () => {
+  // Let's select index 3: "pseudocookie" -> similarWord: "cookie" (isReal: true)
+  // and index 4: "banana" -> similarWord: "bananasss" (isReal: false)
+  const services = makeServices([3, 4]);
+  const app = createApp(services);
+
+  // 1. Visit /stage/2 to verify similarWord is rendered instead of wordText
+  const response1 = await app.request("/stage/2", {
+    headers: { "cookie": "sessionId=test-session" },
+  });
+  const body1 = await response1.text();
+  assertEquals(response1.status, 200);
+  assertStringIncludes(body1, "cookie");
+  assertEquals(body1.includes("pseudocookie"), false);
+
+  // 2. Submit Stage 2 answers:
+  // - Mark "cookie" (index 3, isReal: true) as know.
+  // - Mark "bananasss" (index 4, isReal: false) as know.
+  // Since index 3 has similarWordIsReal: true and index 4 has similarWordIsReal: false,
+  // the scoring should treat index 3 as real (known) and index 4 as pseudo (known).
+  // Thus, score = (1 real known) - (1 pseudo known) = 0.
+  // Truthfulness = 1 / 2 = 50.
+  const body = new URLSearchParams();
+  body.append("word_3", "know");
+  body.append("word_4", "know");
+
+  const response2 = await app.request("/stage/2", {
+    method: "POST",
+    body,
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "origin": "http://localhost",
+      "cookie": "sessionId=test-session",
+    },
+  });
+
+  assertEquals(response2.status, 302);
+  assertEquals(services.savedSessions.length, 1);
+  assertEquals(services.savedSessions[0].result.score, 0); // 1 real - 1 pseudo
+  assertEquals(services.savedSessions[0].result.truthfulness, 50);
 });
