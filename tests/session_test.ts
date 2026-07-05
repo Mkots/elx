@@ -6,6 +6,7 @@ import { testAnswers, testSessions, tickets } from "../db/schema.ts";
 import {
   completeStage2Result,
   getSessionId,
+  loadStage2Result,
   saveConsentTimestamp,
   saveSessionTicketId,
   saveStage2Answer,
@@ -178,8 +179,10 @@ Deno.test({
           end as truthfulness
         from answer_facts
       `);
-
-      assertEquals(result, recomputed[0]);
+      assertEquals(
+        { score: result.score, truthfulness: result.truthfulness },
+        recomputed[0],
+      );
     } finally {
       await db.delete(testSessions).where(eq(testSessions.id, sessionId));
       if (ticketId > 0) {
@@ -209,6 +212,88 @@ Deno.test({
       assertEquals(rows[0].consentedAt?.getTime(), first.getTime());
     } finally {
       await db.delete(testSessions).where(eq(testSessions.id, sessionId));
+    }
+  },
+});
+
+Deno.test({
+  name:
+    "VER-SESSION-STATE: completeStage2Result calculates, saves, and loads vocabularySize",
+  ignore: !Deno.env.get("DATABASE_URL"),
+  async fn() {
+    const sessionId = crypto.randomUUID();
+    let ticketId = 0;
+
+    try {
+      const [ticket] = await db.insert(tickets).values({
+        code: `ELX-VOC-${crypto.randomUUID().slice(0, 8)}`,
+        status: "published",
+        title: "Vocabulary size test fixture",
+        questions: [
+          {
+            type: "verification",
+            wordText: "apple",
+            isReal: true,
+            difficulty: 1,
+          },
+          {
+            type: "verification",
+            wordText: "banana",
+            isReal: true,
+            difficulty: 2,
+          },
+          {
+            type: "verification",
+            wordText: "cherry",
+            isReal: true,
+            difficulty: 3,
+          },
+          {
+            type: "verification",
+            wordText: "blorp",
+            isReal: false,
+            difficulty: 1,
+          },
+          {
+            type: "verification",
+            wordText: "glorp",
+            isReal: false,
+            difficulty: 2,
+          },
+        ],
+      }).returning();
+      ticketId = ticket.id;
+
+      await saveSessionTicketId(sessionId, ticketId);
+      await saveWordSelection(sessionId, [0, 1, 2, 3, 4]);
+
+      await saveStage2Answer(sessionId, 0, true);
+      await saveStage2Answer(sessionId, 1, false);
+      await saveStage2Answer(sessionId, 2, true);
+      await saveStage2Answer(sessionId, 3, true);
+      await saveStage2Answer(sessionId, 4, false);
+
+      const result = await completeStage2Result(sessionId, [
+        { id: 0, isReal: true, difficulty: 1 },
+        { id: 1, isReal: true, difficulty: 2 },
+        { id: 2, isReal: true, difficulty: 3 },
+        { id: 3, isReal: false, difficulty: 1 },
+        { id: 4, isReal: false, difficulty: 2 },
+      ]);
+
+      assertEquals(result.score, 1);
+      assertEquals(result.truthfulness, 67);
+      assertEquals(result.vocabularySize, 2000);
+
+      const loaded = await loadStage2Result(sessionId);
+      assertEquals(loaded?.score, 1);
+      assertEquals(loaded?.truthfulness, 67);
+      assertEquals(loaded?.vocabularySize, 2000);
+    } finally {
+      await db.delete(testSessions).where(eq(testSessions.id, sessionId));
+      if (ticketId > 0) {
+        await db.delete(tickets).where(eq(tickets.id, ticketId));
+      }
     }
   },
 });
