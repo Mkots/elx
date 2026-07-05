@@ -379,7 +379,7 @@ export function AdminTicketDetailPage({
                               class="button outline small secondary m-0"
                               style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;"
                               onclick={`fillDistractor(${idx}, '${
-                                sug.replace(/'/g, "\\'")
+                                sug.replaceAll(/'/g, "\\'")
                               }')`}
                             >
                               {sug}

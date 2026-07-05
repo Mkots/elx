@@ -21,7 +21,7 @@ function populateEnv() {
       const parts = line.trim().split("=");
       if (parts.length >= 2 && !parts[0].startsWith("#")) {
         const key = parts[0].trim();
-        const value = parts.slice(1).join("=").trim().replace(
+        const value = parts.slice(1).join("=").trim().replaceAll(
           /^["']|["']$/g,
           "",
         );

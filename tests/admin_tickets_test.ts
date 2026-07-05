@@ -20,7 +20,7 @@ function populateEnv() {
       const parts = line.trim().split("=");
       if (parts.length >= 2 && !parts[0].startsWith("#")) {
         const key = parts[0].trim();
-        const value = parts.slice(1).join("=").trim().replace(
+        const value = parts.slice(1).join("=").trim().replaceAll(
           /^["']|["']$/g,
           "",
         );
@@ -109,7 +109,7 @@ const mockTicketsLoader: Services["tickets"] = {
   },
   async getRandomRealWords(count, _exclude) {
     await Promise.resolve();
-    return Array(count).fill("random-word");
+    return new Array(count).fill("random-word");
   },
 };
 
@@ -442,11 +442,13 @@ Deno.test({
       await ticketsRepo.deleteTicket(ticket2.id);
 
       const words1 = verifications
-        .map((q) => (q as VerificationSnapshotQuestion).wordText)
-        .sort();
+        .map((q) => (q as VerificationSnapshotQuestion).wordText).sort((a, b) =>
+          String(a).localeCompare(String(b))
+        );
       const words2 = verifications2
-        .map((q) => (q as VerificationSnapshotQuestion).wordText)
-        .sort();
+        .map((q) => (q as VerificationSnapshotQuestion).wordText).sort((a, b) =>
+          String(a).localeCompare(String(b))
+        );
 
       // Shuffled selections are highly likely to have different word contents
       // or different permutations. Let's check that they differ.

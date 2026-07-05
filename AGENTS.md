@@ -11,6 +11,7 @@ Drizzle ORM.
 ```bash
 deno task ci          # fmt:check + lint + check + test:coverage — run before finishing any change
 deno task test        # unit/route tests only
+deno task test:lint-rules # run unit tests for custom lint rules
 deno task dev         # dev server with --watch (needs DATABASE_URL)
 deno task e2e         # Playwright e2e (needs running server + DB + seed)
 deno task seed:e2e    # db:migrate + seed:words + seed:ticket (prepares DB for e2e)
@@ -133,6 +134,7 @@ db/
   client.ts           — createDatabase() → { client, db }
   migrations/         — drizzle-kit output
 scripts/              — seed_words, import_words, clean, enrich, build_wiki
+tools/                — custom lint rules and helper scripts
 tests/                — *_test.ts unit/route tests; e2e/ Playwright specs
 pipeline/             — offline word-data pipeline (clean, enrich, distractors,
                         pseudowords); data/ and out/ hold large generated

@@ -153,7 +153,11 @@ Deno.test("VER-DISTRACTORS: selectDistractors prefers same lexname for definitio
   const chosen = selectDistractors(target, pool, rng, "definition");
 
   // Should select animal distractors first because they have the same lexname
-  assertEquals(chosen.sort(), ["cat", "cow", "pig"]);
+  assertEquals(chosen.sort((a, b) => a.localeCompare(b)), [
+    "cat",
+    "cow",
+    "pig",
+  ]);
 });
 
 Deno.test("VER-DISTRACTORS: selectDistractors runs deterministically under same seed", () => {

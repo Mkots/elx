@@ -542,7 +542,7 @@ function normalizeInlineText(value: unknown): string | null {
   const text = asString(value);
   if (!text) return null;
 
-  return text.replace(/\s+/g, " ").trim();
+  return text.replaceAll(/\s+/g, " ").trim();
 }
 
 function asString(value: unknown): string | null {

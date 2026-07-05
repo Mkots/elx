@@ -23,7 +23,7 @@ interface WordRecord {
 }
 
 function metaphone(word: string): string {
-  let w = word.toLowerCase().replace(/[^a-z]/g, "");
+  let w = word.toLowerCase().replaceAll(/[^a-z]/g, "");
   if (!w) return "";
 
   if (
@@ -189,7 +189,7 @@ function metaphone(word: string): string {
 export function editDistance(a: string, b: string): number {
   const dp: number[][] = Array.from(
     { length: a.length + 1 },
-    () => Array(b.length + 1).fill(0),
+    () => new Array(b.length + 1).fill(0),
   );
   for (let i = 0; i <= a.length; i++) dp[i][0] = i;
   for (let j = 0; j <= b.length; j++) dp[0][j] = j;
