@@ -49,7 +49,9 @@ Skills live in `.agents/skills/<name>/SKILL.md` with YAML frontmatter (`name:`,
 (and re-tokenized) every session, but is too situational for the always-loaded
 AGENTS.md:
 
-- `gh-issue-creator`, `gh-issue-solver` — issue/PR workflows
+- `gh-issue-creator`, `gh-issue-solver` — milestone-driven issue/PR workflows
+  (creator makes a milestone + its issues; solver implements every open issue in
+  a milestone)
 - `plan-brainstorm`, `incubate-idea` — idea → dev-plan pipelines
 - `local-e2e` — fresh-clone → green Playwright run, plus debugging checklist
 - `db-migration` — Drizzle schema-change workflow and its gotchas
