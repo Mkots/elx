@@ -9,6 +9,8 @@ services:
       ENVIRONMENT: production
       PORT: "8000"
       SENTRY_DSN: ${SENTRY_DSN:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
