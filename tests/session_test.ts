@@ -105,9 +105,24 @@ Deno.test({
         status: "published",
         title: "SQL recompute fixture",
         questions: [
-          { type: "verification", wordText: "apple", isReal: true },
-          { type: "verification", wordText: "blorp", isReal: false },
-          { type: "verification", wordText: "chair", isReal: true },
+          {
+            type: "verification",
+            wordText: "apple",
+            isReal: true,
+            difficulty: 1,
+          },
+          {
+            type: "verification",
+            wordText: "blorp",
+            isReal: false,
+            difficulty: 1,
+          },
+          {
+            type: "verification",
+            wordText: "chair",
+            isReal: true,
+            difficulty: 1,
+          },
         ],
       }).returning();
       ticketId = ticket.id;

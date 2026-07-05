@@ -24,6 +24,9 @@ export interface VerificationSnapshotQuestion extends BaseSnapshotQuestion {
   type: "verification";
   wordText: string;
   isReal: boolean;
+  difficulty: number;
+  similarWord?: string;
+  similarWordIsReal?: boolean;
 }
 
 export interface SynonymSnapshotQuestion extends BaseSnapshotQuestion {

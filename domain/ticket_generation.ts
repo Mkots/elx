@@ -1,4 +1,5 @@
 import type { SnapshotQuestion } from "../db/schema.ts";
+import { editDistance } from "../pipeline/phonetic_distractors.ts";
 
 export interface TicketGenerationConfig {
   difficulty1Count: number;
@@ -91,6 +92,39 @@ export function generateSpellingCandidates(word: string): string[] {
 
   candidates.delete(lower);
   return Array.from(candidates).slice(0, 5);
+}
+
+/**
+ * Finds the word in pool with the lowest Levenshtein distance to word, excluding word itself.
+ * If multiple words have the same minimum distance, one is chosen deterministically using random.
+ */
+export function findSimilarWord(
+  word: WordPoolEntry,
+  pool: WordPoolEntry[],
+  random: () => number,
+): WordPoolEntry | null {
+  let minDistance = Infinity;
+  let candidates: WordPoolEntry[] = [];
+
+  for (const cand of pool) {
+    if (cand.value === word.value) {
+      continue;
+    }
+    const dist = editDistance(word.value, cand.value);
+    if (dist < minDistance) {
+      minDistance = dist;
+      candidates = [cand];
+    } else if (dist === minDistance) {
+      candidates.push(cand);
+    }
+  }
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const idx = Math.floor(random() * candidates.length);
+  return candidates[idx];
 }
 
 /**
@@ -207,10 +241,14 @@ export function buildQuestions(
   const questions: SnapshotQuestion[] = [];
 
   for (const w of shuffle([...selectedReal, ...selectedPseudo], random)) {
+    const similar = findSimilarWord(w, wordPool, random);
     questions.push({
       type: "verification",
       wordText: w.value,
       isReal: w.isReal,
+      difficulty: w.difficulty,
+      similarWord: similar?.value,
+      similarWordIsReal: similar?.isReal,
     });
   }
 

@@ -12,9 +12,9 @@ const mockTicket: typeof tickets.$inferSelect = {
   title: "Mock Ticket",
   notes: "Notes",
   questions: [
-    { type: "verification", wordText: "apple", isReal: true },
-    { type: "verification", wordText: "blurp", isReal: false },
-    { type: "verification", wordText: "chair", isReal: true },
+    { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
+    { type: "verification", wordText: "blurp", isReal: false, difficulty: 1 },
+    { type: "verification", wordText: "chair", isReal: true, difficulty: 1 },
   ],
   createdAt: new Date(),
   updatedAt: new Date(),

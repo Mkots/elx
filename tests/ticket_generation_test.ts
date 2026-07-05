@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   buildQuestions,
+  findSimilarWord,
   generateSpellingCandidates,
   type TicketGenerationConfig,
   type WordPoolEntry,
@@ -161,5 +162,82 @@ Deno.test("VER-TICKET-GENERATION: generateSpellingCandidates never returns the o
   assertEquals(misspellings.length, 5);
   for (const m of misspellings) {
     assertEquals(m !== "action", true);
+  }
+});
+
+Deno.test("VER-TICKET-GENERATION: findSimilarWord finds the closest word excluding itself, using random as tie-breaker", () => {
+  const pool: WordPoolEntry[] = [
+    {
+      value: "cat",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "bat",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "car",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "dog",
+      isReal: true,
+      difficulty: 2,
+      synonyms: [],
+      definition: null,
+    },
+  ];
+
+  // Target word is "cat".
+  // Candidates and distances:
+  // "bat": editDistance("cat", "bat") = 1
+  // "car": editDistance("cat", "car") = 1
+  // "dog": editDistance("cat", "dog") = 3
+  // Excluding target word "cat".
+  // Tie-break: lowest distance is 1, candidates: "bat" and "car".
+
+  const rng = getRng(42);
+  const result1 = findSimilarWord(pool[0], pool, rng);
+  assertEquals(result1 !== null, true);
+  assertEquals(result1!.value === "bat" || result1!.value === "car", true);
+
+  // If pool only has the target word, it should return null
+  const result2 = findSimilarWord(pool[0], [pool[0]], rng);
+  assertEquals(result2, null);
+});
+
+Deno.test("VER-TICKET-GENERATION: buildQuestions includes difficulty, similarWord, and similarWordIsReal in verification snapshot questions", () => {
+  const pool = makePool();
+  const config = makeConfig();
+  const questions = buildQuestions(config, pool, getRng(42));
+
+  const verifications = questions.filter((q) =>
+    q.type === "verification"
+  ) as VerificationSnapshotQuestion[];
+  assertEquals(verifications.length, 4);
+
+  for (const q of verifications) {
+    // Check difficulty is present
+    assertEquals(typeof q.difficulty, "number");
+    assertEquals(q.difficulty >= 1 && q.difficulty <= 5, true);
+
+    // Check similarWord is present and is from the pool (excluding itself)
+    if (q.similarWord !== undefined) {
+      assertEquals(typeof q.similarWord, "string");
+      assertEquals(q.similarWord !== q.wordText, true);
+      assertEquals(pool.some((p) => p.value === q.similarWord), true);
+      assertEquals(typeof q.similarWordIsReal, "boolean");
+      const matched = pool.find((p) => p.value === q.similarWord);
+      assertEquals(q.similarWordIsReal, matched?.isReal);
+    }
   }
 });
