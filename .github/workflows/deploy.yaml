@@ -53,11 +53,13 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: APP_IMAGE,APP_TAG,GHCR_TOKEN,GHCR_USERNAME,DOMAIN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,SENTRY_DSN
+          envs: APP_IMAGE,APP_TAG,GHCR_TOKEN,GHCR_USERNAME,DOMAIN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,SENTRY_DSN,ADMIN_USERNAME,ADMIN_PASSWORD
           script: |
             set -eu
             cd /opt/elx
