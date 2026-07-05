@@ -26,12 +26,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       # ── Deno ────────────────────────────────────────────────────────────────
 
       - name: Cache Deno modules
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .deno-cache
           key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
@@ -39,7 +39,7 @@ jobs:
             deno-${{ runner.os }}-
 
       - name: Set up Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           # Matches the version pinned in quality.yaml, e2e.yaml, and
           # .devcontainer/devcontainer.json.
