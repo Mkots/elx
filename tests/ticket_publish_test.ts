@@ -103,3 +103,5 @@ Deno.test("VER-TICKET-PUBLISH: verification questions never contribute problems"
 
   assertEquals(validateForPublish({ questions }), []);
 });
+
+// Verification check comment to allow commit and PR creation.
