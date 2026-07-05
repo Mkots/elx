@@ -3,7 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { getCookie, setCookie } from "hono/cookie";
 import { db } from "./db/client.ts";
 import { testAnswers, testSessions } from "./db/schema.ts";
-import { computeScore } from "./scoring/lextale.ts";
+import { computeScore, computeVocabularySize } from "./scoring/lextale.ts";
 
 const COOKIE_NAME = "sessionId";
 
@@ -139,6 +139,7 @@ export async function saveStage2Answer(
 export interface Stage2Result {
   score: number;
   truthfulness: number;
+  vocabularySize?: number | null;
 }
 
 export async function saveStage2Result(
@@ -149,6 +150,7 @@ export async function saveStage2Result(
     .set({
       score: result.score,
       truthfulness: result.truthfulness,
+      vocabularySize: result.vocabularySize,
       completedAt: new Date(),
     })
     .where(eq(testSessions.id, sessionId));
@@ -157,6 +159,7 @@ export async function saveStage2Result(
 export interface Stage2ScoringWord {
   id: number;
   isReal: boolean;
+  difficulty?: number;
 }
 
 export async function completeStage2Result(
@@ -164,12 +167,20 @@ export async function completeStage2Result(
   words: Stage2ScoringWord[],
 ): Promise<Stage2Result> {
   const answers = await loadStage2Answers(sessionId);
-  const result = computeScore(
+  const result: Stage2Result = computeScore(
     words.map((word) => ({
       isReal: word.isReal,
       known: answers[String(word.id)] === true,
     })),
   );
+  const vocabularySize = computeVocabularySize(
+    words.map((word) => ({
+      isReal: word.isReal,
+      difficulty: word.difficulty ?? 3, // fallback to 3
+      known: answers[String(word.id)] === true,
+    })),
+  );
+  result.vocabularySize = vocabularySize;
   await saveStage2Result(sessionId, result);
   return result;
 }
@@ -180,13 +191,18 @@ export async function loadStage2Result(
   const rows = await db.select({
     score: testSessions.score,
     truthfulness: testSessions.truthfulness,
+    vocabularySize: testSessions.vocabularySize,
   })
     .from(testSessions)
     .where(eq(testSessions.id, sessionId))
     .limit(1);
   const row = rows[0];
   if (!row || row.score === null || row.truthfulness === null) return null;
-  return { score: row.score, truthfulness: row.truthfulness };
+  return {
+    score: row.score,
+    truthfulness: row.truthfulness,
+    vocabularySize: row.vocabularySize,
+  };
 }
 
 export async function saveSessionTicketId(
