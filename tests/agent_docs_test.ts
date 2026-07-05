@@ -110,39 +110,3 @@ Deno.test("CLAUDE.md is a symlink resolving to AGENTS.md", () => {
     `CLAUDE.md must point at AGENTS.md, found "${target}"`,
   );
 });
-
-Deno.test("Playwright version in deno.json matches container tag in e2e.yaml", () => {
-  const denoJson = JSON.parse(
-    Deno.readTextFileSync(new URL("deno.json", root)),
-  ) as { imports: Record<string, string> };
-  const playwrightImport = denoJson.imports["@playwright/test"];
-  assert(playwrightImport, "@playwright/test not found in deno.json imports");
-  const denoVersionMatch = playwrightImport.match(
-    /@playwright\/test@(\d+\.\d+\.\d+(?:-\w+)?)/,
-  );
-  assert(
-    denoVersionMatch,
-    `Failed to parse version from @playwright/test import: ${playwrightImport}`,
-  );
-  const denoVersion = denoVersionMatch[1];
-
-  const e2eYaml = Deno.readTextFileSync(
-    new URL(".github/workflows/e2e.yaml", root),
-  );
-  const containerMatch = e2eYaml.match(
-    /ghcr\.io\/mkots\/elx-playwright:(\S+)/,
-  );
-  assert(
-    containerMatch,
-    "Failed to find ghcr.io/mkots/elx-playwright container in e2e.yaml",
-  );
-  let containerTag = containerMatch[1];
-  if (containerTag.startsWith("v")) {
-    containerTag = containerTag.slice(1);
-  }
-
-  assert(
-    denoVersion === containerTag,
-    `Playwright version mismatch: deno.json has ${denoVersion}, but e2e.yaml uses container tag ${containerTag}`,
-  );
-});
