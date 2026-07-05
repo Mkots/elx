@@ -46,9 +46,12 @@ node_modules
 .env.*
 !.env.example
 
-# Offline word pipeline (79 MB of raw/generated data). Only the curated seed
-# bank ships: `deno task seed:words` runs inside the container (seed.yaml).
-pipeline/*
-!pipeline/data
+# Offline word pipeline: exclude the heavy raw/generated data (~79 MB) but
+# keep the TS sources — the runtime module graph needs them
+# (domain/ticket_generation.ts imports pipeline/phonetic_distractors.ts), and
+# `deno task seed:words` (run in-container via seed.yaml) reads seed_words.csv.
 pipeline/data/*
 !pipeline/data/seed_words.csv
+pipeline/out
+pipeline/notes
+pipeline/testdata
