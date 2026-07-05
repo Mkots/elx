@@ -365,6 +365,9 @@ Deno.test({
         q.type === "verification"
       );
 
+      // New tickets record the word bank version(s) in their notes by default.
+      assertStringIncludes(ticket2.notes ?? "", "Bank version(s):");
+
       // Cleanup ticket2 immediately
       await ticketsRepo.deleteTicket(ticket2.id);
 

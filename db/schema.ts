@@ -66,6 +66,7 @@ export const words = pgTable("words", {
   synonyms: text("synonyms").array().notNull().default(sql`'{}'::text[]`),
   antonyms: text("antonyms").array().notNull().default(sql`'{}'::text[]`),
   definition: text("definition"),
+  bankVersion: text("bank_version").notNull().default("pre-manifest"),
 });
 
 export const tickets = pgTable("tickets", {

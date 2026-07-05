@@ -1,0 +1,76 @@
+value,is_real,difficulty,synonyms,antonyms,definition
+window,true,1,windowpane,,The inedible parts of a grain-producing plant.
+garden,true,1,,,"An outdoor area containing one or more types of plants, usually plants grown for food or ornamental purposes."
+kitten,true,1,kitty,,"A young cat, especially before sexual maturity (reached at about seven months)."
+spider,true,1,,,"Any of various eight-legged, predatory arthropods, of the order Araneae, most of which spin webs to catch prey."
+harvest,true,1,glean;crop;reap;harvesting;harvest home,,The third season of the year; autumn; fall.
+breeding,true,1,nurture;nurturing;refinement;gentility;fruitful,,Propagation of offspring through sexual reproduction.
+festival,true,1,fete;fiesta;feast,,"An event or community gathering, usually staged by a local community, which centers on some theme, sometimes on some unique aspect of the community."
+morning,true,1,dayspring;sunrise;dawning;first light;forenoon,sundown;sunset,The part of the day from dawn to noon.
+bottle,true,1,bottleful,,"A container, typically made of glass or plastic and having a tapered neck, used primarily for holding liquids."
+candle,true,1,taper;cd;standard candle;wax light;candela,,"A light source consisting of a wick embedded in a solid, flammable substance such as wax, tallow, or paraffin."
+denial,true,2,abnegation;demurrer;self-abnegation;defence;defense,prosecution,The negation in logic.
+generic,true,2,general;nonproprietary,,A product sold under a generic name.
+hasty,true,2,headlong;precipitate;hurried;precipitant;overhasty,,Acting in haste; being too hurried or quick
+lengthy,true,2,prolonged;protracted;extended;long;drawn-out,,"Having length; long and overextended, especially in time rather than dimension."
+fluid,true,2,unstable;smooth;fluent;graceful;flowing,,"Any substance which can flow with relative ease, tends to assume the shape of its container, and obeys Bernoulli's principle; a liquid, gas or plasma."
+allied,true,2,related;aligned;confederative;confederate;united,,Joined as allies.
+dispatch,true,2,discharge;complete;expedition;hit;remove,,"A message sent quickly, as a shipment, a prompt settlement of a business, or an important official message sent by a diplomat, or military officer."
+slain,true,2,dead,,"(with ""the"") Those who have been killed."
+platform,true,2,program;chopine;platforms;political platform;political program,,A raised stage from which speeches are made and on which musical and other performances are made.
+gravy,true,2,windfall;godsend;bunce,,A thick sauce made from the fat or juices that come out from meat or vegetables as they are being cooked.
+scornful,true,3,scurrilous;disdainful;opprobrious;contemptuous;offensive,,Showing scorn or disrespect; contemptuous.
+ablaze,true,3,aroused;passionate;blazing;alight;aflame,,Burning fiercely; in a blaze; on fire.
+stoutly,true,3,,,In a stout manner; lustily; boldly; obstinately.
+recipient,true,3,receiver,,One who receives.
+bewitch,true,3,charm;glamour;beguile;hex;entrance,,To cast a spell upon.
+evasive,true,3,ambiguous;artful;elusive;equivocal;protective,,Tending to avoid speaking openly or making revelations about oneself.
+quaint,true,3,strange;unusual;old-time;nonmodern,,"Of a person: cunning, crafty."
+shabby,true,3,ratty;dishonorable;tatty;worn;dishonourable,,Torn or worn; unkempt.
+screech,true,3,shriek;shrill;scream;squeak;squawk,,"A high-pitched strident or piercing sound, such as that between a moving object and any surface."
+savoury,true,3,piquant;zesty;tasteful;spicy;appetizing,offensive;unsavory;unsavoury,A savory snack.
+eloquence,true,4,fluency,,The quality of artistry and persuasiveness in speech or writing.
+cleanliness,true,4,,uncleanliness,"The property of being cleanly, or habitually clean; good hygiene."
+ingenious,true,4,cunning;artful;adroit;clever;inventive,,Displaying genius or brilliance; tending to invent.
+eradicate,true,4,extirpate;eliminate;annihilate;extinguish;decimate,,To pull up by the roots; to uproot.
+kindergarten,true,4,,,"An educational institution for young children, usually between ages 4 and 6; nursery school."
+plaintive,true,4,sorrowful;mournful,,"Sounding sorrowful, mournful or melancholic."
+mortgage,true,4,,,"A special form of secured loan where the purpose of the loan must be specified to the lender, to purchase assets that must be fixed (not movable) property, such as a house or piece of farm land. The assets are registered as the legal property of the borrower but the lender can seize them and dispose of them if they are not satisfied with the manner in which the repayment of the loan is conducted by the borrower. Once the loan is fully repaid, the lender loses this right of seizure and the assets are then deemed to be unencumbered."
+censorship,true,4,censoring;security review,,"The use of state or group power to control freedom of expression or press, such as passing laws to prevent media from being published or propagated."
+conjuror,true,4,conjurer;prestidigitator;magician;illusionist;conjure man,,"One who conjures, a magician."
+mucilage,true,4,gum;glue,,A thick gluey substance (gum) produced by many plants and some microorganisms.
+caudal,true,5,posterior;caudate;caudated;taillike,cephalic,A caudal vertebra.
+fealty,true,5,allegiance,,Fidelity to one's lord or master; the feudal obligation by which the tenant or vassal was bound to be faithful to his lord
+obsequious,true,5,servile;insincere;fawning;sycophantic;bootlicking,,Obedient; compliant with someone else's orders or wishes.
+perspicacious,true,5,sagacious;discerning;sapient;wise;clear-sighted,,Of acute discernment; having keen insight; mentally perceptive.
+lugubrious,true,5,sorrowful,,"Gloomy, mournful or dismal, especially to an exaggerated degree."
+sycophant,true,5,toady;crawler;lackey,,One who uses obsequious compliments to gain self-serving favor or advantage from another; a servile flatterer.
+ineffable,true,5,sacred;indefinable;untellable;unspeakable;indescribable,,Beyond expression in words; unspeakable.
+parsimony,true,5,niggardliness;closeness;parsimoniousness;tightness;niggardness,,Great reluctance to spend money unnecessarily.
+quixotic,true,5,impractical;wild-eyed;romantic,,"Possessing or acting with the desire to do noble and romantic deeds, without thought of realism and practicality; exceedingly idealistic."
+mellifluous,true,5,dulcet;sweet;mellisonant;melodious;honeyed,,Flowing like honey.
+plimber,false,2,,,
+snerdle,false,2,,,
+prabble,false,2,,,
+sprockle,false,2,,,
+flonker,false,2,,,
+chindle,false,2,,,
+plound,false,2,,,
+gondle,false,2,,,
+brastle,false,2,,,
+florant,false,3,,,
+crastic,false,3,,,
+thurpid,false,3,,,
+korvent,false,3,,,
+slimper,false,3,,,
+frabant,false,3,,,
+zibrant,false,3,,,
+twindle,false,3,,,
+morfent,false,3,,,
+quolent,false,4,,,
+glimber,false,4,,,
+vantric,false,4,,,
+perlnack,false,4,,,
+drantive,false,4,,,
+harnel,false,4,,,
+glunth,false,4,,,

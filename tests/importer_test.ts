@@ -222,6 +222,39 @@ Deno.test("IMPORTER-EXECUTE: conflict strategies: update, skip, error", async ()
   }
 });
 
+Deno.test("IMPORTER-EXECUTE: stamps bankVersion on both inserted and updated rows", async () => {
+  const config: ImportConfig = {
+    format: "csv",
+    fields: {
+      value: { from: "word" },
+      isReal: { from: "real_flag" },
+      difficulty: { from: "level" },
+    },
+    onConflict: "update",
+  };
+
+  const db = new MockDb([{
+    id: 1,
+    value: "apple",
+    isReal: true,
+    difficulty: 2,
+    bankVersion: "pre-manifest",
+  }]);
+  const file = `word,real_flag,level\napple,true,5\nbanana,true,3`;
+
+  const res = await executeImport(db, file, config, false, "sha256:abc");
+  assertEquals(res.updated, 1);
+  assertEquals(res.inserted, 1);
+  assertEquals(
+    db.data.find((w) => w.value === "apple")?.bankVersion,
+    "sha256:abc",
+  );
+  assertEquals(
+    db.data.find((w) => w.value === "banana")?.bankVersion,
+    "sha256:abc",
+  );
+});
+
 Deno.test("IMPORTER-MAP-ROW: array splitting and definition loading", () => {
   const config: ImportConfig = {
     format: "csv",

@@ -17,17 +17,18 @@ to insert them as separate entity rows in `words`.
 
 ### Table: `words`
 
-| Column Name   | Database Type | Drizzle/TS Type | Nullability  | Default                       | Description                                                                                |
-| :------------ | :------------ | :-------------- | :----------- | :---------------------------- | :----------------------------------------------------------------------------------------- |
-| `id`          | `integer`     | `number`        | **NOT NULL** | _Identity (Generated Always)_ | Primary key, auto-incrementing identifier.                                                 |
-| `value`       | `text`        | `string`        | **NOT NULL** |                               | The lowercase word string (must be unique).                                                |
-| `is_real`     | `boolean`     | `boolean`       | **NOT NULL** |                               | `true` if it is a real English word; `false` if it is a pseudoword.                        |
-| `difficulty`  | `integer`     | `number`        | **NOT NULL** |                               | Difficulty level on a scale from 1 (e.g., common words) to 5 (rare words).                 |
-| `reviewed`    | `boolean`     | `boolean`       | **NOT NULL** | `false`                       | Status indicating if the word and its metadata have been reviewed.                         |
-| `reviewed_at` | `timestamp`   | `Date`          | _NULLABLE_   | `null`                        | Timestamp when the word was reviewed.                                                      |
-| `synonyms`    | `text[]`      | `string[]`      | **NOT NULL** | `'{}'` (empty array)          | Flat list of synonym strings. May include rare/pseudowords not present as rows in `words`. |
-| `antonyms`    | `text[]`      | `string[]`      | **NOT NULL** | `'{}'` (empty array)          | Flat list of antonym strings. May include rare/pseudowords not present as rows in `words`. |
-| `definition`  | `text`        | `string`        | _NULLABLE_   | `null`                        | A single definition sentence or text snippet for the word.                                 |
+| Column Name    | Database Type | Drizzle/TS Type | Nullability  | Default                       | Description                                                                                                                                       |
+| :------------- | :------------ | :-------------- | :----------- | :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`           | `integer`     | `number`        | **NOT NULL** | _Identity (Generated Always)_ | Primary key, auto-incrementing identifier.                                                                                                        |
+| `value`        | `text`        | `string`        | **NOT NULL** |                               | The lowercase word string (must be unique).                                                                                                       |
+| `is_real`      | `boolean`     | `boolean`       | **NOT NULL** |                               | `true` if it is a real English word; `false` if it is a pseudoword.                                                                               |
+| `difficulty`   | `integer`     | `number`        | **NOT NULL** |                               | Difficulty level on a scale from 1 (e.g., common words) to 5 (rare words).                                                                        |
+| `reviewed`     | `boolean`     | `boolean`       | **NOT NULL** | `false`                       | Status indicating if the word and its metadata have been reviewed.                                                                                |
+| `reviewed_at`  | `timestamp`   | `Date`          | _NULLABLE_   | `null`                        | Timestamp when the word was reviewed.                                                                                                             |
+| `synonyms`     | `text[]`      | `string[]`      | **NOT NULL** | `'{}'` (empty array)          | Flat list of synonym strings. May include rare/pseudowords not present as rows in `words`.                                                        |
+| `antonyms`     | `text[]`      | `string[]`      | **NOT NULL** | `'{}'` (empty array)          | Flat list of antonym strings. May include rare/pseudowords not present as rows in `words`.                                                        |
+| `definition`   | `text`        | `string`        | _NULLABLE_   | `null`                        | A single definition sentence or text snippet for the word.                                                                                        |
+| `bank_version` | `text`        | `string`        | **NOT NULL** | `'pre-manifest'`              | Content-addressed version tag (`sha256:<hash>`) of the seed CSV that imported/updated this row; rows predating this column keep `'pre-manifest'`. |
 
 ### Drizzle Schema Definition snippet:
 
@@ -42,6 +43,7 @@ export const words = pgTable("words", {
   synonyms: text("synonyms").array().notNull().default(sql`'{}'::text[]`),
   antonyms: text("antonyms").array().notNull().default(sql`'{}'::text[]`),
   definition: text("definition"),
+  bankVersion: text("bank_version").notNull().default("pre-manifest"),
 });
 ```
 

@@ -38,8 +38,10 @@ pipeline/out/*
 !pipeline/out/manifest.json
 
 # Raw pipeline data: tracked for sources that are small and license-clean
-# (subtlex, tatoeba); wordlists/wordnet are large/local-only, README only.
+# (subtlex, tatoeba, seed_words.csv); wordlists/wordnet are large/local-only,
+# README only.
 pipeline/data/*
+!pipeline/data/seed_words.csv
 !pipeline/data/tatoeba/
 !pipeline/data/tatoeba/eng_sentences_filtered.tsv
 !pipeline/data/tatoeba/README.md
