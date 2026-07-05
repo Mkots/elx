@@ -195,6 +195,39 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/generate creates a new 
   assertEquals(created?.code, "ELX-T-0002");
 });
 
+Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/generate shows a readable flash message instead of a 500 when the pool is too small", async () => {
+  const failingApp = createApp({
+    ...defaultServices,
+    adminSessions: mockAdminSessions,
+    tickets: {
+      ...mockTicketsLoader,
+      generateBaseTicket: () => {
+        throw new Error(
+          "Not enough real words with synonyms: need 5, have 0.",
+        );
+      },
+    },
+  });
+
+  const sessionId = await createAdminSession();
+  const response = await failingApp.request("/admin/tickets/generate", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
+    },
+    body: new URLSearchParams({ title: "Impossible" }).toString(),
+  });
+
+  assertEquals(response.status, 200);
+  const body = await response.text();
+  assertStringIncludes(
+    body,
+    "Not enough real words with synonyms: need 5, have 0.",
+  );
+});
+
 Deno.test("VER-ADMIN-TICKETS-ROUTES: GET /admin/tickets/:id renders details page", async () => {
   const sessionId = await createAdminSession();
   const response = await app.request("/admin/tickets/1", {
@@ -243,6 +276,38 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/publish updates sta
   });
   assertEquals(response.status, 302);
   assertEquals(mockTicketsList[0].status, "published");
+});
+
+Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/publish shows a readable flash message instead of a 500 when guardrails fail", async () => {
+  const failingApp = createApp({
+    ...defaultServices,
+    adminSessions: mockAdminSessions,
+    tickets: {
+      ...mockTicketsLoader,
+      publishTicket: () => {
+        throw new Error(
+          "Cannot publish: Question #1 (synonym) is unverified.",
+        );
+      },
+    },
+  });
+
+  const sessionId = await createAdminSession();
+  const response = await failingApp.request("/admin/tickets/1/publish", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Origin": "http://localhost",
+    },
+  });
+
+  assertEquals(response.status, 302);
+  const location = response.headers.get("location") ?? "";
+  assertStringIncludes(location, "/admin/tickets/1?error=");
+  assertStringIncludes(
+    decodeURIComponent(location),
+    "Cannot publish: Question #1 (synonym) is unverified.",
+  );
 });
 
 Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/delete removes ticket", async () => {
