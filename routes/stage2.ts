@@ -7,7 +7,12 @@ import { Stage2Card, Stage2Page } from "../ui/pages/Stage2Page.tsx";
 import type { Services } from "../db/services.ts";
 import { requireTestSession } from "./test_session.ts";
 
-type Stage2Word = { id: number; value: string; isReal: boolean };
+type Stage2Word = {
+  id: number;
+  value: string;
+  isReal: boolean;
+  difficulty: number;
+};
 
 function orderWordsBySelection(wordList: Stage2Word[], wordIds: number[]) {
   const order = new Map(wordIds.map((id, index) => [id, index]));
@@ -32,8 +37,11 @@ async function loadStage2WordList(
       const q = ticket.questions[idx] as VerificationSnapshotQuestion;
       return {
         id: idx,
-        value: q.wordText,
-        isReal: q.isReal,
+        value: q.similarWord ?? q.wordText,
+        isReal: q.similarWord !== undefined
+          ? (q.similarWordIsReal ?? q.isReal)
+          : q.isReal,
+        difficulty: q.difficulty ?? 3,
       };
     }),
     selectedIndices,
@@ -55,7 +63,11 @@ async function completeStage2(
 ) {
   return await services.sessions.completeStage2(
     sessionId,
-    wordList.map((word) => ({ id: word.id, isReal: word.isReal })),
+    wordList.map((word) => ({
+      id: word.id,
+      isReal: word.isReal,
+      difficulty: word.difficulty,
+    })),
   );
 }
 
