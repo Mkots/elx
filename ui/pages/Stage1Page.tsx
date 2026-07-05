@@ -17,7 +17,7 @@ export function Stage1Page({ analytics, words, ticketCode }: Stage1PageProps) {
   return (
     <Layout analytics={analytics} title="ELX – Word Selection">
       <h1>Stage 1: Word Selection</h1>
-      <p style="margin-top: -10px; font-size: 0.875rem; color: var(--pico-muted-color); margin-bottom: 20px;">
+      <p class="ticket-code-line">
         Test Version: <strong>{ticketCode}</strong>
       </p>
       <p>Check every word you know.</p>

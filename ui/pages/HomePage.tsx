@@ -17,34 +17,34 @@ export function HomePage({ analytics, publishedTickets = [] }: HomePageProps) {
 
   return (
     <Layout analytics={analytics} title="ELX Vocabulary Assessment">
-      <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
-        <h1 style="text-align: center; margin-bottom: 10px;">
+      <div class="page-container page-container-sm">
+        <h1 class="text-center mb-10">
           ELX Vocabulary Assessment
         </h1>
-        <p style="text-align: center; color: var(--pico-muted-color); margin-bottom: 30px;">
+        <p class="text-center color-muted mb-30">
           A curated test to measure your English vocabulary size and
           verification speed.
         </p>
 
         {!hasTickets
           ? (
-            <div style="padding: 15px; border-radius: 8px; border: 1px solid var(--pico-del-color); background-color: rgba(220, 53, 69, 0.1); color: var(--pico-del-color); text-align: center; margin-bottom: 20px;">
+            <div class="empty-ticket-alert">
               ⚠️ <strong>No published tickets available.</strong>
               <br />
               Please log into the{" "}
-              <a href="/admin/login" style="text-decoration: underline;">
+              <a href="/admin/login" class="decoration-underline">
                 Admin Panel
               </a>{" "}
               to generate and publish a ticket first.
             </div>
           )
           : (
-            <article style="padding: 30px; border-radius: 12px; box-shadow: var(--pico-card-box-shadow);">
+            <article class="home-ticket-card">
               <form action="/stage/1/start" method="post" class="m-0">
                 <div class="form-group mb-20">
                   <label
                     for="ticketId"
-                    style="font-weight: bold; margin-bottom: 8px; display: block;"
+                    class="form-label-block"
                   >
                     Select a Test Version (Ticket)
                   </label>
@@ -59,8 +59,7 @@ export function HomePage({ analytics, publishedTickets = [] }: HomePageProps) {
 
                 <button
                   type="submit"
-                  class="m-0 w-100"
-                  style="font-weight: bold;"
+                  class="m-0 w-100 fw-700"
                 >
                   Start Assessment →
                 </button>

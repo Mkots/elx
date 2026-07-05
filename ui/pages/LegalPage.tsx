@@ -10,7 +10,7 @@ type LegalPageProps = {
 export function LegalPage({ analytics, body, title }: LegalPageProps) {
   return (
     <Layout analytics={analytics} title={`ELX - ${title}`}>
-      <section style="max-width: 760px; margin: 40px auto; padding: 20px;">
+      <section class="page-container page-container-lg">
         <h1>{title}</h1>
         {body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         <p>

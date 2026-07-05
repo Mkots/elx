@@ -53,7 +53,7 @@ export function AdminTicketDetailPage({
 
         {/* Ticket Header Card */}
         <article class="admin-panel admin-panel-card admin-panel-padding mb-20">
-          <div class="grid" style="align-items: center;">
+          <div class="grid align-items-center">
             <div>
               <h3 class="m-0 fs-15">
                 {ticket.title || `Ticket ${ticket.code}`}
@@ -70,8 +70,7 @@ export function AdminTicketDetailPage({
                       : ticket.status === "complete"
                       ? "primary"
                       : "warning"
-                  }`}
-                  style="text-transform: uppercase; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;"
+                  } badge-compact`}
                 >
                   {ticket.status}
                 </span>
@@ -81,7 +80,7 @@ export function AdminTicketDetailPage({
                 </span>
               </div>
             </div>
-            <div style="text-align: right;">
+            <div class="text-right">
               {ticket.status !== "published" && (
                 <form
                   action={`/admin/tickets/${ticket.id}/publish`}
@@ -91,10 +90,9 @@ export function AdminTicketDetailPage({
                   <button
                     type="submit"
                     disabled={!isEnrichmentComplete}
-                    class="button success m-0"
-                    style={!isEnrichmentComplete
-                      ? "background-color: var(--pico-muted-color); border-color: var(--pico-muted-color); cursor: not-allowed;"
-                      : ""}
+                    class={`button success m-0${
+                      !isEnrichmentComplete ? " btn-disabled-muted" : ""
+                    }`}
                   >
                     🚀 Publish Ticket
                   </button>
@@ -116,16 +114,13 @@ export function AdminTicketDetailPage({
 
         <div class="grid">
           {/* Left Column: Verification Questions (Stage 1) */}
-          <article
-            class="admin-panel admin-panel-card admin-panel-padding"
-            style="flex: 1; align-self: flex-start; max-height: 800px; overflow-y: auto;"
-          >
+          <article class="admin-panel admin-panel-card admin-panel-padding flex-1 align-self-start max-h-800 overflow-y-auto">
             <header class="m-0 mb-15">
               <h4 class="m-0 fs-1125">
                 Verification Word List ({verificationQuestions.length})
               </h4>
             </header>
-            <div style="overflow-x: auto;">
+            <div class="table-scroll">
               <table class="m-0 small">
                 <thead>
                   <tr>
@@ -161,7 +156,7 @@ export function AdminTicketDetailPage({
           </article>
 
           {/* Right Column: Challenge Questions Enrichment (Stage 2) */}
-          <div style="flex: 2; display: flex; flex-direction: column; gap: 20px;">
+          <div class="flex-2 d-flex flex-column gap-15">
             <article class="admin-panel admin-panel-card admin-panel-padding">
               <header class="m-0 mb-15">
                 <h4 class="m-0 fs-1125">
@@ -191,16 +186,14 @@ export function AdminTicketDetailPage({
 
               return (
                 <article
-                  class="admin-panel admin-panel-card admin-panel-padding"
+                  class={`admin-panel admin-panel-card admin-panel-padding ticket-question-card ${
+                    isVerified
+                      ? "ticket-question-card-verified"
+                      : "ticket-question-card-unverified"
+                  }`}
                   id={`q-card-${idx}`}
-                  style={isVerified
-                    ? "border-left: 5px solid var(--pico-ins-color);"
-                    : "border-left: 5px solid var(--pico-del-color);"}
                 >
-                  <header
-                    class="m-0 mb-15 flex-wrap-center"
-                    style="justify-content: space-between;"
-                  >
+                  <header class="m-0 mb-15 flex-wrap-center justify-between">
                     <div>
                       <span
                         class={`badge badge-${
@@ -209,8 +202,7 @@ export function AdminTicketDetailPage({
                             : q.type === "spelling"
                             ? "warning"
                             : "secondary"
-                        }`}
-                        style="text-transform: uppercase; font-size: 0.75rem; font-weight: bold; margin-right: 10px;"
+                        } badge-compact badge-spaced`}
                       >
                         {q.type}
                       </span>
@@ -225,8 +217,7 @@ export function AdminTicketDetailPage({
                       <span
                         class={`badge badge-${
                           isVerified ? "success" : "danger"
-                        }`}
-                        style="font-size: 0.75rem;"
+                        } fs-075`}
                       >
                         {isVerified ? "🟢 Verified" : "🔴 Unverified"}
                       </span>
@@ -265,7 +256,7 @@ export function AdminTicketDetailPage({
                     {q.type === "spelling" && (
                       <div class="mb-10">
                         <div class="grid mb-10">
-                          <div class="form-group" style="flex: 2;">
+                          <div class="form-group flex-2">
                             <label class="admin-label">
                               Context Sentence (must include '___')
                             </label>
@@ -278,7 +269,7 @@ export function AdminTicketDetailPage({
                               class="m-0"
                             />
                           </div>
-                          <div class="form-group" style="flex: 1;">
+                          <div class="form-group flex-1">
                             <label class="admin-label">Correct Word</label>
                             <input
                               type="text"
@@ -376,8 +367,7 @@ export function AdminTicketDetailPage({
                           {suggestions.map((sug) => (
                             <button
                               type="button"
-                              class="button outline small secondary m-0"
-                              style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;"
+                              class="button outline small secondary m-0 btn-chip"
                               onclick={`fillDistractor(${idx}, '${
                                 sug.replaceAll(/'/g, "\\'")
                               }')`}
@@ -389,11 +379,10 @@ export function AdminTicketDetailPage({
                       </div>
                     )}
 
-                    <div style="text-align: right;">
+                    <div class="text-right">
                       <button
                         type="submit"
-                        class="button small m-0"
-                        style="padding: 6px 12px; font-size: 0.875rem;"
+                        class="button small m-0 btn-form-small"
                       >
                         {isVerified ? "🔄 Update & Verify" : "✅ Save & Verify"}
                       </button>

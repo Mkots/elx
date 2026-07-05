@@ -98,7 +98,7 @@ export function Stage2Page(props: Stage2PageProps) {
   return (
     <Layout analytics={props.pageAnalytics} title="ELX – Verification" htmx>
       <h1>Stage 2: Verification</h1>
-      <p style="margin-top: -10px; font-size: 0.875rem; color: var(--pico-muted-color); margin-bottom: 20px;">
+      <p class="ticket-code-line">
         Test Version: <strong>{props.ticketCode}</strong>
       </p>
       <p>Confirm which words you truly know.</p>
