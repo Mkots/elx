@@ -1,0 +1,77 @@
+name: "Copilot Setup Steps"
+
+# Run automatically when this file changes so setup failures are caught early,
+# and allow manual validation from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # Job name MUST be `copilot-setup-steps` to be picked up by the agent.
+  copilot-setup-steps:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+
+    env:
+      # Keep Deno's module cache in the workspace so it can be shared via
+      # actions/cache (mirrors the DENO_DIR used by every CI job).
+      DENO_DIR: .deno-cache
+      # Pin SARA to the same version used by .github/workflows/requirements.yaml.
+      SARA_VERSION: "0.9.0"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # ── Deno ────────────────────────────────────────────────────────────────
+
+      - name: Cache Deno modules
+        uses: actions/cache@v6
+        with:
+          path: .deno-cache
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          # Matches the version pinned in quality.yaml, e2e.yaml, and
+          # .devcontainer/devcontainer.json.
+          deno-version: "2.8.3"
+
+      - name: Install Deno dependencies
+        # Warms the DENO_DIR cache so `deno task ci` (fmt:check, lint, check,
+        # test:coverage) can run immediately without a network round-trip.
+        run: deno install --frozen
+
+      # ── SARA CLI (requirements graph validation) ─────────────────────────
+      # sara-cli is a Rust binary; cargo is pre-installed on ubuntu-24.04
+      # runners. The binary is cached to avoid a full compile on every run.
+
+      - name: Cache SARA binary
+        id: sara-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/sara
+          key: sara-${{ runner.os }}-${{ env.SARA_VERSION }}
+
+      - name: Install SARA CLI
+        if: steps.sara-cache.outputs.cache-hit != 'true'
+        run: cargo install --locked --version "$SARA_VERSION" sara-cli
+
+      # ── Playwright browsers (e2e tests) ──────────────────────────────────
+      # Installs Chromium together with the OS-level dependencies that
+      # Playwright needs on a headless Ubuntu runner.  Mirrors the browser
+      # set available in the mcr.microsoft.com/playwright:v1.61.0-noble image
+      # used by e2e.yaml.
+
+      - name: Install Playwright browsers
+        run: deno run -A npm:@playwright/test@1.61.0 install --with-deps chromium
