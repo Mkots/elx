@@ -1,0 +1,179 @@
+@layer app {
+/* ── Results ── */
+
+.result-shell {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 48rem;
+}
+
+.result-header {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.result-header h1,
+.result-header p {
+    margin: 0;
+}
+
+.result-kicker {
+    color: var(--color-positive);
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.result-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 1rem;
+}
+
+.result-score,
+.result-truthfulness {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    min-height: 12rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+}
+
+.result-primary-metric {
+    background:
+        linear-gradient(135deg, var(--color-positive-elevated), transparent 48%),
+        var(--color-panel-strong);
+}
+
+.result-vocab-card {
+    display: grid;
+    gap: 0.5rem;
+    padding: 2.25rem 2rem;
+    border-radius: var(--pico-border-radius);
+    background: linear-gradient(135deg, var(--color-primary-surface), var(--color-primary-surface-soft)), var(--color-panel-strong);
+    border: 1px solid var(--color-primary-border);
+    box-shadow: 0 8px 32px var(--color-shadow-medium);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.result-vocab-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, var(--color-primary-glow) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.result-vocab-label {
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--pico-muted-color);
+}
+
+.result-vocab-val {
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--pico-color), var(--color-checked-bg));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0.5rem 0;
+}
+
+.result-vocab-desc {
+    font-size: 0.95rem;
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
+.result-cefr-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0.25rem auto 0.75rem auto;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: var(--color-primary-surface);
+    border: 1px solid var(--color-primary-border-strong);
+    width: max-content;
+    box-shadow: 0 4px 12px var(--color-shadow-subtle);
+}
+
+.result-cefr-badge .cefr-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pico-muted-color);
+}
+
+.cefr-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--color-positive);
+    text-shadow: 0 0 10px var(--color-positive-glow);
+}
+
+.result-label {
+    color: var(--pico-muted-color);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.result-value {
+    color: var(--pico-color);
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.truthfulness-progress {
+    height: 0.75rem;
+}
+
+.truthfulness-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-caution), var(--color-positive));
+}
+
+.truthfulness-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-caution), var(--color-positive));
+}
+
+.result-caption {
+    color: var(--pico-muted-color);
+    font-size: 0.95rem;
+}
+
+.result-restart-btn {
+    justify-self: start;
+    margin: 0;
+    background: var(--pico-primary);
+    border: 0;
+    color: var(--color-primary-contrast);
+    font-weight: 800;
+}
+
+@media (max-width: 560px) {
+    .result-card {
+        grid-template-columns: 1fr;
+    }
+
+    .result-score,
+    .result-truthfulness {
+        min-height: auto;
+    }
+}
+}

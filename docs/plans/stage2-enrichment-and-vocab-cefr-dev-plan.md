@@ -79,12 +79,13 @@ alongside the calculated vocabulary size.
 - **Context**:
   [ResultPage](file:///Users/vitalijkomarov/dev/tmp/elx/ui/pages/ResultPage.tsx#L17-L71),
   `routes/result.ts`, and
-  [app.css](file:///Users/vitalijkomarov/dev/tmp/elx/static/app.css#L256-L300).
+  [result.css](file:///Users/vitalijkomarov/dev/tmp/elx/static/css/result.css).
 - **Deliverable**:
   1. Update `routes/result.ts` to compute or pass the CEFR level to the page.
   2. Render the CEFR level badge in `ui/pages/ResultPage.tsx` with
      `data-testid="cefr-level"`.
-  3. Add styling for `.result-cefr-badge` and `.cefr-val` in `static/app.css`.
+  3. Add styling for `.result-cefr-badge` and `.cefr-val` in
+     `static/css/result.css`.
 - **Acceptance criteria**:
   - Results page displays the CEFR level badge.
   - `deno test tests/result_route_test.ts` is updated to check for

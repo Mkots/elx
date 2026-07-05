@@ -1,4 +1,7 @@
 @layer framework, app;
 
 @import url("/static/pico.min.css") layer(framework);
-@import url("/static/app.css") layer(app);
+@import url("/static/css/tokens.css");
+@import url("/static/css/base.css");
+@import url("/static/css/stage.css");
+@import url("/static/css/result.css");

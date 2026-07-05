@@ -1,0 +1,40 @@
+@layer app {
+/* ── Admin Login & Layout ── */
+
+.login-body {
+    background-color: var(--pico-background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card {
+    padding: 2rem;
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    box-shadow: 0 8px 32px var(--color-shadow-strong);
+    border: 1px solid var(--color-border-muted);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border-muted);
+    margin-top: 1rem;
+}
+}
