@@ -20,11 +20,13 @@ jobs:
     permissions:
       packages: write
     steps:
-      - name: Delete sha-tagged images older than 1 day
+      - name: Delete non-release images older than 1 day
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           package: elx
-          delete-tags: "sha-*"
+          use-regex: true
+          delete-tags: "^sha-.*$"
+          exclude-tags: "^latest$,^\\d+\\.\\d+(\\.\\d+)?$"
           older-than: 1 day
           delete-untagged: true
           dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
