@@ -17,16 +17,17 @@ jobs:
     container: ghcr.io/mkots/elx-playwright:v1.61.0
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17-alpine
         env:
           POSTGRES_DB: elx_test
           POSTGRES_USER: elx
           POSTGRES_PASSWORD: elx
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 10
+          --health-start-period 2s
     env:
       DATABASE_URL: postgres://elx:elx@postgres:5432/elx_test
       DENO_DIR: .deno-cache
