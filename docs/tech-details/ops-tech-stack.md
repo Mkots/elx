@@ -52,7 +52,10 @@ The push and pull request pipeline runs:
 2. `deno lint` for static analysis.
 3. `deno test` and `deno coverage` for unit and integration tests; see
    [test-tech-stack.md](./test-tech-stack.md).
-4. **Playwright E2E** against the running server and Postgres service.
+4. **Playwright E2E** against the running server and Postgres service. This runs
+   inside a custom slim Docker image (`ghcr.io/mkots/elx-playwright:v1.61.0`),
+   which is built and published by `.github/workflows/image-playwright.yaml` and
+   cleaned up via `.github/workflows/ghcr-cleanup.yaml`.
 5. **SARA** (`sara check`) for requirement traceability. Broken links, duplicate
    IDs, cycles, or orphans block the merge. SARA is a single Rust binary without
    a JRE; see [test-tech-stack.md](./test-tech-stack.md).
@@ -92,11 +95,12 @@ The push and pull request pipeline runs:
    Secrets. Roll back by switching the image tag to the previous version.
 3. `.github/workflows/ghcr-cleanup.yaml` runs daily via
    `dataaxiom/ghcr-cleanup-action` and deletes `sha-*` GHCR tags (and dangling
-   manifests) older than 1 day. Release builds carry extra tags (`latest`, the
-   semver `x.y.z`/`x.y`) on the **same digest** as their `sha-*` tag; the action
-   excludes any version that has one of those tags from every rule before
-   applying `delete-tags`/`older-than`, so a release's `sha-*` tag survives too
-   — only commits that were never released lose their `sha-*` tag. Because
+   manifests) older than 1 day for both `elx` and `elx-playwright` packages.
+   Release builds carry extra tags (`latest`, the semver `x.y.z`/`x.y`) on the
+   **same digest** as their `sha-*` tag; the action excludes any version that
+   has one of those tags from every rule before applying
+   `delete-tags`/`older-than`, so a release's `sha-*` tag survives too — only
+   commits that were never released lose their `sha-*` tag. Because
    `deploy.yaml` deploys by `sha-<commit>` tag, rolling back to an unreleased
    commit whose image has aged past the 1-day window will fail to pull — the
    running container on the Droplet keeps working (Docker caches the image

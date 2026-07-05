@@ -69,6 +69,14 @@ It also verifies operation without JavaScript or with minimal Vanilla JS.
 - Run it against a started Deno server in a separate process, as E2E is already
   out of process.
 - Integrate it as a Node tool or through an `npm:` specifier in Deno.
+- E2E tests run in CI using a custom, slim Docker image
+  (`ghcr.io/mkots/elx-playwright:v1.61.0`).
+- This image is Chromium-only to minimize download sizes, setup overhead, and
+  build time in CI. It is based on the official Deno Debian image and installs
+  only the Playwright Chromium browser and its system dependencies.
+- The image is built and published to GHCR by
+  `.github/workflows/image-playwright.yaml` on changes to
+  `Dockerfile.playwright` or via manual dispatch.
 
 > **Alternative:** [Astral](https://github.com/lino-levan/astral) is a native
 > Deno browser driver similar to Puppeteer and does not require a Node bridge.
