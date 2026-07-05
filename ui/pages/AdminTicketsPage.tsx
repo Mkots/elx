@@ -27,10 +27,7 @@ export function AdminTicketsPage(
 
         <div class="grid">
           {/* List of Tickets */}
-          <article
-            class="admin-panel admin-panel-card admin-panel-padding"
-            style="flex: 2;"
-          >
+          <article class="admin-panel admin-panel-card admin-panel-padding flex-2">
             <header class="m-0 mb-15">
               <h3 class="m-0 fs-125">All Test Tickets</h3>
             </header>
@@ -43,7 +40,7 @@ export function AdminTicketsPage(
                 </p>
               )
               : (
-                <div style="overflow-x: auto;">
+                <div class="table-scroll">
                   <table class="m-0">
                     <thead>
                       <tr>
@@ -69,15 +66,14 @@ export function AdminTicketsPage(
                         return (
                           <tr>
                             <td>
-                              <strong style="font-family: monospace;">
+                              <strong class="admin-monospace">
                                 {t.code}
                               </strong>
                             </td>
                             <td>{t.title || "-"}</td>
                             <td>
                               <span
-                                class={`badge badge-${statusBadgeClass}`}
-                                style="text-transform: uppercase; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold;"
+                                class={`badge badge-compact badge-${statusBadgeClass}`}
                               >
                                 {t.status}
                               </span>
@@ -90,8 +86,7 @@ export function AdminTicketsPage(
                               <div class="flex-wrap-center gap-05">
                                 <a
                                   href={`/admin/tickets/${t.id}`}
-                                  class="button outline small m-0"
-                                  style="font-size: 0.8rem; padding: 4px 8px;"
+                                  class="button outline small m-0 btn-table-action"
                                 >
                                   ✏️ Enrich
                                 </a>
@@ -103,8 +98,7 @@ export function AdminTicketsPage(
                                 >
                                   <button
                                     type="submit"
-                                    class="button outline small contrast m-0"
-                                    style="font-size: 0.8rem; padding: 4px 8px; border-color: var(--pico-del-color);"
+                                    class="button outline small contrast m-0 btn-table-action btn-danger-border"
                                   >
                                     🗑️ Delete
                                   </button>
@@ -121,10 +115,7 @@ export function AdminTicketsPage(
           </article>
 
           {/* Generate Ticket Config Form */}
-          <article
-            class="admin-panel admin-panel-card admin-panel-padding"
-            style="flex: 1; align-self: flex-start;"
-          >
+          <article class="admin-panel admin-panel-card admin-panel-padding flex-1 align-self-start">
             <header class="m-0 mb-15">
               <h3 class="m-0 fs-125">Generate Base Ticket</h3>
             </header>

@@ -106,7 +106,7 @@ export function Layout(
               src={`https://www.googletagmanager.com/ns.html?id=${containerId}`}
               height="0"
               width="0"
-              style="display:none;visibility:hidden"
+              class="gtm-noscript-frame"
             >
             </iframe>
           </noscript>

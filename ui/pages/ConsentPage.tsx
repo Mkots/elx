@@ -12,10 +12,10 @@ export function ConsentPage(
 ) {
   return (
     <Layout analytics={analytics} title="ELX - Research Consent">
-      <section style="max-width: 680px; margin: 40px auto; padding: 20px;">
+      <section class="page-container page-container-md">
         <h1>Research Consent</h1>
         {ticketCode && (
-          <p style="color: var(--pico-muted-color);">
+          <p class="color-muted">
             Test Version: <strong>{ticketCode}</strong>
           </p>
         )}
@@ -31,7 +31,7 @@ export function ConsentPage(
         </p>
 
         {error && (
-          <p role="alert" style="color: var(--pico-del-color);">
+          <p role="alert" class="color-danger">
             {error}
           </p>
         )}
@@ -43,7 +43,7 @@ export function ConsentPage(
             <a href="/privacy">Privacy Policy</a> and{" "}
             <a href="/terms">Terms of Service</a>.
           </label>
-          <button type="submit" style="margin-top: 20px;">
+          <button type="submit" class="mt-20">
             Continue to Assessment
           </button>
         </form>
