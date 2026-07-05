@@ -1,3 +1,4 @@
+// Scoring and CEFR levels mapping logic for LexTALE methodology.
 export interface WordAnswer {
   isReal: boolean;
   known: boolean;
