@@ -19,6 +19,21 @@ deno task db:generate # drizzle-kit generate (after editing db/schema.ts)
 deno task db:migrate  # apply migrations
 ```
 
+## Commands not available in the Copilot container
+
+The following commands require infrastructure that is **not present** in the
+Copilot coding-agent environment and must **not** be run there:
+
+- `deno task e2e` — requires Playwright browsers and a live PostgreSQL service.
+  E2E tests run in a dedicated CI job (`e2e.yaml`) with the
+  `mcr.microsoft.com/playwright:v1.61.0-noble` container and a PostgreSQL 17
+  service. Do not attempt to install Playwright or its browsers inside the
+  agent.
+- `sara` / `sara check` — the SARA CLI (requirements traceability) is not
+  installed in the agent. Requirements validation runs in its own CI job
+  (`requirements.yaml`) using a Rust container. Do not attempt to install or
+  invoke `sara` inside the agent.
+
 - `deno task check` type-checks an explicit file list in `deno.json` — when
   adding a new top-level directory with TS/TSX files, add it to the `check`
   task.
