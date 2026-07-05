@@ -35,7 +35,7 @@ jobs:
         id: metadata
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ghcr.io/vitalijkomarov/elx-playwright
+          images: ghcr.io/mkots/elx-playwright
           tags: |
             type=raw,value=v1.61.0
             type=raw,value=latest

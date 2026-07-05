@@ -70,7 +70,7 @@ It also verifies operation without JavaScript or with minimal Vanilla JS.
   out of process.
 - Integrate it as a Node tool or through an `npm:` specifier in Deno.
 - E2E tests run in CI using a custom, slim Docker image
-  (`ghcr.io/vitalijkomarov/elx-playwright:v1.61.0`).
+  (`ghcr.io/mkots/elx-playwright:v1.61.0`).
 - This image is Chromium-only to minimize download sizes, setup overhead, and
   build time in CI. It is based on the official Deno Debian image and installs
   only the Playwright Chromium browser and its system dependencies.

@@ -8,10 +8,10 @@ Source: chat idea (speed up e2e `Initialize containers`), incubated via
 The e2e job stops pulling the ~2.2 GB
 `mcr.microsoft.com/playwright:v1.61.0-noble` (3 browsers) image on every run and
 instead pulls a custom **Chromium-only** image with **Deno baked in**, published
-to GHCR as `ghcr.io/vitalijkomarov/elx-playwright`. Because Deno + Chromium + OS
-deps are baked in, `e2e.yaml` drops both the `Install unzip` and `setup-deno`
-steps and just swaps its `container:` line — cutting the `Initialize containers`
-step materially below the current ~43 s.
+to GHCR as `ghcr.io/mkots/elx-playwright`. Because Deno + Chromium + OS deps are
+baked in, `e2e.yaml` drops both the `Install unzip` and `setup-deno` steps and
+just swaps its `container:` line — cutting the `Initialize containers` step
+materially below the current ~43 s.
 
 Alongside, Deno is standardized on a **single version (2.9.0)** across CI,
 Docker, DevContainer, and local dev via **Mise** (`mise.toml` as the source of
@@ -117,8 +117,8 @@ One subsection per future issue, in execution order.
      `Dockerfile.playwright` + `workflow_dispatch`; mirrors `image.yaml`
      conventions (buildx, `docker/login-action` with GITHUB_TOKEN,
      `docker/build-push-action` + GHA cache — all SHA-pinned). Pushes
-     `ghcr.io/vitalijkomarov/elx-playwright:v1.61.0` (tag = Playwright version)
-     and `:latest`.
+     `ghcr.io/mkots/elx-playwright:v1.61.0` (tag = Playwright version) and
+     `:latest`.
   3. Make the `elx-playwright` GHCR package **public** (one-time repo/package
      setting; note in the PR).
   4. Add an `elx-playwright` cleanup rule to `ghcr-cleanup.yaml` mirroring the
@@ -145,9 +145,9 @@ One subsection per future issue, in execution order.
   steps and swap `container:` (`:17`). The version tag must stay in sync with
   `deno.json`'s `@playwright/test` (Decision 3).
 - **Deliverable**:
-  1. `e2e.yaml`: `container:` → `ghcr.io/vitalijkomarov/elx-playwright:v1.61.0`;
-     remove the `Install unzip` and `setup-deno` steps; keep the postgres
-     service, Deno cache step, and env unchanged.
+  1. `e2e.yaml`: `container:` → `ghcr.io/mkots/elx-playwright:v1.61.0`; remove
+     the `Install unzip` and `setup-deno` steps; keep the postgres service, Deno
+     cache step, and env unchanged.
   2. A CI guard in `tests/` (repo's `agent_docs_test.ts` style) that parses the
      `@playwright/test` version from `deno.json` and the e2e `container:` tag
      from `e2e.yaml` and asserts they match; runs in the existing quality job.

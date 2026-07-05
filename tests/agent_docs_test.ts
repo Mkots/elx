@@ -130,11 +130,11 @@ Deno.test("Playwright version in deno.json matches container tag in e2e.yaml", (
     new URL(".github/workflows/e2e.yaml", root),
   );
   const containerMatch = e2eYaml.match(
-    /ghcr\.io\/vitalijkomarov\/elx-playwright:(\S+)/,
+    /ghcr\.io\/mkots\/elx-playwright:(\S+)/,
   );
   assert(
     containerMatch,
-    "Failed to find ghcr.io/vitalijkomarov/elx-playwright container in e2e.yaml",
+    "Failed to find ghcr.io/mkots/elx-playwright container in e2e.yaml",
   );
   let containerTag = containerMatch[1];
   if (containerTag.startsWith("v")) {

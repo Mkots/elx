@@ -53,10 +53,9 @@ The push and pull request pipeline runs:
 3. `deno test` and `deno coverage` for unit and integration tests; see
    [test-tech-stack.md](./test-tech-stack.md).
 4. **Playwright E2E** against the running server and Postgres service. This runs
-   inside a custom slim Docker image
-   (`ghcr.io/vitalijkomarov/elx-playwright:v1.61.0`), which is built and
-   published by `.github/workflows/image-playwright.yaml` and cleaned up via
-   `.github/workflows/ghcr-cleanup.yaml`.
+   inside a custom slim Docker image (`ghcr.io/mkots/elx-playwright:v1.61.0`),
+   which is built and published by `.github/workflows/image-playwright.yaml` and
+   cleaned up via `.github/workflows/ghcr-cleanup.yaml`.
 5. **SARA** (`sara check`) for requirement traceability. Broken links, duplicate
    IDs, cycles, or orphans block the merge. SARA is a single Rust binary without
    a JRE; see [test-tech-stack.md](./test-tech-stack.md).

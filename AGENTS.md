@@ -27,9 +27,8 @@ Copilot coding-agent environment and must **not** be run there:
 
 - `deno task e2e` — requires Playwright browsers and a live PostgreSQL service.
   E2E tests run in a dedicated CI job (`e2e.yaml`) with the
-  `ghcr.io/vitalijkomarov/elx-playwright:v1.61.0` container and a PostgreSQL 17
-  service. Do not attempt to install Playwright or its browsers inside the
-  agent.
+  `ghcr.io/mkots/elx-playwright:v1.61.0` container and a PostgreSQL 17 service.
+  Do not attempt to install Playwright or its browsers inside the agent.
 - `sara` / `sara check` — the SARA CLI (requirements traceability) is not
   installed in the agent. Requirements validation runs in its own CI job
   (`requirements.yaml`) using a Rust container. Do not attempt to install or
@@ -37,8 +36,8 @@ Copilot coding-agent environment and must **not** be run there:
 
 - `deno task check` runs `deno check .`; directories are excluded via the
   top-level `exclude` list in `deno.json`.
-- e2e CI runs in the `ghcr.io/vitalijkomarov/elx-playwright:v1.61.0` container
-  with a PostgreSQL 17 service; env vars come from GitHub Secrets.
+- e2e CI runs in the `ghcr.io/mkots/elx-playwright:v1.61.0` container with a
+  PostgreSQL 17 service; env vars come from GitHub Secrets.
 - Local dev DB: `docker compose -f compose.dev.yaml up -d postgres`, then
   `deno task --env-file=.env dev` (see CONTRIBUTING.md for recipes).
 - Pre-commit/pre-push hooks (fmt, lint, check, test) run via `hk` (`hk.pkl`).
