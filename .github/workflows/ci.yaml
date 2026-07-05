@@ -114,16 +114,21 @@ jobs:
       - quality
       - e2e
       - requirements
+    # On pull requests this is a build-only smoke test (image.yaml pushes to
+    # GHCR only when event_name == 'push'), so Dockerfile/.dockerignore
+    # breakage is caught before merge.
     if: >-
       always() &&
       needs.filter.result == 'success' &&
-      github.event_name == 'push' &&
+      ((github.event_name == 'pull_request' &&
+      needs.filter.outputs.image == 'true') ||
+      (github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/master' ||
       startsWith(github.ref, 'refs/tags/v')) &&
       (startsWith(github.ref, 'refs/tags/v') ||
       needs.filter.outputs.image == 'true' ||
-      needs.filter.outputs.deploy == 'true') &&
+      needs.filter.outputs.deploy == 'true'))) &&
       needs.quality.result == 'success' &&
       (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') &&
       (needs.requirements.result == 'success' ||
