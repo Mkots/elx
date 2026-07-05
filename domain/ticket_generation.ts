@@ -241,7 +241,14 @@ export function buildQuestions(
   const questions: SnapshotQuestion[] = [];
 
   for (const w of shuffle([...selectedReal, ...selectedPseudo], random)) {
-    const similar = findSimilarWord(w, wordPool, random);
+    let similar: WordPoolEntry | null = null;
+    if (w.isReal && random() < 0.5) {
+      const pseudoPool = wordPool.filter((wp) => !wp.isReal);
+      similar = findSimilarWord(w, pseudoPool, random);
+    }
+    if (!similar) {
+      similar = findSimilarWord(w, wordPool, random);
+    }
     questions.push({
       type: "verification",
       wordText: w.value,

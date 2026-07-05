@@ -241,3 +241,145 @@ Deno.test("VER-TICKET-GENERATION: buildQuestions includes difficulty, similarWor
     }
   }
 });
+
+Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudowords", () => {
+  const config = makeConfig({
+    difficulty1Count: 3,
+    difficulty2Count: 0,
+    difficulty3Count: 0,
+    difficulty4Count: 0,
+    difficulty5Count: 0,
+    realCount: 2,
+    pseudoCount: 1,
+    synonymsCount: 0,
+    spellingCount: 0,
+    definitionCount: 0,
+  });
+
+  const pool: WordPoolEntry[] = [
+    {
+      value: "cat",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "cab",
+      isReal: true,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+    {
+      value: "cap",
+      isReal: false,
+      difficulty: 1,
+      synonyms: [],
+      definition: null,
+    },
+  ];
+
+  // Test Case 1: random() < 0.5 (e.g., 0.1) -> searches pseudowords.
+  // "cat" is real, pseudoword "cap" is closer/in pool. It should pick "cap" (pseudo).
+  {
+    const mockRng = () => 0.1;
+    const questions = buildQuestions(config, pool, mockRng);
+    const catQuestion = questions.find((q) =>
+      q.type === "verification" && q.wordText === "cat"
+    ) as VerificationSnapshotQuestion;
+    assertEquals(catQuestion !== undefined, true);
+    assertEquals(catQuestion.similarWord, "cap");
+    assertEquals(catQuestion.similarWordIsReal, false);
+  }
+
+  // Test Case 2: random() >= 0.5 (e.g., 0.9) -> general pool search.
+  // "cat" is real. If we force random() >= 0.5, it searches the general pool.
+  // Since we mock rng to return 0.9, we might get either "cab" or "cap" based on tie-breaking.
+  // Let's make "cab" closer than "cap" so it definitely chooses the real word when general search is used.
+  // E.g., "cat" (real), "cab" (real, distance 1), "clog" (pseudo, distance 3).
+  // If random check succeeds, it is forced to search pseudo pool, so it must pick "clog" (distance 3, even though it's further than "cab").
+  // If random check fails, it searches general pool and picks "cab" (distance 1).
+  {
+    const pool2: WordPoolEntry[] = [
+      {
+        value: "cat",
+        isReal: true,
+        difficulty: 1,
+        synonyms: [],
+        definition: null,
+      },
+      {
+        value: "cab",
+        isReal: true,
+        difficulty: 1,
+        synonyms: [],
+        definition: null,
+      },
+      {
+        value: "clog",
+        isReal: false,
+        difficulty: 1,
+        synonyms: [],
+        definition: null,
+      },
+    ];
+
+    // Case 2a: random() < 0.5 -> searches pseudowords only, picks "clog"
+    const questions1 = buildQuestions(config, pool2, () => 0.1);
+    const catQ1 = questions1.find((q) =>
+      q.type === "verification" && q.wordText === "cat"
+    ) as VerificationSnapshotQuestion;
+    assertEquals(catQ1 !== undefined, true);
+    assertEquals(catQ1.similarWord, "clog");
+    assertEquals(catQ1.similarWordIsReal, false);
+
+    // Case 2b: random() >= 0.5 -> general search, picks "cab" because distance is 1 (clog is 3)
+    const questions2 = buildQuestions(config, pool2, () => 0.9);
+    const catQ2 = questions2.find((q) =>
+      q.type === "verification" && q.wordText === "cat"
+    ) as VerificationSnapshotQuestion;
+    assertEquals(catQ2 !== undefined, true);
+    assertEquals(catQ2.similarWord, "cab");
+    assertEquals(catQ2.similarWordIsReal, true);
+  }
+
+  // Test Case 3: random() < 0.5 but no pseudowords are in pool -> fallback to general pool search.
+  {
+    const configNoPseudo = makeConfig({
+      difficulty1Count: 2,
+      difficulty2Count: 0,
+      difficulty3Count: 0,
+      difficulty4Count: 0,
+      difficulty5Count: 0,
+      realCount: 2,
+      pseudoCount: 0,
+      synonymsCount: 0,
+      spellingCount: 0,
+      definitionCount: 0,
+    });
+    const poolNoPseudo: WordPoolEntry[] = [
+      {
+        value: "cat",
+        isReal: true,
+        difficulty: 1,
+        synonyms: [],
+        definition: null,
+      },
+      {
+        value: "cab",
+        isReal: true,
+        difficulty: 1,
+        synonyms: [],
+        definition: null,
+      },
+    ];
+    const questions3 = buildQuestions(configNoPseudo, poolNoPseudo, () => 0.1);
+    const catQ3 = questions3.find((q) =>
+      q.type === "verification" && q.wordText === "cat"
+    ) as VerificationSnapshotQuestion;
+    assertEquals(catQ3 !== undefined, true);
+    assertEquals(catQ3.similarWord, "cab");
+    assertEquals(catQ3.similarWordIsReal, true);
+  }
+});
