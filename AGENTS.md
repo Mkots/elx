@@ -144,25 +144,57 @@ restricts CSRF's allowed origin behind a proxy); wiki sync uses
 
 ## Token & Context Optimization Rules
 
-To prevent rapid token depletion and context bloat, agents MUST follow these
-strict rules:
+### Investigation scope
 
-- **Do NOT read large CSV, TSV, or JSON files**: If a data file (e.g., in
-  `pipeline/data/` or `static/`) is larger than a few kilobytes, do NOT use
-  `view_file` on it. Note that `pipeline/data/` contains raw dictionary data
-  files which must NOT be read without extreme necessity. If you need to
-  understand their structure, run a targeted terminal command (like `head -n 5`
-  or `jq '.[0]'` for JSON) instead of reading the content into your context.
-- **Do NOT read unnecessary files in `docs/`**: Only read documentation files
-  (like `docs/data-model.md` or `docs/requirements/`) if they are directly
-  relevant to your current task. Never perform speculative reads of all
-  documentation files.
-- **Use Subagent Sandboxing**: For any non-trivial implementation, spawn a
-  `self` subagent to carry out the coding and local validation. This keeps
-  intermediate run logs, linters, and edits isolated from the main conversation.
-- **Run Targeted Tests**: Avoid running global test suites (`deno task ci` or
-  `deno task test`) repeatedly in the main chat. Run targeted test files (e.g.
-  `deno test tests/specific_test.ts`) during debugging.
+- Never read the entire repository unless the task explicitly requires it.
+- Start by discovering the project structure before opening files.
+- Use search to identify candidate files before reading them.
+- Read only the files required for the current task.
+- Expand investigation incrementally instead of loading broad context up front.
+- Reuse knowledge gathered earlier in the task instead of reopening the same
+  files.
+
+### Initial budget
+
+- Keep the initial investigation to roughly 10–15 files and no more than 3
+  directories.
+- If that first pass is insufficient, justify the next files or directories and
+  extend the search in small steps.
+- For research tasks, first produce a short investigation plan and identify the
+  minimum file set needed to answer the question.
+
+### Preferred sources
+
+- Prefer repository summaries, this guide, and focused documentation over
+  rereading source files when they already answer the question.
+- Only read `docs/` files that are directly relevant to the task. Do not
+  speculate through the full documentation tree.
+- Encourage recording durable findings in repository docs (for example,
+  `docs/ai/`) so future agents can avoid repeating the same analysis.
+
+### Content to avoid by default
+
+- Ignore generated files, build artifacts, dependency trees, snapshots, caches,
+  and vendored content unless the task specifically depends on them.
+- Do NOT read large CSV, TSV, or JSON files wholesale. For data under
+  `pipeline/data/`, `pipeline/testdata/`, or similar large inputs, inspect only
+  targeted samples with commands such as `head`, `tail`, or `jq`.
+
+### Task-specific priorities
+
+- For CI or build failures, inspect workflow definitions, build configuration,
+  package manifests, and test configuration before reading application code.
+- Prefer configuration-level optimizations over code changes when they can solve
+  the problem safely.
+- When proposing optimizations, estimate expected impact, explain trade-offs,
+  and give concrete implementation suggestions.
+
+### Execution hygiene
+
+- Use subagent sandboxing for non-trivial implementation work to keep logs,
+  tests, and intermediate exploration out of the main context window.
+- Run targeted tests during debugging instead of repeatedly loading full-suite
+  output into the main conversation.
 
 ## Gotchas
 
