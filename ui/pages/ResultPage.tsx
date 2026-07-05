@@ -5,6 +5,7 @@ type ResultPageProps = {
   analytics?: AnalyticsProps;
   score: number;
   truthfulness: number;
+  vocabularySize?: number | null;
 };
 
 function confidenceLabel(truthfulness: number) {
@@ -14,7 +15,7 @@ function confidenceLabel(truthfulness: number) {
 }
 
 export function ResultPage(
-  { analytics, score, truthfulness }: ResultPageProps,
+  { analytics, score, truthfulness, vocabularySize }: ResultPageProps,
 ) {
   return (
     <Layout analytics={analytics} title="ELX – Results">
@@ -26,6 +27,18 @@ export function ResultPage(
             Your score reflects known real words minus known pseudowords.
           </p>
         </div>
+
+        {typeof vocabularySize === "number" && (
+          <div class="result-vocab-card">
+            <span class="result-vocab-label">Estimated Vocabulary Size</span>
+            <span class="result-vocab-val" data-testid="vocabulary-size">
+              {vocabularySize.toLocaleString()}
+            </span>
+            <p class="result-vocab-desc">
+              words based on your test performance
+            </p>
+          </div>
+        )}
 
         <div class="result-card">
           <div class="result-score result-primary-metric">
