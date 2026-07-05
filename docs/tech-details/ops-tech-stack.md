@@ -90,6 +90,18 @@ The push and pull request pipeline runs:
 2. The deployment step connects to the Droplet over **SSH** and runs
    `docker compose pull && docker compose up -d` using a key from GitHub
    Secrets. Roll back by switching the image tag to the previous version.
+3. `.github/workflows/ghcr-cleanup.yaml` runs daily via
+   `dataaxiom/ghcr-cleanup-action` and deletes `sha-*` GHCR tags (and dangling
+   manifests) older than 1 day. Release builds carry extra tags (`latest`, the
+   semver `x.y.z`/`x.y`) on the **same digest** as their `sha-*` tag; the action
+   excludes any version that has one of those tags from every rule before
+   applying `delete-tags`/`older-than`, so a release's `sha-*` tag survives too
+   — only commits that were never released lose their `sha-*` tag. Because
+   `deploy.yaml` deploys by `sha-<commit>` tag, rolling back to an unreleased
+   commit whose image has aged past the 1-day window will fail to pull — the
+   running container on the Droplet keeps working (Docker caches the image
+   locally), but redeploying that exact old tag requires rebuilding the image
+   first.
 
 ## Database and Migrations
 
