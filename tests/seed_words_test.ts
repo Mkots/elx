@@ -1,5 +1,14 @@
-import { wordSeeds } from "../scripts/seed_words.ts";
 import { assert, assertEquals } from "@std/assert";
+import { mapRow, parseRows } from "../scripts/importer_core.ts";
+import { SEED_CSV_PATH, SEED_IMPORT_CONFIG } from "../scripts/seed_words.ts";
+
+const csvContent = await Deno.readTextFile(SEED_CSV_PATH);
+const { rows } = parseRows(csvContent, SEED_IMPORT_CONFIG);
+const wordSeeds = rows.map((row) => mapRow(row, SEED_IMPORT_CONFIG));
+
+Deno.test("VER-SEED-WORDS: seed CSV has the expected word count", () => {
+  assertEquals(wordSeeds.length, 75);
+});
 
 Deno.test("VER-SEED-WORDS: seed words contain no duplicate values", () => {
   const values = wordSeeds.map((word) => word.value);
@@ -84,4 +93,12 @@ Deno.test("VER-SEED-WORDS: real words have synonyms and definition, pseudowords 
       `pseudoword "${word.value}" should have no definition`,
     );
   }
+});
+
+Deno.test("VER-SEED-WORDS: spot-checks a known real word's fields", () => {
+  const window = wordSeeds.find((w) => w.value === "window");
+  assert(window, "expected seed data to contain 'window'");
+  assertEquals(window.isReal, true);
+  assertEquals(window.difficulty, 1);
+  assertEquals(window.synonyms, ["windowpane"]);
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "words" ADD COLUMN "bank_version" text DEFAULT 'pre-manifest' NOT NULL;

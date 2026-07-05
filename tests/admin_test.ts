@@ -49,6 +49,7 @@ const mockWordsList = [
     synonyms: [] as string[],
     antonyms: [] as string[],
     definition: null as string | null,
+    bankVersion: "pre-manifest",
   },
   {
     id: 2,
@@ -60,6 +61,7 @@ const mockWordsList = [
     synonyms: [] as string[],
     antonyms: [] as string[],
     definition: null as string | null,
+    bankVersion: "pre-manifest",
   },
   {
     id: 3,
@@ -71,6 +73,7 @@ const mockWordsList = [
     synonyms: [] as string[],
     antonyms: [] as string[],
     definition: null as string | null,
+    bankVersion: "pre-manifest",
   },
 ];
 
@@ -177,6 +180,7 @@ const mockWordsLoader: Services["words"] = {
       synonyms: [],
       antonyms: [],
       definition: null,
+      bankVersion: "pre-manifest",
     });
   },
 
@@ -283,6 +287,7 @@ const mockWordsLoader: Services["words"] = {
                     synonyms: [] as string[],
                     antonyms: [] as string[],
                     definition: null as string | null,
+                    bankVersion: "pre-manifest",
                   };
                   mockWordsList.push(newWord);
                   return [{ id: nextId }];
@@ -344,6 +349,7 @@ function resetMockData() {
       synonyms: [] as string[],
       antonyms: [] as string[],
       definition: null as string | null,
+      bankVersion: "pre-manifest",
     },
     {
       id: 2,
@@ -355,6 +361,7 @@ function resetMockData() {
       synonyms: [] as string[],
       antonyms: [] as string[],
       definition: null as string | null,
+      bankVersion: "pre-manifest",
     },
     {
       id: 3,
@@ -366,6 +373,7 @@ function resetMockData() {
       synonyms: [] as string[],
       antonyms: [] as string[],
       definition: null as string | null,
+      bankVersion: "pre-manifest",
     },
   );
 

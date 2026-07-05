@@ -71,6 +71,13 @@
       "when": 1783205385272,
       "tag": "0009_solid_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783209379651,
+      "tag": "0010_tough_thor",
+      "breakpoints": true
     }
   ]
 }

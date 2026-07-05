@@ -316,6 +316,7 @@ export async function executeImport(
   fileContent: string,
   config: ImportConfig,
   dryRun = false,
+  bankVersion?: string,
 ): Promise<ImportResult> {
   const { rows } = parseRows(fileContent, config);
   const onConflict = config.onConflict || "update";
@@ -394,7 +395,8 @@ export async function executeImport(
           currentDiff !== mapped.difficulty ||
           !arraysEqual(currentSynonyms, mappedSynonyms) ||
           !arraysEqual(currentAntonyms, mappedAntonyms) ||
-          currentDefinition !== mappedDefinition
+          currentDefinition !== mappedDefinition ||
+          (bankVersion !== undefined && existing.bankVersion !== bankVersion)
         ) {
           if (!dryRun) {
             await db
@@ -405,6 +407,7 @@ export async function executeImport(
                 synonyms: mappedSynonyms,
                 antonyms: mappedAntonyms,
                 definition: mappedDefinition,
+                ...(bankVersion !== undefined ? { bankVersion } : {}),
               })
               .where(eq(words.id, existing.id));
           }
@@ -415,6 +418,7 @@ export async function executeImport(
           existing.synonyms = mappedSynonyms;
           existing.antonyms = mappedAntonyms;
           existing.definition = mappedDefinition;
+          if (bankVersion !== undefined) existing.bankVersion = bankVersion;
         } else {
           result.skipped++; // no changes needed, acts as skipped
         }
@@ -431,6 +435,7 @@ export async function executeImport(
             synonyms: mapped.synonyms,
             antonyms: mapped.antonyms,
             definition: mapped.definition,
+            ...(bankVersion !== undefined ? { bankVersion } : {}),
           })
           .returning({ id: words.id });
         existingMap.set(val, {
@@ -443,6 +448,7 @@ export async function executeImport(
           synonyms: mapped.synonyms,
           antonyms: mapped.antonyms,
           definition: mapped.definition,
+          bankVersion: bankVersion ?? "pre-manifest",
         });
       } else {
         // For dry-run, we also add to existingMap to simulate subsequent duplicates check
@@ -456,6 +462,7 @@ export async function executeImport(
           synonyms: mapped.synonyms,
           antonyms: mapped.antonyms,
           definition: mapped.definition,
+          bankVersion: bankVersion ?? "pre-manifest",
         });
       }
       result.inserted++;
