@@ -3,6 +3,7 @@ import { analyticsEvent, analyticsProps } from "../analytics.ts";
 import { ResultPage } from "../ui/pages/ResultPage.tsx";
 import type { Services } from "../db/services.ts";
 import { requireTestSession } from "./test_session.ts";
+import { getCEFRLevel } from "../scoring/lextale.ts";
 
 export function createResultRoute(services: Services) {
   const route = new Hono();
@@ -20,12 +21,16 @@ export function createResultRoute(services: Services) {
     if (!result) return context.redirect("/stage/2", 302);
 
     const { score, truthfulness, vocabularySize } = result;
+    const cefrLevel = typeof vocabularySize === "number"
+      ? getCEFRLevel(vocabularySize)
+      : undefined;
 
     return context.html(
       ResultPage({
         score,
         truthfulness,
         vocabularySize,
+        cefrLevel,
         analytics: analyticsProps(context, {
           consentGranted: true,
           events: [

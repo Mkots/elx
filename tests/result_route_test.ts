@@ -72,6 +72,8 @@ Deno.test("VER-RESULT-ROUTE: GET /result renders score, truthfulness and vocabul
   assertStringIncludes(body, 'class="truthfulness-progress"');
   assertStringIncludes(body, 'data-testid="vocabulary-size"');
   assertStringIncludes(body, "5,200");
+  assertStringIncludes(body, 'data-testid="cefr-level"');
+  assertStringIncludes(body, "B1");
 });
 
 Deno.test("VER-RESULT-ROUTE: GET /result renders a link to restart", async () => {
