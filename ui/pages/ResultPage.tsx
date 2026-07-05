@@ -6,6 +6,7 @@ type ResultPageProps = {
   score: number;
   truthfulness: number;
   vocabularySize?: number | null;
+  cefrLevel?: string;
 };
 
 function confidenceLabel(truthfulness: number) {
@@ -15,7 +16,8 @@ function confidenceLabel(truthfulness: number) {
 }
 
 export function ResultPage(
-  { analytics, score, truthfulness, vocabularySize }: ResultPageProps,
+  { analytics, score, truthfulness, vocabularySize, cefrLevel }:
+    ResultPageProps,
 ) {
   return (
     <Layout analytics={analytics} title="ELX – Results">
@@ -34,6 +36,14 @@ export function ResultPage(
             <span class="result-vocab-val" data-testid="vocabulary-size">
               {vocabularySize.toLocaleString()}
             </span>
+            {cefrLevel && (
+              <div class="result-cefr-badge">
+                <span class="cefr-label">CEFR Level</span>
+                <span class="cefr-val" data-testid="cefr-level">
+                  {cefrLevel}
+                </span>
+              </div>
+            )}
             <p class="result-vocab-desc">
               words based on your test performance
             </p>

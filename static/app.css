@@ -301,6 +301,35 @@
     margin: 0;
 }
 
+.result-cefr-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0.25rem auto 0.75rem auto;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(196, 164, 206, 0.15);
+    border: 1px solid rgba(196, 164, 206, 0.3);
+    width: max-content;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.result-cefr-badge .cefr-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pico-muted-color);
+}
+
+.cefr-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--color-positive);
+    text-shadow: 0 0 10px rgba(139, 213, 202, 0.3);
+}
+
 .result-label {
     color: var(--pico-muted-color);
     font-size: 0.875rem;
