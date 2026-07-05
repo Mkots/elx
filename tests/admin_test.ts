@@ -17,6 +17,7 @@ const mockDashboardLoader: Pick<Services["history"], "getDashboardStats"> = {
         score: 80,
         truthfulness: 90,
         stage1Selection: null,
+        vocabularySize: null,
       },
       {
         id: "mock-session-2",
@@ -27,6 +28,7 @@ const mockDashboardLoader: Pick<Services["history"], "getDashboardStats"> = {
         score: 60,
         truthfulness: 80,
         stage1Selection: null,
+        vocabularySize: null,
       },
     ];
     return {
@@ -388,6 +390,7 @@ function resetMockData() {
       score: 80,
       truthfulness: 90,
       stage1Selection: null,
+      vocabularySize: null,
     },
     {
       id: "session-def-456",
@@ -398,6 +401,7 @@ function resetMockData() {
       score: 70,
       truthfulness: 85,
       stage1Selection: null,
+      vocabularySize: null,
     },
     {
       id: "session-ghi-789",
@@ -408,6 +412,7 @@ function resetMockData() {
       score: 95,
       truthfulness: 100,
       stage1Selection: null,
+      vocabularySize: null,
     },
   );
 }

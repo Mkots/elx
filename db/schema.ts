@@ -91,6 +91,7 @@ export const testSessions = pgTable("test_sessions", {
   score: integer("score"),
   truthfulness: integer("truthfulness"),
   stage1Selection: jsonb("stage1_selection").$type<number[]>(),
+  vocabularySize: integer("vocabulary_size"),
 });
 
 export const testAnswers = pgTable(
