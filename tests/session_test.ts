@@ -283,12 +283,12 @@ Deno.test({
 
       assertEquals(result.score, 1);
       assertEquals(result.truthfulness, 67);
-      assertEquals(result.vocabularySize, 2000);
+      assertEquals(result.vocabularySize, 2750);
 
       const loaded = await loadStage2Result(sessionId);
       assertEquals(loaded?.score, 1);
       assertEquals(loaded?.truthfulness, 67);
-      assertEquals(loaded?.vocabularySize, 2000);
+      assertEquals(loaded?.vocabularySize, 2750);
     } finally {
       await db.delete(testSessions).where(eq(testSessions.id, sessionId));
       if (ticketId > 0) {

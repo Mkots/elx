@@ -27,6 +27,14 @@ export interface VocabularyScoringWord {
   known: boolean;
 }
 
+const BAND_SIZES: Record<number, number> = {
+  1: 1500,
+  2: 2500,
+  3: 4000,
+  4: 6000,
+  5: 8000,
+};
+
 export function computeVocabularySize(
   answers: VocabularyScoringWord[],
 ): number {
@@ -42,8 +50,18 @@ export function computeVocabularySize(
     const knownRealInBand = realInBand.filter((a) => a.known).length;
     const hitRate = totalRealInBand > 0 ? knownRealInBand / totalRealInBand : 0;
     const correctedRate = Math.max(0, hitRate - falseAlarmRate);
-    totalSize += correctedRate * 2000;
+    const bandSize = BAND_SIZES[band] || 0;
+    totalSize += correctedRate * bandSize;
   }
 
   return Math.round(totalSize);
+}
+
+export function getCEFRLevel(vocabularySize: number): string {
+  if (vocabularySize < 1500) return "A1";
+  if (vocabularySize < 3000) return "A2";
+  if (vocabularySize < 5500) return "B1";
+  if (vocabularySize < 8500) return "B2";
+  if (vocabularySize < 12000) return "C1";
+  return "C2";
 }
