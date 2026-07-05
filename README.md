@@ -5,7 +5,7 @@ JSX.
 
 ## Requirements
 
-- Deno `2.8.3`
+- Deno `2.9.0`
 - Docker with the Compose plugin
 - [hk](https://hk.jdx.dev/) for git hooks
 - Zed with Dev Containers support when developing inside a container
