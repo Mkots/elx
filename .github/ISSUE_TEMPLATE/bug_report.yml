@@ -41,7 +41,7 @@ body:
       label: Environment
       description: |
         - OS: [e.g. macOS 15, Ubuntu 24.04]
-        - Deno version: [e.g. 2.8.3]
+        - Deno version: [e.g. 2.9.0]
         - Browser (if applicable): [e.g. Chrome 130]
     validations:
       required: false
