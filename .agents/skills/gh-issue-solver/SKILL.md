@@ -29,7 +29,18 @@ downgrade to a manual workflow.
    This loads the open-issue queue into `state.json` and checks out the branch
    for the next issue (or resumes `currentIssue` if one is already in progress).
 2. **Implementation**: analyze the issue and implement the fix on the
-   checked-out branch. Iterate with `deno task ci` locally until it passes.
+   checked-out branch.
+   - **Subagent Sandboxing (Isolate Context)**: Mandatorily delegate the
+     Plan-Act-Validate implementation phase to a `self` subagent (using
+     `invoke_subagent`). The subagent does all the heavy reading, editing, and
+     intermediate test runs in a sandboxed conversation, then reports back only
+     the final diff/summary. This prevents all intermediate tokens from bloating
+     the main chat thread.
+   - **Targeted Debugging**: Instead of running `deno task ci` continuously, run
+     only targeted commands (e.g., `deno test tests/specific_test.ts` and
+     `deno lint paths/to/file.ts`) during local iterations to minimize stdout
+     verbosity. Run `deno task ci` only as a final check or via the `--submit`
+     command.
 3. **Submit**: run
    `deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --submit`.
    This runs `deno task ci`, commits and pushes, opens the PR (with

@@ -142,6 +142,28 @@ docs/                 — business process, data model, requirements, roadmap
 restricts CSRF's allowed origin behind a proxy); wiki sync uses
 `WIKI_SOURCE_REPO_URL` / `WIKI_SOURCE_REVISION`.
 
+## Token & Context Optimization Rules
+
+To prevent rapid token depletion and context bloat, agents MUST follow these
+strict rules:
+
+- **Do NOT read large CSV, TSV, or JSON files**: If a data file (e.g., in
+  `pipeline/data/` or `static/`) is larger than a few kilobytes, do NOT use
+  `view_file` on it. Note that `pipeline/data/` contains raw dictionary data
+  files which must NOT be read without extreme necessity. If you need to
+  understand their structure, run a targeted terminal command (like `head -n 5`
+  or `jq '.[0]'` for JSON) instead of reading the content into your context.
+- **Do NOT read unnecessary files in `docs/`**: Only read documentation files
+  (like `docs/data-model.md` or `docs/requirements/`) if they are directly
+  relevant to your current task. Never perform speculative reads of all
+  documentation files.
+- **Use Subagent Sandboxing**: For any non-trivial implementation, spawn a
+  `self` subagent to carry out the coding and local validation. This keeps
+  intermediate run logs, linters, and edits isolated from the main conversation.
+- **Run Targeted Tests**: Avoid running global test suites (`deno task ci` or
+  `deno task test`) repeatedly in the main chat. Run targeted test files (e.g.
+  `deno test tests/specific_test.ts`) during debugging.
+
 ## Gotchas
 
 - `GET /stage/2` with empty wordIds redirects to `/stage/1`, not `/stage/2` —
