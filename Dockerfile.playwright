@@ -1,0 +1,4 @@
+FROM denoland/deno:debian-2.9.0
+
+# Install Playwright Chromium and its dependencies
+RUN deno run -A npm:playwright@1.61.0 install --with-deps chromium
