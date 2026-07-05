@@ -6,6 +6,8 @@ import {
   type VocabularyScoringWord,
 } from "../scoring/lextale.ts";
 
+// Tests updated for progressive CEFR band scoring
+
 Deno.test("VER-VERIFICATION-SCORING: computeScore: all real words known → score equals count, truthfulness 100", () => {
   const answers = [
     { isReal: true, known: true },
