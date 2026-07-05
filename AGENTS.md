@@ -34,11 +34,13 @@ Copilot coding-agent environment and must **not** be run there:
   (`requirements.yaml`) using a Rust container. Do not attempt to install or
   invoke `sara` inside the agent.
 
-- `deno task check` type-checks an explicit file list in `deno.json` — when
-  adding a new top-level directory with TS/TSX files, add it to the `check`
-  task.
+- `deno task check` runs `deno check .`; directories are excluded via the
+  top-level `exclude` list in `deno.json`.
 - e2e CI runs in the `mcr.microsoft.com/playwright:v1.61.0-noble` container with
   a PostgreSQL 17 service; env vars come from GitHub Secrets.
+- Local dev DB: `docker compose -f compose.dev.yaml up -d postgres`, then
+  `deno task --env-file=.env dev` (see CONTRIBUTING.md for recipes).
+- Pre-commit/pre-push hooks (fmt, lint, check, test) run via `hk` (`hk.pkl`).
 
 ## Architecture principles
 
@@ -132,8 +134,51 @@ db/
   migrations/         — drizzle-kit output
 scripts/              — seed_words, import_words, clean, enrich, build_wiki
 tests/                — *_test.ts unit/route tests; e2e/ Playwright specs
+pipeline/             — offline word-data pipeline (clean, enrich, distractors,
+                        pseudowords); data/ and out/ hold large generated
+                        CSV/JSON files — never read them directly
 docs/                 — business process, data model, requirements, roadmap
+deploy/               — Caddyfile + cloud-init for the droplet
 ```
+
+## Docs index (read only what the task needs)
+
+- `docs/data-model.md` — DB tables, bank_version, word lifecycle
+- `docs/business-process.md` — test-taking flow from the product side
+- `docs/import-config.md` — CSV import mapping format for `/admin/words/import`
+- `docs/tech-details/index.md` — architecture/ops/test-stack docs index
+- `docs/tech-details/agent-tooling.md` — AI-agent setup for this repo (skills,
+  deny rules, freshness checks)
+- `docs/requirements/` — SARA-traced requirements (only for requirement edits)
+- `docs/plans/` — dev plans consumed by the gh-issue-creator skill
+- `pipeline/README.md` — bulk word-data pipeline (SUBTLEX/WordNet)
+
+## CI/CD at a glance (.github/workflows/)
+
+- `ci.yaml` — umbrella with paths-filter; dispatches the workflows below
+- `quality.yaml` — fmt:check, lint, check, unit tests + coverage (≙
+  `deno task ci`)
+- `e2e.yaml` — Playwright container + Postgres 17 service
+- `image.yaml` / `deploy.yaml` — GHCR image build, SSH deploy to droplet
+- `seed.yaml` — manual word seeding (workflow_dispatch)
+- `wiki-sync.yaml` — publishes `docs/` to the GitHub wiki via
+  `scripts/build_wiki.ts`
+- `requirements.yaml` — SARA requirements validation
+- `cleanup-closed-pr-branches.yml` — housekeeping
+
+Green CI locally = `deno task ci` passes; e2e additionally needs a seeded DB
+(see the `local-e2e` skill).
+
+## Skills (`.agents/skills/`, symlinked into `.claude/skills/`)
+
+Reusable workflows — invoke instead of re-deriving them:
+
+- `gh-issue-creator` — turn a plan doc into GitHub issues
+- `gh-issue-solver` — pick an issue, branch, implement, open a PR
+- `plan-brainstorm` / `incubate-idea` — refine ideas into dev plans
+- `local-e2e` — run/debug the Playwright suite locally from scratch
+- `db-migration` — schema-change workflow (schema.ts → generate → migrate →
+  test)
 
 ## Sessions (PostgreSQL)
 
@@ -194,6 +239,10 @@ restricts CSRF's allowed origin behind a proxy); wiki sync uses
 - Do NOT read large CSV, TSV, or JSON files wholesale. For data under
   `pipeline/data/`, `pipeline/testdata/`, or similar large inputs, inspect only
   targeted samples with commands such as `head`, `tail`, or `jq`.
+- `.claude/settings.json` enforces this with Read-deny rules on the heavy paths
+  (`pipeline/data/*`, `pipeline/out/*.csv`, `coverage`, `deno.lock`, vendored
+  `static/*.min.*`, `db/migrations/meta/`). `pipeline/data/seed_words.csv` (the
+  small curated seed bank) is the one data file that stays readable/editable.
 
 ### Task-specific priorities
 
@@ -209,7 +258,14 @@ restricts CSRF's allowed origin behind a proxy); wiki sync uses
 - Use subagent sandboxing for non-trivial implementation work to keep logs,
   tests, and intermediate exploration out of the main context window.
 - Run targeted tests during debugging instead of repeatedly loading full-suite
-  output into the main conversation.
+  output into the main conversation; run `deno task ci` once before finishing.
+
+### Freshness
+
+- `tests/agent_docs_test.ts` fails CI if this file's map misses a top-level
+  source directory, a referenced `deno task` doesn't exist (here or in
+  `.github/workflows/`), or a skill loses its frontmatter — keep AGENTS.md
+  updated instead of deleting the test.
 
 ## Gotchas
 

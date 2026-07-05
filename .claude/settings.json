@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./coverage/**)",
+      "Read(./coverage.lcov)",
+      "Read(./node_modules/**)",
+      "Read(./.deno-cache/**)",
+      "Read(./.data/**)",
+      "Read(./.wiki-build/**)",
+      "Read(./test-results/**)",
+      "Read(./playwright-report/**)",
+      "Read(./deno.lock)",
+      "Read(./static/htmx.min.js)",
+      "Read(./static/pico.min.css)",
+      "Read(./pipeline/data/wordnet/**)",
+      "Read(./pipeline/data/wordlists/**)",
+      "Read(./pipeline/data/subtlex/**)",
+      "Read(./pipeline/data/tatoeba/**)",
+      "Read(./pipeline/out/*.csv)",
+      "Read(./db/migrations/meta/**)"
+    ],
+    "allow": [
+      "Bash(deno task fmt)",
+      "Bash(deno task fmt:check)",
+      "Bash(deno task lint)",
+      "Bash(deno task check)",
+      "Bash(deno task test)",
+      "Bash(deno task ci)",
+      "Bash(deno test:*)",
+      "Bash(deno fmt:*)",
+      "Bash(deno lint:*)",
+      "Bash(deno check:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ]
+  }
+}

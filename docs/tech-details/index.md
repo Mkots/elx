@@ -11,6 +11,7 @@ Architecture, infrastructure, and tooling documentation for the ELX project.
 | [Test Stack](test-tech-stack.md)      | Testing pyramid: deno test, Playwright E2E, SARA traceability            |
 | [Enrichment Pipeline](enrichers.md)   | Offline pipeline: data cleaning, semantic & phonetic distractors, gaps   |
 | [Analytics Contract](analytics.md)    | GTM consent mode and `dataLayer` event contract                          |
+| [AI Agent Tooling](agent-tooling.md)  | AGENTS.md conventions, skills, Read-deny rules, docs freshness guard     |
 
 ## Architecture Summary
 
