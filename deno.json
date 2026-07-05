@@ -59,7 +59,7 @@
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",
-    "test": "deno test --allow-env --allow-read --allow-write --allow-net",
+    "test": "deno test --parallel --allow-env --allow-read --allow-write --allow-net",
     "test:lint-rules": "deno test tools/lint/audit_rules_test.ts",
     "test:coverage": "DENO_DIR=.deno-cache deno test --clean --coverage=coverage --coverage-raw-data-only --allow-env --allow-read --allow-write --allow-net && DENO_DIR=.deno-cache deno coverage coverage --lcov --output=coverage.lcov",
     "wiki:build": "deno run -A scripts/build_wiki.ts docs .wiki-build",
