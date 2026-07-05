@@ -53,3 +53,4 @@ pipeline/data/wordlists/*
 !pipeline/data/wordnet/
 pipeline/data/wordnet/*
 !pipeline/data/wordnet/README.md
+pipeline/out/manifest.json

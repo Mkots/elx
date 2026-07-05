@@ -104,3 +104,91 @@ output artifact contains exactly `M` rows (the `K` not-found words are dropped,
 not left in with a `notFound` flag). Cleaning first should push the not-found
 rate from roughly 8% down to about 1-2% (the remainder being words genuinely
 absent from the WordNet data).
+
+## Example Import Configuration
+
+Below is an example of a mapping JSON configuration that can be used on the
+`/admin/words/import` page to import a CSV generated from this pipeline (or a
+similar source).
+
+### Example CSV structure
+
+```csv
+headword,pos,CEFR,CoreInventory 1,CoreInventory 2,Threshold,lexname,definition,synonyms,antonyms,examples,pronunciation,senseCount,difficulty,zipf
+abandon,verb,B1,,,,verb.possession,"forsake, leave behind",,,We abandoned the old car in the empty parking lot,,5,3,3.9085
+```
+
+### Corresponding Import JSON Configuration
+
+```json
+{
+  "format": "csv",
+  "delimiter": ",",
+  "hasHeader": true,
+  "onConflict": "update",
+  "fields": {
+    "value": {
+      "from": "headword"
+    },
+    "difficulty": {
+      "from": "difficulty"
+    },
+    "definition": {
+      "from": "definition"
+    },
+    "synonyms": {
+      "from": "synonyms",
+      "splitBy": ","
+    },
+    "antonyms": {
+      "from": "antonyms",
+      "splitBy": ","
+    }
+  }
+}
+```
+
+### Example 2: CSV with standard structure (including pseudowords)
+
+For a CSV with matching column names that includes real and pseudoword flags
+(e.g. `is_real` column):
+
+#### CSV structure
+
+```csv
+value,is_real,difficulty,synonyms,antonyms,definition
+desstugn,false,3,,,
+```
+
+#### Corresponding Import JSON Configuration
+
+```json
+{
+  "format": "csv",
+  "delimiter": ",",
+  "hasHeader": true,
+  "onConflict": "update",
+  "fields": {
+    "value": {
+      "from": "value"
+    },
+    "isReal": {
+      "from": "is_real"
+    },
+    "difficulty": {
+      "from": "difficulty"
+    },
+    "synonyms": {
+      "from": "synonyms",
+      "splitBy": ";"
+    },
+    "antonyms": {
+      "from": "antonyms",
+      "splitBy": ";"
+    },
+    "definition": {
+      "from": "definition"
+    }
+  }
+}
+```
