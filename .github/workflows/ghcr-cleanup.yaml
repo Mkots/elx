@@ -30,3 +30,14 @@ jobs:
           older-than: 1 day
           delete-untagged: true
           dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+
+      - name: Delete non-release Playwright images older than 1 day
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        with:
+          package: elx-playwright
+          use-regex: true
+          delete-tags: "^sha-.*$"
+          exclude-tags: "^latest$,^\\d+\\.\\d+$,^\\d+\\.\\d+\\.\\d+$"
+          older-than: 1 day
+          delete-untagged: true
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
