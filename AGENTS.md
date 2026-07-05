@@ -174,8 +174,8 @@ Green CI locally = `deno task ci` passes; e2e additionally needs a seeded DB
 
 Reusable workflows — invoke instead of re-deriving them:
 
-- `gh-issue-creator` — turn a plan doc into GitHub issues
-- `gh-issue-solver` — pick an issue, branch, implement, open a PR
+- `gh-issue-creator` — turn a plan doc into a milestone + its GitHub issues
+- `gh-issue-solver` — implement every open issue in a milestone (branch/PR each)
 - `plan-brainstorm` / `incubate-idea` — refine ideas into dev plans
 - `local-e2e` — run/debug the Playwright suite locally from scratch
 - `db-migration` — schema-change workflow (schema.ts → generate → migrate →

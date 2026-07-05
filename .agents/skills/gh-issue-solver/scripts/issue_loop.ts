@@ -22,6 +22,7 @@ interface Issue {
 }
 
 interface State {
+  milestone: string | null;
   currentIssue: Issue | null;
   remainingIssues: Issue[];
   completedIssues: Issue[];
@@ -109,9 +110,20 @@ async function runCmd(cmd: string[], errorMsg: string): Promise<string> {
 async function loadState(): Promise<State> {
   try {
     const data = await Deno.readTextFile(STATE_FILE);
-    return JSON.parse(data);
+    const parsed = JSON.parse(data) as Partial<State>;
+    return {
+      milestone: parsed.milestone ?? null,
+      currentIssue: parsed.currentIssue ?? null,
+      remainingIssues: parsed.remainingIssues ?? [],
+      completedIssues: parsed.completedIssues ?? [],
+    };
   } catch {
-    return { currentIssue: null, remainingIssues: [], completedIssues: [] };
+    return {
+      milestone: null,
+      currentIssue: null,
+      remainingIssues: [],
+      completedIssues: [],
+    };
   }
 }
 
@@ -213,18 +225,27 @@ async function printIssueDetails(issueNumber: number) {
   console.log(details);
 }
 
-async function startWorkflow(label: string) {
+async function startWorkflow(milestoneArg: string | null) {
   const state = await loadState();
+  const milestone = milestoneArg ?? state.milestone;
 
   if (state.remainingIssues.length === 0 && !state.currentIssue) {
-    console.log(blue(`Fetching open issues with label "${label}"...`));
+    if (!milestone) {
+      console.error(
+        red(
+          'Error: no milestone selected. Run --start with --milestone "<title>".',
+        ),
+      );
+      Deno.exit(1);
+    }
+    console.log(blue(`Fetching open issues in milestone "${milestone}"...`));
     const issuesJson = await runCmd(
       [
         "gh",
         "issue",
         "list",
-        "--label",
-        label,
+        "--milestone",
+        milestone,
         "--json",
         "number,title,url",
         "--state",
@@ -236,14 +257,17 @@ async function startWorkflow(label: string) {
     );
     const parsedIssues = parseIssueList(issuesJson);
     if (parsedIssues.length === 0) {
-      console.log(green("No open issues found."));
+      console.log(green(`No open issues found in milestone "${milestone}".`));
       return;
     }
     parsedIssues.sort((a, b) => a.number - b.number);
+    state.milestone = milestone;
     state.remainingIssues = parsedIssues;
     await saveState(state);
     console.log(
-      green(`Loaded ${state.remainingIssues.length} issues into the queue.`),
+      green(
+        `Loaded ${state.remainingIssues.length} issues from milestone "${milestone}" into the queue.`,
+      ),
     );
   }
 
@@ -502,7 +526,7 @@ async function submitWorkflow() {
 
   if (state.remainingIssues.length > 0) {
     console.log(green("\nMoving on to the next issue..."));
-    await startWorkflow("scripts");
+    await startWorkflow(null);
   } else {
     console.log(green("\nAll issues in queue have been submitted."));
   }
@@ -538,6 +562,7 @@ async function showStatus() {
 
 async function resetWorkflow() {
   await saveState({
+    milestone: null,
     currentIssue: null,
     remainingIssues: [],
     completedIssues: [],
@@ -565,7 +590,7 @@ async function skipWorkflow() {
   await checkoutUpdatedDefaultBranch();
 
   if (state.remainingIssues.length > 0) {
-    await startWorkflow("scripts");
+    await startWorkflow(null);
   } else {
     console.log(green("No more issues in the queue."));
   }
@@ -574,12 +599,11 @@ async function skipWorkflow() {
 // Command dispatcher
 const args = parseArgs(Deno.args, {
   boolean: ["start", "submit", "status", "reset", "skip"],
-  string: ["label"],
-  default: { label: "scripts" },
+  string: ["milestone"],
 });
 
 if (args.start) {
-  await startWorkflow(args.label);
+  await startWorkflow(args.milestone ?? null);
 } else if (args.submit) {
   await submitWorkflow();
 } else if (args.status) {
@@ -591,10 +615,13 @@ if (args.start) {
 } else {
   console.log(`
 Usage:
-  deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --start [--label scripts]
+  deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --start --milestone "<Milestone title>"
   deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --submit
   deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --status
   deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --skip
   deno run -A .agents/skills/gh-issue-solver/scripts/issue_loop.ts --reset
+
+The milestone is required on the first --start of a batch and is persisted in
+state.json; later --start/--submit/--skip invocations reuse it automatically.
   `);
 }
