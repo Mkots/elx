@@ -307,12 +307,11 @@ async function submitWorkflow() {
   // 1. Run local CI tests
   console.log(blue("Running local CI quality gates (`deno task ci`)..."));
   try {
-    const ciOutput = await runCmd(
+    await runCmd(
       ["deno", "task", "ci"],
       "Local Deno CI checks failed!",
     );
-    console.log(ciOutput);
-    console.log(green("Local CI passed."));
+    console.log(green("Local CI passed! ✅"));
   } catch (err: unknown) {
     console.error(
       red("\nLocal CI failed. Please fix formatting, linting, or tests."),
@@ -398,6 +397,7 @@ async function submitWorkflow() {
   let attempts = 0;
   const maxAttempts = 40;
   let checksPassed = false;
+  let lastStatusString = "";
 
   while (attempts < maxAttempts) {
     attempts++;
@@ -414,9 +414,13 @@ async function submitWorkflow() {
         : [];
 
       if (rollup.length === 0) {
-        console.log(
-          gray(`[${attempts}/${maxAttempts}] Waiting for checks to start...`),
-        );
+        const currentStatus = "Waiting for checks to start...";
+        if (currentStatus !== lastStatusString || attempts % 5 === 0) {
+          console.log(
+            gray(`[${attempts}/${maxAttempts}] ${currentStatus}`),
+          );
+          lastStatusString = currentStatus;
+        }
         continue;
       }
 
@@ -462,10 +466,14 @@ async function submitWorkflow() {
         break;
       }
 
-      console.log(
-        gray(`[${attempts}/${maxAttempts}] Checks in progress: `) +
-          yellow(runningChecks.join(", ")),
-      );
+      const currentStatus = runningChecks.join(", ");
+      if (currentStatus !== lastStatusString || attempts % 5 === 0) {
+        console.log(
+          gray(`[${attempts}/${maxAttempts}] Checks in progress: `) +
+            yellow(currentStatus),
+        );
+        lastStatusString = currentStatus;
+      }
     } catch (err: unknown) {
       console.log(
         yellow(`Warning: Could not fetch checks status: ${errorMessage(err)}`),
