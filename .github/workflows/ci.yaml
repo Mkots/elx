@@ -38,13 +38,18 @@ jobs:
               - main.ts
               - app.ts
               - session.ts
+              - analytics.ts
               - deno.json
               - deno.lock
+              - drizzle.config.ts
               - playwright.config.ts
               - routes/**
               - ui/**
               - db/**
               - scoring/**
+              - domain/**
+              - scripts/**
+              - pipeline/data/seed_words.csv
               - tests/e2e/**
               - .github/workflows/ci.yaml
               - .github/workflows/e2e.yaml
@@ -56,14 +61,20 @@ jobs:
               - main.ts
               - app.ts
               - session.ts
+              - analytics.ts
               - deno.json
               - deno.lock
+              - drizzle.config.ts
               - Dockerfile
+              - .dockerignore
               - static/**
               - db/**
               - routes/**
               - ui/**
               - scoring/**
+              - domain/**
+              - scripts/**
+              - pipeline/data/seed_words.csv
               - .github/workflows/ci.yaml
               - .github/workflows/image.yaml
             deploy:

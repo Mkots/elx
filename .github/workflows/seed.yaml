@@ -10,10 +10,6 @@ on:
         type: choice
         options:
           - seed:words
-          - seed:synonyms
-          - seed:spelling
-          - seed:meanings
-          - all
 
 permissions:
   contents: read
@@ -48,14 +44,9 @@ jobs:
               docker exec "$cid" deno task "$1"
             }
 
+            # Allowlist guard: only tasks that exist in deno.json may run.
             case "$SEED_TASK" in
-              all)
-                run_seed_task seed:words
-                run_seed_task seed:synonyms
-                run_seed_task seed:spelling
-                run_seed_task seed:meanings
-                ;;
-              seed:words|seed:synonyms|seed:spelling|seed:meanings)
+              seed:words)
                 run_seed_task "$SEED_TASK"
                 ;;
               *)

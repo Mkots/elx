@@ -24,8 +24,15 @@ source plan is in another language.
    confirmation before creating anything**. Creating issues is an outward-facing
    action.
 4. **Creation**: after confirmation, create issues **in dependency order** so
-   earlier ones can be referenced. Write each body to a temp file and run:
-   `gh issue create --title "<title>" --label "<a,b>" --body-file <file>`.
+   earlier ones can be referenced. Write each body to a temporary file (outside
+   the project workspace, e.g., in `/tmp` or the agent's scratch folder) and
+   run: `gh issue create --title "<title>" --label "<a,b>" --body-file <file>`.
+   **CRITICAL**: Never write temporary files or issue creation helper scripts to
+   the project workspace (such as `docs/plans/issues` or
+   `docs/plans/create_issues.sh`), as this pollutes the repository. If any
+   scripts are needed to automate or batch create issues, save them inside the
+   skill folder (`.agents/skills/gh-issue-creator/scripts/`) or the scratch
+   directory so they can be reused without polluting the workspace.
 5. **Report**: list the created issue numbers and URLs.
 
 ## Issue format

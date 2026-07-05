@@ -1,18 +1,54 @@
-.devcontainer
-.deno-cache
+# VCS / CI / dev tooling
 .git
 .github
+.agents
+.claude
+.devcontainer
 .zed
+.editorconfig
+.gitignore
+.dockerignore
+Dockerfile
+hk.pkl
+sara.toml
+
+# Docs & repo meta (never read at runtime)
+docs
+deploy
+AGENTS.md
+CLAUDE.md
+README.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Orchestration configs (deploy copies compose.yaml from the checkout, not the image)
+compose.yaml
+compose.dev.yaml
+
+# Tests & QA artifacts
+tests
+playwright.config.ts
+playwright-report
+test-results
 coverage
 coverage.lcov
-docs
-lefthook.yml
+
+# Local caches / state / build artifacts
+.deno-cache
+.data
+.wiki-build
 node_modules
-playwright-report
-playwright.config.ts
-renovate.json
-test-results
-tests
+**/.DS_Store
+
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Offline word pipeline (79 MB of raw/generated data). Only the curated seed
+# bank ships: `deno task seed:words` runs inside the container (seed.yaml).
+pipeline/*
+!pipeline/data
+pipeline/data/*
+!pipeline/data/seed_words.csv
