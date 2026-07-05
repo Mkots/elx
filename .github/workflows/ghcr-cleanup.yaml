@@ -1,0 +1,30 @@
+name: GHCR cleanup
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Preview deletions without removing anything
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete stale non-release images
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - name: Delete sha-tagged images older than 1 day
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: elx
+          delete-tags: "sha-*"
+          older-than: 1 day
+          delete-untagged: true
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
