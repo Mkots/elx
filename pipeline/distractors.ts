@@ -211,13 +211,13 @@ Options:
 
   const scriptDir = import.meta.dirname ?? ".";
   const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
-  const seedVal = args.seed ? parseInt(args.seed, 10) : DEFAULT_SEED;
+  const seedVal = args.seed ? Number.parseInt(args.seed, 10) : DEFAULT_SEED;
 
   try {
     await runDistractors({
       input: inputPath,
       output: args.output,
-      seed: isNaN(seedVal) ? DEFAULT_SEED : seedVal,
+      seed: Number.isNaN(seedVal) ? DEFAULT_SEED : seedVal,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -211,15 +211,15 @@ Options:
   const scriptDir = import.meta.dirname ?? ".";
   const dataDir = args["data-dir"] ?? `${scriptDir}/data`;
   const outDir = args["out-dir"] ?? `${scriptDir}/out`;
-  const seed = args.seed ? parseInt(args.seed, 10) : DEFAULT_SEED;
-  const pseudowordCount = args.count ? parseInt(args.count, 10) : 100;
+  const seed = args.seed ? Number.parseInt(args.seed, 10) : DEFAULT_SEED;
+  const pseudowordCount = args.count ? Number.parseInt(args.count, 10) : 100;
 
   const manifest = await runPipeline({
     dataDir,
     outDir,
     wordlist: args.wordlist,
-    seed: isNaN(seed) ? DEFAULT_SEED : seed,
-    pseudowordCount: isNaN(pseudowordCount) ? 100 : pseudowordCount,
+    seed: Number.isNaN(seed) ? DEFAULT_SEED : seed,
+    pseudowordCount: Number.isNaN(pseudowordCount) ? 100 : pseudowordCount,
   });
 
   console.error(

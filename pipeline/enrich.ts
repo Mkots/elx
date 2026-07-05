@@ -269,7 +269,7 @@ export class Rabbits {
         const antonyms = [
           ...new Set(
             (sense.antonym ?? [])
-              .map((key) => key.split("%")[0].replace(/_/g, " "))
+              .map((key) => key.split("%")[0].replaceAll(/_/g, " "))
               .filter((lemma) =>
                 lemma.toLowerCase() !== headword.toLowerCase()
               ),
@@ -314,8 +314,8 @@ async function loadSubtlex(filePath: string): Promise<Map<string, number>> {
       if (!line) continue;
       const parts = line.split("\t");
       const word = parts[0]?.toLowerCase();
-      const subtlwf = parseFloat(parts[5]);
-      if (word && !isNaN(subtlwf)) {
+      const subtlwf = Number.parseFloat(parts[5]);
+      if (word && !Number.isNaN(subtlwf)) {
         const zipf = Math.log10(subtlwf) + 3;
         subtlex.set(word, zipf);
       }
@@ -353,7 +353,7 @@ function getDifficultyAndZipf(
   }
 
   const zipf = subtlex.get(word.toLowerCase());
-  if (zipf !== undefined && !isNaN(zipf)) {
+  if (zipf !== undefined && !Number.isNaN(zipf)) {
     let difficulty = 5;
     if (zipf >= 4.5) difficulty = 1;
     else if (zipf >= 4.0) difficulty = 2;

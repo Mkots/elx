@@ -104,7 +104,10 @@ export async function generateBaseTicket(
   const maxId = maxIdResult[0]?.maxId ?? 0;
   const code = `ELX-T-${String(maxId + 1).padStart(4, "0")}`;
 
-  const bankVersions = [...new Set(wordPool.map((w) => w.bankVersion))].sort();
+  const bankVersions = [...new Set(wordPool.map((w) => w.bankVersion))].sort((
+    a,
+    b,
+  ) => String(a).localeCompare(String(b)));
   const defaultNotes = `Created under active config: ${config.name}. ` +
     `Bank version(s): ${bankVersions.join(", ") || "none"}.`;
 

@@ -189,7 +189,7 @@ export function registerWordsRoutes(
         }),
       );
     }
-    if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
+    if (Number.isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
       return context.html(
         AdminWordEditPage({
           word: wordData,
@@ -279,7 +279,7 @@ export function registerWordsRoutes(
   // GET /admin/words/:id/edit
   route.get("/words/:id/edit", async (context) => {
     const id = Number(context.req.param("id"));
-    if (isNaN(id)) {
+    if (Number.isNaN(id)) {
       return context.redirect(
         "/admin/words?error=" + encodeURIComponent("Invalid word ID."),
       );
@@ -296,7 +296,7 @@ export function registerWordsRoutes(
   // POST /admin/words/:id/edit
   route.post("/words/:id/edit", async (context) => {
     const id = Number(context.req.param("id"));
-    if (isNaN(id)) {
+    if (Number.isNaN(id)) {
       return context.redirect(
         "/admin/words?error=" + encodeURIComponent("Invalid word ID."),
       );
@@ -349,7 +349,7 @@ export function registerWordsRoutes(
         }),
       );
     }
-    if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
+    if (Number.isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
       return context.html(
         AdminWordEditPage({
           word: wordData,
@@ -386,7 +386,7 @@ export function registerWordsRoutes(
   // POST /admin/words/:id/delete
   route.post("/words/:id/delete", async (context) => {
     const id = Number(context.req.param("id"));
-    if (isNaN(id)) {
+    if (Number.isNaN(id)) {
       return context.redirect(
         "/admin/words?error=" + encodeURIComponent("Invalid word ID."),
       );

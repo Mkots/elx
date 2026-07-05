@@ -87,8 +87,8 @@ export async function runPseudowords(
   const realWords: { word: string; difficulty: number }[] = [];
   for (const rec of records) {
     const word = (rec.headword ?? "").trim().toLowerCase();
-    const diff = parseInt(rec.difficulty ?? "1", 10);
-    if (word && !isNaN(diff)) {
+    const diff = Number.parseInt(rec.difficulty ?? "1", 10);
+    if (word && !Number.isNaN(diff)) {
       realWords.push({ word, difficulty: diff });
     }
   }
@@ -171,10 +171,10 @@ Options:
   const scriptDir = import.meta.dirname ?? ".";
   const inputPath = args.input ?? `${scriptDir}/out/ALL.enriched.csv`;
   const rabbitsDir = args.rabbits ?? `${scriptDir}/data/wordnet`;
-  const count = parseInt(args.count ?? "100", 10);
-  const seedVal = args.seed ? parseInt(args.seed, 10) : DEFAULT_SEED;
+  const count = Number.parseInt(args.count ?? "100", 10);
+  const seedVal = args.seed ? Number.parseInt(args.seed, 10) : DEFAULT_SEED;
 
-  if (isNaN(count) || count <= 0) {
+  if (Number.isNaN(count) || count <= 0) {
     console.error("Error: --count must be a positive integer");
     Deno.exit(1);
   }

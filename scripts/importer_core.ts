@@ -115,8 +115,8 @@ export function mapRow(
     if (Array.isArray(row)) {
       const idx = typeof fromKey === "number"
         ? fromKey
-        : parseInt(String(fromKey), 10);
-      if (!isNaN(idx) && idx >= 0 && idx < row.length) {
+        : Number.parseInt(String(fromKey), 10);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < row.length) {
         rawVal = row[idx];
       }
     } else if (row && typeof row === "object") {
@@ -158,8 +158,8 @@ export function mapRow(
     if (Array.isArray(row)) {
       const idx = typeof fromKey === "number"
         ? fromKey
-        : parseInt(String(fromKey), 10);
-      if (!isNaN(idx) && idx >= 0 && idx < row.length) {
+        : Number.parseInt(String(fromKey), 10);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < row.length) {
         rawVal = row[idx];
       }
     } else if (row && typeof row === "object") {
@@ -241,8 +241,8 @@ export function mapRow(
   if (typeof rawDiff === "number") {
     difficulty = rawDiff;
   } else if (rawDiff !== undefined) {
-    difficulty = parseInt(String(rawDiff).trim(), 10);
-    if (isNaN(difficulty)) {
+    difficulty = Number.parseInt(String(rawDiff).trim(), 10);
+    if (Number.isNaN(difficulty)) {
       throw new Error(`Invalid integer value '${rawDiff}' for difficulty`);
     }
   } else {

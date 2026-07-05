@@ -49,13 +49,13 @@ export function isHyphenated(headword: string): boolean {
 /** Dotted shorthand (`a.m.`, `Mr.`) or an all-caps acronym (`CD`, `DVD`). */
 export function isAbbreviation(headword: string): boolean {
   if (headword.includes(".")) return true;
-  const letters = headword.replace(/[^A-Za-z]/g, "");
+  const letters = headword.replaceAll(/[^A-Za-z]/g, "");
   return letters.length >= 2 && letters === letters.toUpperCase();
 }
 
 /** Lowercases and normalizes whitespace/unicode of an already-vetted headword. */
 export function normalizeHeadword(headword: string): string {
-  return headword.trim().toLowerCase().replace(/\s+/g, " ").normalize("NFC");
+  return headword.trim().toLowerCase().replaceAll(/\s+/g, " ").normalize("NFC");
 }
 
 export interface CleanStats {
