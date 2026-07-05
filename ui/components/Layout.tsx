@@ -73,8 +73,7 @@ export function Layout(
           content="ELX vocabulary assessment application"
         />
         <title>{title}</title>
-        <link rel="stylesheet" href="/static/pico.min.css" />
-        <link rel="stylesheet" href="/static/app.css" />
+        <link rel="stylesheet" href="/static/public.css" />
         {containerId && (
           <script
             nonce={nonce}
