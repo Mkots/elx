@@ -37,7 +37,13 @@ hooks {
                 check = "deno task check"
             }
             ["test"] {
-                check = "deno task test"
+                // hk runs pre-push steps concurrently. `deno test` type-checks by
+                // default, so running it alongside `check` type-checks the whole
+                // graph twice at once and oversubscribes the CPU (~9s). The
+                // `check` step already owns whole-project type-checking, so run
+                // tests here with --no-check (still --parallel) — ~2.6s.
+                check =
+                    "deno test --no-check --parallel --allow-env --allow-read --allow-write --allow-net"
             }
         }
     }
