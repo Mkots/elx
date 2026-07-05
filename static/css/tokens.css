@@ -1,0 +1,57 @@
+@layer app {
+:root {
+    --pico-font-family: system-ui, -apple-system, sans-serif;
+    --pico-font-family-monospace: ui-monospace, "Cascadia Code", monospace;
+
+    --pico-primary: #afa4ce;
+    --pico-primary-hover: #c4a4ce;
+    --pico-background-color: #4b4860;
+    --pico-card-background-color: #5d5977;
+    --pico-color: #f2effa;
+    --pico-muted-color: #c9c2de;
+
+    --color-checked-bg: #c4a4ce;
+    --color-checked-border: #c4a4ce;
+    --color-primary-contrast: #2d2839;
+    --color-positive: #8bd5ca;
+    --color-positive-hover: #a1e0d8;
+    --color-positive-contrast: #102b28;
+    --color-positive-dark: #2f766f;
+    --color-caution: #f2c177;
+    --color-caution-contrast: #2b2110;
+    --color-caution-dark: #7a5221;
+    --color-neutral-action-bg: #f3edf7;
+    --color-neutral-action-fg: #332c43;
+    --color-danger: #ff7675;
+    --color-orange: #ffb86c;
+    --color-panel-strong: #4f4a68;
+    --color-border-default: rgba(242, 239, 250, 0.16);
+    --color-border-muted: rgba(242, 239, 250, 0.08);
+    --color-border-hairline: rgba(242, 239, 250, 0.04);
+    --color-surface-hover: rgba(242, 239, 250, 0.05);
+    --color-surface-empty: rgba(242, 239, 250, 0.03);
+    --color-surface-muted: rgba(242, 239, 250, 0.02);
+    --color-surface-pending: rgba(242, 239, 250, 0.06);
+    --color-focus-ring: rgba(242, 239, 250, 0.35);
+    --color-primary-surface: rgba(196, 164, 206, 0.15);
+    --color-primary-surface-soft: rgba(175, 164, 206, 0.05);
+    --color-primary-border: rgba(196, 164, 206, 0.25);
+    --color-primary-border-strong: rgba(196, 164, 206, 0.3);
+    --color-primary-glow: rgba(175, 164, 206, 0.1);
+    --color-positive-surface: rgba(139, 213, 202, 0.1);
+    --color-positive-surface-soft: rgba(139, 213, 202, 0.08);
+    --color-positive-surface-strong: rgba(139, 213, 202, 0.15);
+    --color-positive-border: rgba(139, 213, 202, 0.2);
+    --color-positive-elevated: rgba(139, 213, 202, 0.18);
+    --color-positive-glow: rgba(139, 213, 202, 0.3);
+    --color-caution-surface: rgba(242, 193, 119, 0.15);
+    --color-danger-surface: rgba(255, 118, 117, 0.1);
+    --color-danger-surface-soft: rgba(255, 118, 117, 0.08);
+    --color-danger-border: rgba(255, 118, 117, 0.2);
+    --color-neutral-action-border: rgba(51, 44, 67, 0.12);
+    --color-shadow-subtle: rgba(0, 0, 0, 0.08);
+    --color-shadow-medium: rgba(0, 0, 0, 0.15);
+    --color-shadow-strong: rgba(0, 0, 0, 0.24);
+    --color-log-surface: rgba(0, 0, 0, 0.2);
+}
+}

@@ -10,7 +10,7 @@ export function LoginPage({ error }: LoginPageProps = {}) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="ELX Admin Login" />
         <title>Admin Login | ELX</title>
-        <link rel="stylesheet" href="/static/admin.css" />
+        <link rel="stylesheet" href="/static/login.css" />
       </head>
       <body class="login-body">
         <main class="login-container">
