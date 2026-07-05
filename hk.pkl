@@ -8,6 +8,19 @@ local linters = new Mapping<String, Step> {
     }
     ["lint"] {
         glob = List("*.ts", "*.tsx", "*.js", "*.jsx")
+        // Mirror deno.json `lint.exclude`: `deno lint` errors with
+        // "No target files found" when every path it is handed is excluded, so
+        // hk must drop those files before substituting {{files}} (otherwise a
+        // commit touching only excluded paths like `.agents/skills` fails).
+        exclude = List(
+            "coverage/**",
+            ".wiki-build/**",
+            "node_modules/**",
+            "playwright-report/**",
+            "test-results/**",
+            "static/**",
+            ".agents/skills/**",
+        )
         check = "deno lint {{files}}"
     }
 }
