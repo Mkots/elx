@@ -19,15 +19,19 @@ export function createResultRoute(services: Services) {
     const result = await services.sessions.loadStage2Result(sessionId);
     if (!result) return context.redirect("/stage/2", 302);
 
+    const { score, truthfulness, vocabularySize } = result;
+
     return context.html(
       ResultPage({
-        ...result,
+        score,
+        truthfulness,
+        vocabularySize,
         analytics: analyticsProps(context, {
           consentGranted: true,
           events: [
             analyticsEvent("test_completed", sessionId, ticket.code, {
-              score: result.score,
-              truthfulness: result.truthfulness,
+              score,
+              truthfulness,
             }),
           ],
         }),

@@ -54,8 +54,10 @@ Deno.test("VER-RESULT-ROUTE: GET /result redirects to /stage/2 when no result in
   assertEquals(response.headers.get("location"), "/stage/2");
 });
 
-Deno.test("VER-RESULT-ROUTE: GET /result renders score and truthfulness", async () => {
-  const app = createApp(makeServices({ score: 42, truthfulness: 87 }));
+Deno.test("VER-RESULT-ROUTE: GET /result renders score, truthfulness and vocabulary size", async () => {
+  const app = createApp(
+    makeServices({ score: 42, truthfulness: 87, vocabularySize: 5200 }),
+  );
 
   const response = await app.request("/result", {
     headers: { "cookie": "sessionId=test-session" },
@@ -68,6 +70,8 @@ Deno.test("VER-RESULT-ROUTE: GET /result renders score and truthfulness", async 
   assertStringIncludes(body, "87%");
   assertStringIncludes(body, "High confidence");
   assertStringIncludes(body, 'class="truthfulness-progress"');
+  assertStringIncludes(body, 'data-testid="vocabulary-size"');
+  assertStringIncludes(body, "5,200");
 });
 
 Deno.test("VER-RESULT-ROUTE: GET /result renders a link to restart", async () => {

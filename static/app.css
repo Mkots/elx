@@ -253,6 +253,54 @@
         var(--color-panel-strong);
 }
 
+.result-vocab-card {
+    display: grid;
+    gap: 0.5rem;
+    padding: 2.25rem 2rem;
+    border-radius: var(--pico-border-radius);
+    background: linear-gradient(135deg, rgba(196, 164, 206, 0.15), rgba(175, 164, 206, 0.05)), var(--color-panel-strong);
+    border: 1px solid rgba(196, 164, 206, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.result-vocab-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(175, 164, 206, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.result-vocab-label {
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--pico-muted-color);
+}
+
+.result-vocab-val {
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--pico-color), var(--color-checked-bg));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0.5rem 0;
+}
+
+.result-vocab-desc {
+    font-size: 0.95rem;
+    color: var(--pico-muted-color);
+    margin: 0;
+}
+
 .result-label {
     color: var(--pico-muted-color);
     font-size: 0.875rem;
