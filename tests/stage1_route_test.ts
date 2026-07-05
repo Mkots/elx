@@ -13,6 +13,7 @@ const mockTicket: typeof tickets.$inferSelect = {
     type: "verification" as const,
     wordText: i % 2 === 0 ? `realword${i}` : `pseudoword${i}`,
     isReal: i % 2 === 0,
+    difficulty: 1,
   })),
   createdAt: new Date(),
   updatedAt: new Date(),

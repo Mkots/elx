@@ -45,7 +45,7 @@ let mockTicketsList: (typeof ticketsTable.$inferSelect)[] = [
     title: "Mock Ticket 1",
     notes: "Notes 1",
     questions: [
-      { type: "verification", wordText: "hello", isReal: true },
+      { type: "verification", wordText: "hello", isReal: true, difficulty: 1 },
       {
         type: "synonym",
         promptText: "hello",
@@ -77,7 +77,12 @@ const mockTicketsLoader: Services["tickets"] = {
       status: "base",
       title: title || "New Gen",
       notes: notes || "Notes",
-      questions: [{ type: "verification", wordText: "random", isReal: true }],
+      questions: [{
+        type: "verification",
+        wordText: "random",
+        isReal: true,
+        difficulty: 1,
+      }],
       createdAt: new Date(),
       updatedAt: new Date(),
     };

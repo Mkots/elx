@@ -4,7 +4,7 @@ import type { SnapshotQuestion } from "../db/schema.ts";
 
 Deno.test("VER-TICKET-PUBLISH: a fully verified ticket has no problems", () => {
   const questions: SnapshotQuestion[] = [
-    { type: "verification", wordText: "apple", isReal: true },
+    { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
     {
       type: "synonym",
       promptText: "apple",
@@ -19,7 +19,7 @@ Deno.test("VER-TICKET-PUBLISH: a fully verified ticket has no problems", () => {
 
 Deno.test("VER-TICKET-PUBLISH: lists every problem across every unverified question at once", () => {
   const questions: SnapshotQuestion[] = [
-    { type: "verification", wordText: "apple", isReal: true },
+    { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
     {
       type: "synonym",
       promptText: "apple",
@@ -97,8 +97,8 @@ Deno.test("VER-TICKET-PUBLISH: lists every problem across every unverified quest
 
 Deno.test("VER-TICKET-PUBLISH: verification questions never contribute problems", () => {
   const questions: SnapshotQuestion[] = [
-    { type: "verification", wordText: "apple", isReal: true },
-    { type: "verification", wordText: "blarg", isReal: false },
+    { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
+    { type: "verification", wordText: "blarg", isReal: false, difficulty: 1 },
   ];
 
   assertEquals(validateForPublish({ questions }), []);
