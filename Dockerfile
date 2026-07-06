@@ -1,4 +1,4 @@
-FROM denoland/deno:debian-2.9.0 AS dependencies
+FROM denoland/deno:debian-2.9.1 AS dependencies
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ FROM dependencies AS build
 COPY . .
 RUN deno cache --frozen main.ts drizzle.config.ts
 
-FROM denoland/deno:debian-2.9.0 AS runtime
+FROM denoland/deno:debian-2.9.1 AS runtime
 
 WORKDIR /app
 
