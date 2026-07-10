@@ -4,6 +4,28 @@ import { ResultPage } from "../ui/pages/ResultPage.tsx";
 import type { Services } from "../db/services.ts";
 import { requireTestSession } from "./test_session.ts";
 import { getCEFRLevel } from "../scoring/lextale.ts";
+import { getEligibleSynonymQuestions } from "../domain/stage3_eligibility.ts";
+import type { Ticket } from "../db/repositories/tickets.ts";
+
+async function loadStage3ChallengeAvailable(
+  services: Services,
+  sessionId: string,
+  ticket: Ticket,
+): Promise<boolean> {
+  const stage2KnownAnswers = await services.sessions.loadStage2Answers(
+    sessionId,
+  );
+  const eligible = getEligibleSynonymQuestions(
+    ticket.questions,
+    stage2KnownAnswers,
+  );
+  if (eligible.length === 0) return false;
+
+  const stage3Answers = await services.sessions.loadStage3Answers(sessionId);
+  return eligible.some((item) =>
+    stage3Answers[String(item.questionIndex)] === undefined
+  );
+}
 
 export function createResultRoute(services: Services) {
   const route = new Hono();
@@ -25,12 +47,25 @@ export function createResultRoute(services: Services) {
       ? getCEFRLevel(vocabularySize)
       : undefined;
 
+    const stage3ChallengeAvailable = await loadStage3ChallengeAvailable(
+      services,
+      sessionId,
+      ticket,
+    );
+    const stage3Summary = await services.sessions.loadStage3Summary(
+      sessionId,
+    );
+
     return context.html(
       ResultPage({
         score,
         truthfulness,
         vocabularySize,
         cefrLevel,
+        stage3ChallengeAvailable,
+        stage3Summary: stage3Summary.answeredCount > 0
+          ? stage3Summary
+          : undefined,
         analytics: analyticsProps(context, {
           consentGranted: true,
           events: [

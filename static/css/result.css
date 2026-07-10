@@ -157,6 +157,28 @@
     font-size: 0.95rem;
 }
 
+.result-stage3-summary {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+}
+
+.result-stage3-summary p {
+    margin: 0;
+}
+
+.result-stage3-cta {
+    justify-self: start;
+    margin: 0;
+    background: var(--color-primary-surface);
+    border: 1px solid var(--color-primary-border-strong);
+    color: var(--pico-color);
+    font-weight: 800;
+}
+
 .result-restart-btn {
     justify-self: start;
     margin: 0;
