@@ -228,6 +228,82 @@ export async function loadSessionTicketId(
   return rows[0]?.ticketId ?? null;
 }
 
+export interface Stage3Answer {
+  answer: string;
+  isCorrect: boolean;
+}
+
+export type Stage3Answers = Record<string, Stage3Answer>;
+
+export async function loadStage3Answers(
+  sessionId: string,
+): Promise<Stage3Answers> {
+  const rows = await db.select({
+    questionIndex: testAnswers.questionIndex,
+    answer: testAnswers.answer,
+    isCorrect: testAnswers.isCorrect,
+  })
+    .from(testAnswers)
+    .where(
+      and(
+        eq(testAnswers.sessionId, sessionId),
+        eq(testAnswers.stage, 3),
+      ),
+    );
+
+  return Object.fromEntries(
+    rows.map((row) => [
+      String(row.questionIndex),
+      { answer: row.answer ?? "", isCorrect: row.isCorrect ?? false },
+    ]),
+  );
+}
+
+export async function saveStage3Answer(
+  sessionId: string,
+  questionIndex: number,
+  answer: string,
+  isCorrect: boolean,
+): Promise<void> {
+  const now = new Date();
+  await db.insert(testAnswers).values({
+    sessionId,
+    questionIndex,
+    questionType: "synonym",
+    stage: 3,
+    answer,
+    isCorrect,
+    answeredAt: now,
+  }).onConflictDoUpdate({
+    target: [
+      testAnswers.sessionId,
+      testAnswers.stage,
+      testAnswers.questionIndex,
+    ],
+    set: {
+      answer,
+      isCorrect,
+      answeredAt: now,
+    },
+  });
+}
+
+export interface Stage3Summary {
+  answeredCount: number;
+  correctCount: number;
+}
+
+export async function loadStage3Summary(
+  sessionId: string,
+): Promise<Stage3Summary> {
+  const answers = await loadStage3Answers(sessionId);
+  const values = Object.values(answers);
+  return {
+    answeredCount: values.length,
+    correctCount: values.filter((entry) => entry.isCorrect).length,
+  };
+}
+
 export async function loadConsentTimestamp(
   sessionId: string,
 ): Promise<Date | null> {
