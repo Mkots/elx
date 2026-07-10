@@ -45,6 +45,25 @@ export const defaultSessionsService = {
   async loadStage2Result(sessionId: string) {
     return await sessionHelpers.loadStage2Result(sessionId);
   },
+  async loadStage3Answers(sessionId: string) {
+    return await sessionHelpers.loadStage3Answers(sessionId);
+  },
+  async saveStage3Answer(
+    sessionId: string,
+    questionIndex: number,
+    answer: string,
+    isCorrect: boolean,
+  ) {
+    await sessionHelpers.saveStage3Answer(
+      sessionId,
+      questionIndex,
+      answer,
+      isCorrect,
+    );
+  },
+  async loadStage3Summary(sessionId: string) {
+    return await sessionHelpers.loadStage3Summary(sessionId);
+  },
 };
 
 export interface Services {

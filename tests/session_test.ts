@@ -1,15 +1,18 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Hono } from "@hono/hono";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db/client.ts";
 import { testAnswers, testSessions, tickets } from "../db/schema.ts";
 import {
   completeStage2Result,
   getSessionId,
   loadStage2Result,
+  loadStage3Answers,
+  loadStage3Summary,
   saveConsentTimestamp,
   saveSessionTicketId,
   saveStage2Answer,
+  saveStage3Answer,
   saveWordSelection,
   setSessionCookie,
 } from "../session.ts";
@@ -294,6 +297,77 @@ Deno.test({
       if (ticketId > 0) {
         await db.delete(tickets).where(eq(tickets.id, ticketId));
       }
+    }
+  },
+});
+
+Deno.test({
+  name:
+    "VER-STAGE3-PERSISTENCE: saveStage3Answer upserts by (session, stage, question_index)",
+  ignore: !Deno.env.get("DATABASE_URL"),
+  async fn() {
+    const sessionId = crypto.randomUUID();
+
+    try {
+      await db.insert(testSessions).values({ id: sessionId });
+
+      await saveStage3Answer(sessionId, 1, "fruit", true);
+      await saveStage3Answer(sessionId, 2, "a", false);
+
+      const firstLoad = await loadStage3Answers(sessionId);
+      assertEquals(firstLoad, {
+        "1": { answer: "fruit", isCorrect: true },
+        "2": { answer: "a", isCorrect: false },
+      });
+
+      await saveStage3Answer(sessionId, 1, "a", false);
+      const secondLoad = await loadStage3Answers(sessionId);
+      assertEquals(secondLoad["1"], { answer: "a", isCorrect: false });
+
+      const rowCount = await db.execute<{ count: number }>(sql`
+        select count(*)::integer as count
+        from ${testAnswers}
+        where ${testAnswers.sessionId} = ${sessionId}
+          and ${testAnswers.stage} = 3
+      `);
+      assertEquals(rowCount[0].count, 2);
+
+      const rows = await db.select({ questionType: testAnswers.questionType })
+        .from(testAnswers)
+        .where(
+          and(eq(testAnswers.sessionId, sessionId), eq(testAnswers.stage, 3)),
+        );
+      assertEquals(rows.every((row) => row.questionType === "synonym"), true);
+    } finally {
+      await db.delete(testSessions).where(eq(testSessions.id, sessionId));
+    }
+  },
+});
+
+Deno.test({
+  name: "VER-STAGE3-PERSISTENCE: loadStage3Summary counts correct and answered",
+  ignore: !Deno.env.get("DATABASE_URL"),
+  async fn() {
+    const sessionId = crypto.randomUUID();
+
+    try {
+      await db.insert(testSessions).values({ id: sessionId });
+
+      assertEquals(await loadStage3Summary(sessionId), {
+        answeredCount: 0,
+        correctCount: 0,
+      });
+
+      await saveStage3Answer(sessionId, 0, "fruit", true);
+      await saveStage3Answer(sessionId, 1, "a", false);
+      await saveStage3Answer(sessionId, 2, "seat", true);
+
+      assertEquals(await loadStage3Summary(sessionId), {
+        answeredCount: 3,
+        correctCount: 2,
+      });
+    } finally {
+      await db.delete(testSessions).where(eq(testSessions.id, sessionId));
     }
   },
 });
