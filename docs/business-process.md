@@ -15,6 +15,8 @@ graph TD
     H --> I[Serve Stage 1 Grid from Snapshot]
     I --> J[Serve Stage 2 Cards from Snapshot]
     J --> K[Score and Insert test_history with ticket_id]
+    K --> L[Show /result]
+    L -.optional.-> M[Stage 3 Synonym Challenge]
 ```
 
 ---
@@ -108,3 +110,19 @@ published tickets.
      reference to the `ticket_id`. This allows administrators to track
      performance metrics per-ticket.
    - The user is redirected to the `/result` page showing their final metrics.
+
+## 6. Optional Stage 3 (Synonym Challenge)
+
+1. **Availability**: `/result` also checks whether the participant's ticket
+   snapshot has any verified `synonym` questions for words marked "Know" in
+   Stage 2 (respecting the Stage 2 `similarWord` substitution) that haven't been
+   answered yet. If so, it shows a CTA into `/stage/3`; this never happens
+   automatically.
+2. **Serving Stage 3**: `GET /stage/3` renders the next eligible synonym
+   question from the snapshot (prompt word plus `correctText` and `distractors`
+   as the four options). `POST /stage/3` validates and persists each answer to
+   `test_answers` (`stage = 3`), then serves the next card via HTMX or redirects
+   to `/result` once every eligible question is answered.
+3. **Summary**: once at least one Stage 3 answer exists, `/result` shows a Stage
+   3 summary (answered/correct counts) separate from the core LexTALE score,
+   truthfulness, vocabulary size, and CEFR result, which Stage 3 never modifies.
