@@ -312,6 +312,7 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     await page.locator('input[name="difficulty4Count"]').fill("9");
     await page.locator('input[name="difficulty5Count"]').fill("8");
     await page.locator('input[name="synonymsCount"]').fill("1");
+    await page.locator('input[name="antonymsCount"]').fill("1");
     await page.locator('input[name="spellingCount"]').fill("1");
     await page.locator('input[name="definitionCount"]').fill("1");
 
@@ -365,7 +366,7 @@ test.describe("VER-ADMIN-E2E: Admin Panel E2E Flows", () => {
     // 5. Loop through unverified challenge questions and verify them
     const cards = page.locator('article[id^="q-card-"]');
     const count = await cards.count();
-    expect(count).toBe(3); // 1 synonym, 1 spelling, 1 definition
+    expect(count).toBe(4); // 1 synonym, 1 antonym, 1 spelling, 1 definition
 
     for (let i = 0; i < count; i++) {
       const card = cards.nth(i);
