@@ -10,6 +10,7 @@ import { createResultRoute } from "./routes/result.ts";
 import { createSeedVerificationRoute } from "./routes/seed_verification.ts";
 import { createStage1Route } from "./routes/stage1.ts";
 import { createStage2Route } from "./routes/stage2.ts";
+import { createStage3Route } from "./routes/stage3.ts";
 import { createAdminRoute } from "./routes/admin/index.ts";
 import { createConsentRoute } from "./routes/consent.ts";
 import { legalRoute } from "./routes/legal.ts";
@@ -51,6 +52,7 @@ export function createApp(services: Services = defaultServices) {
   app.route("/consent", createConsentRoute(services));
   app.route("/stage/1", createStage1Route(services));
   app.route("/stage/2", createStage2Route(services));
+  app.route("/stage/3", createStage3Route(services));
   app.route("/result", createResultRoute(services));
   app.route("/admin", createAdminRoute(services));
 
