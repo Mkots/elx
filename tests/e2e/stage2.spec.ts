@@ -62,12 +62,14 @@ test("VER-STAGE2-E2E: stage 2 advances one htmx card at a time", async ({ page }
   await page.getByRole("button", { name: /next/i }).click();
 
   await expect(page).toHaveURL(/\/stage\/2/);
-  const firstWord = await page.locator(".word-value").textContent();
+  const firstWordId = await page.locator('input[name="wordId"]').inputValue();
   await page.getByRole("button", { name: /^know$/i }).click();
 
   await expect(page).toHaveURL(/\/stage\/2/);
   await expect(page.locator(".stage-progress")).toHaveText("Word 2 of 2");
-  await expect(page.locator(".word-value")).not.toHaveText(firstWord ?? "");
+  await expect(page.locator('input[name="wordId"]')).not.toHaveValue(
+    firstWordId,
+  );
 });
 
 test("VER-STAGE2-E2E: stage 2 result page shows score and truthfulness", async ({ page }) => {
