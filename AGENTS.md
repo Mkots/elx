@@ -180,6 +180,8 @@ Reusable workflows — invoke instead of re-deriving them:
 - `local-e2e` — run/debug the Playwright suite locally from scratch
 - `db-migration` — schema-change workflow (schema.ts → generate → migrate →
   test)
+- `sara-requirements` — maintain SARA docs and traceability when behavior,
+  architecture, or verification coverage changes
 
 ## Sessions (PostgreSQL)
 
