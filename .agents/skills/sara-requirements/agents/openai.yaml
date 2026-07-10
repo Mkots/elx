@@ -1,0 +1,4 @@
+interface:
+  display_name: "SARA Requirements"
+  short_description: "Maintain SARA traceability docs"
+  default_prompt: "Use $sara-requirements to update requirements and traceability after this change."
