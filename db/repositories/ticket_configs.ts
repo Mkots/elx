@@ -15,6 +15,7 @@ export interface TicketConfigData {
   realCount: number;
   pseudoCount: number;
   synonymsCount: number;
+  antonymsCount: number;
   spellingCount: number;
   definitionCount: number;
   randomizeOrder: boolean;
@@ -25,6 +26,7 @@ export interface DatabaseWordStats {
   totalPseudo: number;
   diffCounts: Record<number, number>;
   realSynonyms: number;
+  realAntonyms: number;
   realDefinitions: number;
 }
 
@@ -65,6 +67,7 @@ export async function getActiveConfig(): Promise<TicketConfig> {
       realCount: 30,
       pseudoCount: 15,
       synonymsCount: 5,
+      antonymsCount: 5,
       spellingCount: 5,
       definitionCount: 5,
       randomizeOrder: true,
@@ -137,6 +140,16 @@ export async function getDatabaseWordStats(): Promise<DatabaseWordStats> {
     );
   const realSynonyms = synonymsResult[0]?.count ?? 0;
 
+  const antonymsResult = await db
+    .select({
+      count: sql<number>`count(${words.id})::integer`,
+    })
+    .from(words)
+    .where(
+      sql`is_real = true AND (antonyms IS NOT NULL AND cardinality(antonyms) > 0)`,
+    );
+  const realAntonyms = antonymsResult[0]?.count ?? 0;
+
   const definitionResult = await db
     .select({
       count: sql<number>`count(${words.id})::integer`,
@@ -152,6 +165,7 @@ export async function getDatabaseWordStats(): Promise<DatabaseWordStats> {
     totalPseudo,
     diffCounts,
     realSynonyms,
+    realAntonyms,
     realDefinitions,
   };
 }

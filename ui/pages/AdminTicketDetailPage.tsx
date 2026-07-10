@@ -199,6 +199,8 @@ export function AdminTicketDetailPage({
                         class={`badge badge-${
                           q.type === "synonym"
                             ? "primary"
+                            : q.type === "antonym"
+                            ? "info"
                             : q.type === "spelling"
                             ? "warning"
                             : "secondary"
@@ -209,7 +211,9 @@ export function AdminTicketDetailPage({
                       <span>
                         Target word:{" "}
                         <strong>
-                          {q.type === "synonym" ? q.promptText : cq.correctText}
+                          {q.type === "synonym" || q.type === "antonym"
+                            ? q.promptText
+                            : cq.correctText}
                         </strong>
                       </span>
                     </div>
@@ -242,6 +246,30 @@ export function AdminTicketDetailPage({
                         </div>
                         <div class="form-group">
                           <label class="admin-label">Correct Synonym</label>
+                          <input
+                            type="text"
+                            name="correctText"
+                            value={q.correctText}
+                            required
+                            class="m-0"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {q.type === "antonym" && (
+                      <div class="grid mb-10">
+                        <div class="form-group">
+                          <label class="admin-label">Prompt Word</label>
+                          <input
+                            type="text"
+                            value={q.promptText}
+                            disabled
+                            class="m-0"
+                          />
+                        </div>
+                        <div class="form-group">
+                          <label class="admin-label">Correct Antonym</label>
                           <input
                             type="text"
                             name="correctText"

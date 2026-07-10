@@ -34,6 +34,7 @@ export function registerTicketConfigRoutes(route: Hono, services: Services) {
     const pseudoCount = Number(body.pseudoCount ?? 0);
 
     const synonymsCount = Number(body.synonymsCount ?? 0);
+    const antonymsCount = Number(body.antonymsCount ?? 0);
     const spellingCount = Number(body.spellingCount ?? 0);
     const definitionCount = Number(body.definitionCount ?? 0);
 
@@ -50,6 +51,7 @@ export function registerTicketConfigRoutes(route: Hono, services: Services) {
       realCount,
       pseudoCount,
       synonymsCount,
+      antonymsCount,
       spellingCount,
       definitionCount,
       randomizeOrder,
@@ -64,7 +66,7 @@ export function registerTicketConfigRoutes(route: Hono, services: Services) {
         difficulty1Count < 0 || difficulty2Count < 0 || difficulty3Count < 0 ||
         difficulty4Count < 0 || difficulty5Count < 0 ||
         realCount < 0 || pseudoCount < 0 || synonymsCount < 0 ||
-        spellingCount < 0 || definitionCount < 0
+        antonymsCount < 0 || spellingCount < 0 || definitionCount < 0
       ) {
         throw new Error("Counts cannot be negative");
       }
@@ -128,6 +130,11 @@ export function registerTicketConfigRoutes(route: Hono, services: Services) {
       if (synonymsCount > stats.realSynonyms) {
         throw new Error(
           `Requested synonyms challenge count (${synonymsCount}) exceeds available real words with synonyms (${stats.realSynonyms})`,
+        );
+      }
+      if (antonymsCount > stats.realAntonyms) {
+        throw new Error(
+          `Requested antonyms challenge count (${antonymsCount}) exceeds available real words with antonyms (${stats.realAntonyms})`,
         );
       }
       if (definitionCount > stats.realDefinitions) {

@@ -1,12 +1,12 @@
 import { Hono } from "@hono/hono";
 import { analyticsEvent, analyticsProps, safeJson } from "../analytics.ts";
 import type { Ticket } from "../db/repositories/tickets.ts";
-import type { SynonymSnapshotQuestion } from "../db/schema.ts";
 import { setSessionCookie, type Stage3Answers } from "../session.ts";
 import {
-  type EligibleSynonymQuestion,
-  getEligibleSynonymQuestions,
-  validateSynonymAnswer,
+  type ChallengeChoiceQuestion,
+  type EligibleChallengeQuestion,
+  getEligibleChallengeQuestions,
+  validateChallengeAnswer,
 } from "../domain/stage3_eligibility.ts";
 import { Stage3Card, Stage3Page } from "../ui/pages/Stage3Page.tsx";
 import type { Services } from "../db/services.ts";
@@ -31,7 +31,7 @@ function mulberry32(seed: number) {
 // the shuffle is seeded from the question's own index rather than randomized
 // per-request.
 function shuffledOptions(
-  question: SynonymSnapshotQuestion,
+  question: ChallengeChoiceQuestion,
   seed: number,
 ): string[] {
   const options = [question.correctText, ...question.distractors];
@@ -47,15 +47,15 @@ async function loadEligibleQuestions(
   services: Services,
   sessionId: string,
   ticket: Ticket,
-): Promise<EligibleSynonymQuestion[]> {
+): Promise<EligibleChallengeQuestion[]> {
   const stage2KnownAnswers = await services.sessions.loadStage2Answers(
     sessionId,
   );
-  return getEligibleSynonymQuestions(ticket.questions, stage2KnownAnswers);
+  return getEligibleChallengeQuestions(ticket.questions, stage2KnownAnswers);
 }
 
 function getNextEligibleIndex(
-  eligible: EligibleSynonymQuestion[],
+  eligible: EligibleChallengeQuestion[],
   answers: Stage3Answers,
 ): number {
   return eligible.findIndex((item) =>
@@ -136,7 +136,10 @@ export function createStage3Route(services: Services) {
       return context.text("Invalid Stage 3 answer", 400);
     }
 
-    const validation = validateSynonymAnswer(current.question, submittedAnswer);
+    const validation = validateChallengeAnswer(
+      current.question,
+      submittedAnswer,
+    );
     if (!validation.valid) {
       return context.text("Invalid Stage 3 answer", 400);
     }
@@ -144,6 +147,7 @@ export function createStage3Route(services: Services) {
     await services.sessions.saveStage3Answer(
       sessionId,
       current.questionIndex,
+      current.question.type,
       submittedAnswer,
       validation.isCorrect,
     );

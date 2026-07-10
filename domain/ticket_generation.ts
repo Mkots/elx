@@ -10,6 +10,7 @@ export interface TicketGenerationConfig {
   realCount: number;
   pseudoCount: number;
   synonymsCount: number;
+  antonymsCount: number;
   spellingCount: number;
   definitionCount: number;
 }
@@ -19,6 +20,7 @@ export interface WordPoolEntry {
   isReal: boolean;
   difficulty: number;
   synonyms: string[];
+  antonyms: string[];
   definition: string | null;
 }
 
@@ -46,13 +48,15 @@ function shuffle<T>(array: T[], random: () => number): T[] {
 
 function richnessScore(word: WordPoolEntry): number {
   return (word.synonyms.length > 0 ? 1 : 0) +
+    (word.antonyms.length > 0 ? 1 : 0) +
     (word.definition && word.definition.trim() !== "" ? 1 : 0);
 }
 
 /**
- * Picks `count` words, favoring ones with synonyms/definitions so the
- * aggregate selection across all difficulties reliably has enough candidates
- * for the synonym/definition challenge questions. Ties are broken randomly.
+ * Picks `count` words, favoring ones with synonyms/antonyms/definitions so
+ * the aggregate selection across all difficulties reliably has enough
+ * candidates for the synonym/antonym/definition challenge questions. Ties
+ * are broken randomly.
  */
 function selectPreferringRichWords(
   pool: WordPoolEntry[],
@@ -193,6 +197,14 @@ export function buildQuestions(
     );
   }
 
+  const antCandidates = selectedReal.filter((w) => w.antonyms.length > 0);
+  if (antCandidates.length < config.antonymsCount) {
+    throw new Error(
+      `Not enough real words with antonyms: need ${config.antonymsCount}, ` +
+        `have ${antCandidates.length}.`,
+    );
+  }
+
   const defCandidates = selectedReal.filter((w) =>
     w.definition && w.definition.trim() !== ""
   );
@@ -213,6 +225,10 @@ export function buildQuestions(
   const synonymWords = shuffle(synCandidates, random).slice(
     0,
     config.synonymsCount,
+  );
+  const antonymWords = shuffle(antCandidates, random).slice(
+    0,
+    config.antonymsCount,
   );
   const definitionWords = shuffle(defCandidates, random).slice(
     0,
@@ -266,6 +282,17 @@ export function buildQuestions(
       promptText: w.value,
       correctText: correctSynonym,
       distractors: pickDistractors(correctSynonym, [w.value]),
+      verified: false,
+    });
+  }
+
+  for (const w of antonymWords) {
+    const correctAntonym = w.antonyms[0] ?? "";
+    questions.push({
+      type: "antonym",
+      promptText: w.value,
+      correctText: correctAntonym,
+      distractors: pickDistractors(correctAntonym, [w.value]),
       verified: false,
     });
   }

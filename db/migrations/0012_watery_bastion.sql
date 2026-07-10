@@ -1,0 +1,1 @@
+ALTER TABLE "ticket_configs" ADD COLUMN "antonyms_count" integer DEFAULT 10 NOT NULL;

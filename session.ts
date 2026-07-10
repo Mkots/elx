@@ -262,6 +262,7 @@ export async function loadStage3Answers(
 export async function saveStage3Answer(
   sessionId: string,
   questionIndex: number,
+  questionType: "synonym" | "antonym",
   answer: string,
   isCorrect: boolean,
 ): Promise<void> {
@@ -269,7 +270,7 @@ export async function saveStage3Answer(
   await db.insert(testAnswers).values({
     sessionId,
     questionIndex,
-    questionType: "synonym",
+    questionType,
     stage: 3,
     answer,
     isCorrect,

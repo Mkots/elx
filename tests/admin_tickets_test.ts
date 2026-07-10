@@ -4,6 +4,7 @@ import * as ticketsRepo from "../db/repositories/tickets.ts";
 import { db } from "../db/client.ts";
 import { ticketConfigs, tickets } from "../db/schema.ts";
 import type {
+  AntonymSnapshotQuestion,
   SnapshotQuestion,
   SynonymSnapshotQuestion,
   tickets as ticketsTable,
@@ -50,6 +51,13 @@ let mockTicketsList: (typeof ticketsTable.$inferSelect)[] = [
         type: "synonym",
         promptText: "hello",
         correctText: "hi",
+        distractors: [],
+        verified: false,
+      },
+      {
+        type: "antonym",
+        promptText: "hello",
+        correctText: "goodbye",
         distractors: [],
         verified: false,
       },
@@ -270,6 +278,31 @@ Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/edit-question/:inde
   assertEquals(q.distractors.length, 3);
 });
 
+Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/edit-question/:index updates an antonym question", async () => {
+  const sessionId = await createAdminSession();
+  const form = new URLSearchParams();
+  form.append("correctText", "farewell");
+  form.append("distractors[0]", "dist1");
+  form.append("distractors[1]", "dist2");
+  form.append("distractors[2]", "dist3");
+
+  const response = await app.request("/admin/tickets/1/edit-question/2", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
+    },
+    body: form.toString(),
+  });
+
+  assertEquals(response.status, 302);
+  const q = mockTicketsList[0].questions[2] as AntonymSnapshotQuestion;
+  assertEquals(q.correctText, "farewell");
+  assertEquals(q.verified, true);
+  assertEquals(q.distractors.length, 3);
+});
+
 Deno.test("VER-ADMIN-TICKETS-ROUTES: POST /admin/tickets/:id/publish updates status", async () => {
   const sessionId = await createAdminSession();
   const response = await app.request("/admin/tickets/1/publish", {
@@ -363,6 +396,7 @@ Deno.test({
           realCount: 6,
           pseudoCount: 4,
           synonymsCount: 1,
+          antonymsCount: 1,
           spellingCount: 1,
           definitionCount: 1,
           randomizeOrder: true,
@@ -397,25 +431,29 @@ Deno.test({
       );
       assertEquals(pseudos.length, 4);
 
-      // Should have 3 challenge questions (1 synonym, 1 spelling, 1 definition)
+      // Should have 4 challenge questions (1 synonym, 1 antonym, 1 spelling, 1 definition)
       const challenges = ticket.questions.filter((q) =>
         q.type !== "verification"
       );
-      assertEquals(challenges.length, 3);
+      assertEquals(challenges.length, 4);
 
       const synonymCount = challenges.filter((q) =>
         q.type === "synonym"
       ).length;
       assertEquals(synonymCount, 1);
 
+      const antonymCount = challenges.filter((q) =>
+        q.type === "antonym"
+      ).length;
+      assertEquals(antonymCount, 1);
+
       const spellingCount = challenges.filter((q) =>
         q.type === "spelling"
       ).length;
       assertEquals(spellingCount, 1);
 
-      const definitionCount = challenges.filter((q) =>
-        q.type === "definition"
-      ).length;
+      const definitionCount =
+        challenges.filter((q) => q.type === "definition").length;
       assertEquals(definitionCount, 1);
 
       // 2. Try to publish base ticket immediately -> should throw error (guardrail check)
@@ -479,6 +517,14 @@ Deno.test({
             type: "synonym",
             promptText: q.promptText,
             correctText: q.correctText || "correct-syn",
+            distractors: ["d1", "d2", "d3"],
+            verified: true,
+          };
+        } else if (q.type === "antonym") {
+          updatedQ = {
+            type: "antonym",
+            promptText: q.promptText,
+            correctText: q.correctText || "correct-ant",
             distractors: ["d1", "d2", "d3"],
             verified: true,
           };
@@ -563,6 +609,7 @@ Deno.test({
           realCount: 100_000,
           pseudoCount: 0,
           synonymsCount: 0,
+          antonymsCount: 0,
           spellingCount: 0,
           definitionCount: 0,
           randomizeOrder: true,

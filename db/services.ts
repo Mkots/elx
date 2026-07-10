@@ -51,12 +51,14 @@ export const defaultSessionsService = {
   async saveStage3Answer(
     sessionId: string,
     questionIndex: number,
+    questionType: "synonym" | "antonym",
     answer: string,
     isCorrect: boolean,
   ) {
     await sessionHelpers.saveStage3Answer(
       sessionId,
       questionIndex,
+      questionType,
       answer,
       isCorrect,
     );
