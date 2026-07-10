@@ -177,6 +177,19 @@ export function registerTicketsRoutes(route: Hono, services: Services) {
           distractors,
           verified: true,
         };
+      } else if (currentQuestion.type === "antonym") {
+        const correctText = typeof body.correctText === "string"
+          ? body.correctText.trim()
+          : "";
+        if (!correctText) throw new Error("Correct antonym is required");
+
+        updatedQuestion = {
+          type: "antonym",
+          promptText: currentQuestion.promptText,
+          correctText,
+          distractors,
+          verified: true,
+        };
       } else if (currentQuestion.type === "spelling") {
         const contextSentence = typeof body.contextSentence === "string"
           ? body.contextSentence.trim()

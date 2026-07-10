@@ -311,8 +311,8 @@ Deno.test({
     try {
       await db.insert(testSessions).values({ id: sessionId });
 
-      await saveStage3Answer(sessionId, 1, "fruit", true);
-      await saveStage3Answer(sessionId, 2, "a", false);
+      await saveStage3Answer(sessionId, 1, "synonym", "fruit", true);
+      await saveStage3Answer(sessionId, 2, "antonym", "a", false);
 
       const firstLoad = await loadStage3Answers(sessionId);
       assertEquals(firstLoad, {
@@ -320,7 +320,7 @@ Deno.test({
         "2": { answer: "a", isCorrect: false },
       });
 
-      await saveStage3Answer(sessionId, 1, "a", false);
+      await saveStage3Answer(sessionId, 1, "synonym", "a", false);
       const secondLoad = await loadStage3Answers(sessionId);
       assertEquals(secondLoad["1"], { answer: "a", isCorrect: false });
 
@@ -337,7 +337,11 @@ Deno.test({
         .where(
           and(eq(testAnswers.sessionId, sessionId), eq(testAnswers.stage, 3)),
         );
-      assertEquals(rows.every((row) => row.questionType === "synonym"), true);
+      const questionTypes = rows.map((row) => row.questionType).sort((
+        a,
+        b,
+      ) => a.localeCompare(b));
+      assertEquals(questionTypes, ["antonym", "synonym"]);
     } finally {
       await db.delete(testSessions).where(eq(testSessions.id, sessionId));
     }
@@ -358,9 +362,9 @@ Deno.test({
         correctCount: 0,
       });
 
-      await saveStage3Answer(sessionId, 0, "fruit", true);
-      await saveStage3Answer(sessionId, 1, "a", false);
-      await saveStage3Answer(sessionId, 2, "seat", true);
+      await saveStage3Answer(sessionId, 0, "synonym", "fruit", true);
+      await saveStage3Answer(sessionId, 1, "antonym", "a", false);
+      await saveStage3Answer(sessionId, 2, "synonym", "seat", true);
 
       assertEquals(await loadStage3Summary(sessionId), {
         answeredCount: 3,

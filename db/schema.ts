@@ -13,6 +13,7 @@ import {
 export type QuestionType =
   | "verification"
   | "synonym"
+  | "antonym"
   | "spelling"
   | "definition";
 
@@ -31,6 +32,14 @@ export interface VerificationSnapshotQuestion extends BaseSnapshotQuestion {
 
 export interface SynonymSnapshotQuestion extends BaseSnapshotQuestion {
   type: "synonym";
+  promptText: string;
+  correctText: string;
+  distractors: string[];
+  verified?: boolean;
+}
+
+export interface AntonymSnapshotQuestion extends BaseSnapshotQuestion {
+  type: "antonym";
   promptText: string;
   correctText: string;
   distractors: string[];
@@ -56,6 +65,7 @@ export interface DefinitionSnapshotQuestion extends BaseSnapshotQuestion {
 export type SnapshotQuestion =
   | VerificationSnapshotQuestion
   | SynonymSnapshotQuestion
+  | AntonymSnapshotQuestion
   | SpellingSnapshotQuestion
   | DefinitionSnapshotQuestion;
 
@@ -139,6 +149,7 @@ export const ticketConfigs = pgTable("ticket_configs", {
   realCount: integer("real_count").notNull().default(40),
   pseudoCount: integer("pseudo_count").notNull().default(20),
   synonymsCount: integer("synonyms_count").notNull().default(10),
+  antonymsCount: integer("antonyms_count").notNull().default(10),
   spellingCount: integer("spelling_count").notNull().default(10),
   definitionCount: integer("definition_count").notNull().default(10),
   randomizeOrder: boolean("randomize_order").notNull().default(true),

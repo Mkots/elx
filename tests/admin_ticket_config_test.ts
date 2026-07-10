@@ -19,6 +19,7 @@ let mockConfig: typeof ticketConfigs.$inferSelect = {
   realCount: 30,
   pseudoCount: 15,
   synonymsCount: 5,
+  antonymsCount: 5,
   spellingCount: 5,
   definitionCount: 5,
   randomizeOrder: true,
@@ -31,6 +32,7 @@ const mockStats: DatabaseWordStats = {
   totalPseudo: 50,
   diffCounts: { 1: 30, 2: 30, 3: 30, 4: 30, 5: 30 },
   realSynonyms: 20,
+  realAntonyms: 15,
   realDefinitions: 25,
 };
 
@@ -133,6 +135,7 @@ Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit updates confi
   validForm.append("realCount", "35");
   validForm.append("pseudoCount", "15");
   validForm.append("synonymsCount", "5");
+  validForm.append("antonymsCount", "5");
   validForm.append("spellingCount", "5");
   validForm.append("definitionCount", "5");
   validForm.append("randomizeOrder", "on");
@@ -150,7 +153,43 @@ Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit updates confi
   assertEquals(response.status, 302);
   assertEquals(mockConfig.name, "Updated Preset");
   assertEquals(mockConfig.realCount, 35);
+  assertEquals(mockConfig.antonymsCount, 5);
   assertEquals(mockConfig.randomizeOrder, true);
+});
+
+Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit validates antonymsCount exceeds available real words with antonyms", async () => {
+  const sessionId = await createAdminSession();
+
+  const invalidForm = new URLSearchParams();
+  invalidForm.append("name", "Too Many Antonyms Config");
+  invalidForm.append("difficulty1Count", "10");
+  invalidForm.append("difficulty2Count", "10");
+  invalidForm.append("difficulty3Count", "10");
+  invalidForm.append("difficulty4Count", "10");
+  invalidForm.append("difficulty5Count", "10");
+  invalidForm.append("realCount", "35");
+  invalidForm.append("pseudoCount", "15");
+  invalidForm.append("synonymsCount", "5");
+  invalidForm.append("antonymsCount", "50"); // stats say only 15 real words have antonyms
+  invalidForm.append("spellingCount", "5");
+  invalidForm.append("definitionCount", "5");
+
+  const response = await app.request("/admin/ticket-config/edit", {
+    method: "POST",
+    headers: {
+      "Cookie": `admin_session=${sessionId}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Origin": "http://localhost",
+    },
+    body: invalidForm.toString(),
+  });
+
+  const body = await response.text();
+  assertEquals(response.status, 200);
+  assertStringIncludes(
+    body,
+    "Requested antonyms challenge count (50) exceeds available real words with antonyms (15)",
+  );
 });
 
 Deno.test("VER-ADMIN-TICKET-CONFIG: POST /admin/ticket-config/edit validates mismatch in total counts", async () => {

@@ -4,7 +4,7 @@ import { ResultPage } from "../ui/pages/ResultPage.tsx";
 import type { Services } from "../db/services.ts";
 import { requireTestSession } from "./test_session.ts";
 import { getCEFRLevel } from "../scoring/lextale.ts";
-import { getEligibleSynonymQuestions } from "../domain/stage3_eligibility.ts";
+import { getEligibleChallengeQuestions } from "../domain/stage3_eligibility.ts";
 import type { Ticket } from "../db/repositories/tickets.ts";
 
 async function loadStage3ChallengeAvailable(
@@ -15,7 +15,7 @@ async function loadStage3ChallengeAvailable(
   const stage2KnownAnswers = await services.sessions.loadStage2Answers(
     sessionId,
   );
-  const eligible = getEligibleSynonymQuestions(
+  const eligible = getEligibleChallengeQuestions(
     ticket.questions,
     stage2KnownAnswers,
   );

@@ -30,6 +30,7 @@ function makeConfig(
     realCount: 3,
     pseudoCount: 1,
     synonymsCount: 1,
+    antonymsCount: 1,
     spellingCount: 1,
     definitionCount: 1,
     ...overrides,
@@ -43,6 +44,7 @@ function makePool(): WordPoolEntry[] {
       isReal: true,
       difficulty: 1,
       synonyms: ["fruit"],
+      antonyms: ["nothing"],
       definition: "a round fruit",
     },
     {
@@ -50,6 +52,7 @@ function makePool(): WordPoolEntry[] {
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -57,6 +60,7 @@ function makePool(): WordPoolEntry[] {
       isReal: true,
       difficulty: 2,
       synonyms: ["fruit"],
+      antonyms: ["nothing"],
       definition: "a small red fruit",
     },
     {
@@ -64,6 +68,7 @@ function makePool(): WordPoolEntry[] {
       isReal: true,
       difficulty: 2,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -71,6 +76,7 @@ function makePool(): WordPoolEntry[] {
       isReal: false,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -78,6 +84,7 @@ function makePool(): WordPoolEntry[] {
       isReal: false,
       difficulty: 2,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
   ];
@@ -100,8 +107,16 @@ Deno.test("VER-TICKET-GENERATION: happy path builds verification and challenge q
   assertEquals(pseudos.length, 1);
 
   assertEquals(questions.filter((q) => q.type === "synonym").length, 1);
+  assertEquals(questions.filter((q) => q.type === "antonym").length, 1);
   assertEquals(questions.filter((q) => q.type === "definition").length, 1);
   assertEquals(questions.filter((q) => q.type === "spelling").length, 1);
+
+  const antonymQuestion = questions.find((q) => q.type === "antonym");
+  assertEquals(antonymQuestion !== undefined, true);
+  if (antonymQuestion?.type === "antonym") {
+    assertEquals(antonymQuestion.correctText, "nothing");
+    assertEquals(Array.isArray(antonymQuestion.distractors), true);
+  }
 });
 
 Deno.test("VER-TICKET-GENERATION: same seed produces an identical ticket", () => {
@@ -146,6 +161,17 @@ Deno.test("VER-TICKET-GENERATION: throws when not enough real words have synonym
   );
 });
 
+Deno.test("VER-TICKET-GENERATION: throws when not enough real words have antonyms", () => {
+  const config = makeConfig({ antonymsCount: 5 });
+  const pool = makePool();
+
+  assertThrows(
+    () => buildQuestions(config, pool, getRng(1)),
+    Error,
+    "antonyms",
+  );
+});
+
 Deno.test("VER-TICKET-GENERATION: throws when not enough real words have definitions", () => {
   const config = makeConfig({ definitionCount: 5 });
   const pool = makePool();
@@ -172,6 +198,7 @@ Deno.test("VER-TICKET-GENERATION: findSimilarWord finds the closest word excludi
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -179,6 +206,7 @@ Deno.test("VER-TICKET-GENERATION: findSimilarWord finds the closest word excludi
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -186,6 +214,7 @@ Deno.test("VER-TICKET-GENERATION: findSimilarWord finds the closest word excludi
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -193,6 +222,7 @@ Deno.test("VER-TICKET-GENERATION: findSimilarWord finds the closest word excludi
       isReal: true,
       difficulty: 2,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
   ];
@@ -252,6 +282,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
     realCount: 2,
     pseudoCount: 1,
     synonymsCount: 0,
+    antonymsCount: 0,
     spellingCount: 0,
     definitionCount: 0,
   });
@@ -262,6 +293,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -269,6 +301,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
       isReal: true,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
     {
@@ -276,6 +309,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
       isReal: false,
       difficulty: 1,
       synonyms: [],
+      antonyms: [],
       definition: null,
     },
   ];
@@ -307,6 +341,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
         isReal: true,
         difficulty: 1,
         synonyms: [],
+        antonyms: [],
         definition: null,
       },
       {
@@ -314,6 +349,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
         isReal: true,
         difficulty: 1,
         synonyms: [],
+        antonyms: [],
         definition: null,
       },
       {
@@ -321,6 +357,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
         isReal: false,
         difficulty: 1,
         synonyms: [],
+        antonyms: [],
         definition: null,
       },
     ];
@@ -355,6 +392,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
       realCount: 2,
       pseudoCount: 0,
       synonymsCount: 0,
+      antonymsCount: 0,
       spellingCount: 0,
       definitionCount: 0,
     });
@@ -364,6 +402,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
         isReal: true,
         difficulty: 1,
         synonyms: [],
+        antonyms: [],
         definition: null,
       },
       {
@@ -371,6 +410,7 @@ Deno.test("VER-TICKET-GENERATION: similar words for real words can be pseudoword
         isReal: true,
         difficulty: 1,
         synonyms: [],
+        antonyms: [],
         definition: null,
       },
     ];

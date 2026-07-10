@@ -13,6 +13,7 @@ export interface TicketConfigData {
   realCount: number;
   pseudoCount: number;
   synonymsCount: number;
+  antonymsCount: number;
   spellingCount: number;
   definitionCount: number;
   randomizeOrder: boolean;
@@ -23,6 +24,7 @@ export interface DatabaseWordStats {
   totalPseudo: number;
   diffCounts: Record<number, number>; // difficulty -> count
   realSynonyms: number; // real words that have synonyms
+  realAntonyms: number; // real words that have antonyms
   realDefinitions: number; // real words that have a definition
 }
 
@@ -74,6 +76,7 @@ export const databaseAdminTicketConfigLoader: AdminTicketConfigLoader = {
         realCount: 30,
         pseudoCount: 15,
         synonymsCount: 5,
+        antonymsCount: 5,
         spellingCount: 5,
         definitionCount: 5,
         randomizeOrder: true,
@@ -147,6 +150,17 @@ export const databaseAdminTicketConfigLoader: AdminTicketConfigLoader = {
       );
     const realSynonyms = synonymsResult[0]?.count ?? 0;
 
+    // Query real words with antonyms
+    const antonymsResult = await db
+      .select({
+        count: sql<number>`count(${words.id})::integer`,
+      })
+      .from(words)
+      .where(
+        sql`is_real = true AND (antonyms IS NOT NULL AND cardinality(antonyms) > 0)`,
+      );
+    const realAntonyms = antonymsResult[0]?.count ?? 0;
+
     // Query real words with definition
     const definitionResult = await db
       .select({
@@ -163,6 +177,7 @@ export const databaseAdminTicketConfigLoader: AdminTicketConfigLoader = {
       totalPseudo,
       diffCounts,
       realSynonyms,
+      realAntonyms,
       realDefinitions,
     };
   },

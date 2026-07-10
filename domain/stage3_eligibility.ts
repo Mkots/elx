@@ -1,11 +1,16 @@
 import type {
+  AntonymSnapshotQuestion,
   SnapshotQuestion,
   SynonymSnapshotQuestion,
 } from "../db/schema.ts";
 
-export interface EligibleSynonymQuestion {
+export type ChallengeChoiceQuestion =
+  | SynonymSnapshotQuestion
+  | AntonymSnapshotQuestion;
+
+export interface EligibleChallengeQuestion {
   questionIndex: number;
-  question: SynonymSnapshotQuestion;
+  question: ChallengeChoiceQuestion;
 }
 
 /**
@@ -32,15 +37,15 @@ function collectKnownWordTexts(
   return knownWords;
 }
 
-export function getEligibleSynonymQuestions(
+export function getEligibleChallengeQuestions(
   questions: SnapshotQuestion[],
   stage2KnownAnswers: Record<string, boolean>,
-): EligibleSynonymQuestion[] {
+): EligibleChallengeQuestion[] {
   const knownWords = collectKnownWordTexts(questions, stage2KnownAnswers);
 
-  const eligible: EligibleSynonymQuestion[] = [];
+  const eligible: EligibleChallengeQuestion[] = [];
   questions.forEach((question, index) => {
-    if (question.type !== "synonym") return;
+    if (question.type !== "synonym" && question.type !== "antonym") return;
     if (!question.verified) return;
     if (!knownWords.has(question.promptText)) return;
     eligible.push({ questionIndex: index, question });
@@ -53,8 +58,8 @@ export type Stage3AnswerValidation =
   | { valid: true; isCorrect: boolean }
   | { valid: false };
 
-export function validateSynonymAnswer(
-  question: SynonymSnapshotQuestion,
+export function validateChallengeAnswer(
+  question: ChallengeChoiceQuestion,
   submittedAnswer: string,
 ): Stage3AnswerValidation {
   const options = [question.correctText, ...question.distractors];

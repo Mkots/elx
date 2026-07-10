@@ -12,9 +12,48 @@ Deno.test("VER-TICKET-PUBLISH: a fully verified ticket has no problems", () => {
       distractors: ["a", "b", "c"],
       verified: true,
     },
+    {
+      type: "antonym",
+      promptText: "apple",
+      correctText: "nothing",
+      distractors: ["a", "b", "c"],
+      verified: true,
+    },
   ];
 
   assertEquals(validateForPublish({ questions }), []);
+});
+
+Deno.test("VER-TICKET-PUBLISH: an unverified antonym question is reported like any other challenge type", () => {
+  const questions: SnapshotQuestion[] = [
+    { type: "verification", wordText: "apple", isReal: true, difficulty: 1 },
+    {
+      type: "antonym",
+      promptText: "apple",
+      correctText: "",
+      distractors: [],
+      verified: false,
+    },
+  ];
+
+  const problems = validateForPublish({ questions });
+
+  assertEquals(
+    problems.some((p) => p.includes("Question #1") && p.includes("unverified")),
+    true,
+  );
+  assertEquals(
+    problems.some((p) =>
+      p.includes("Question #1") && p.includes("no correct text")
+    ),
+    true,
+  );
+  assertEquals(
+    problems.some((p) =>
+      p.includes("Question #1") && p.includes("exactly 3 distractors")
+    ),
+    true,
+  );
 });
 
 Deno.test("VER-TICKET-PUBLISH: lists every problem across every unverified question at once", () => {

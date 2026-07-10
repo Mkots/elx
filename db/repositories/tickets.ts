@@ -27,6 +27,7 @@ const DEFAULT_TICKET_CONFIG: TicketGenerationConfig & { name: string } = {
   realCount: 30,
   pseudoCount: 15,
   synonymsCount: 5,
+  antonymsCount: 5,
   spellingCount: 5,
   definitionCount: 5,
 };
@@ -90,6 +91,7 @@ export async function generateBaseTicket(
       isReal: words.isReal,
       difficulty: words.difficulty,
       synonyms: words.synonyms,
+      antonyms: words.antonyms,
       definition: words.definition,
       bankVersion: words.bankVersion,
     })

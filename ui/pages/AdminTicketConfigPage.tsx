@@ -11,6 +11,7 @@ type TicketConfigData = {
   realCount: number;
   pseudoCount: number;
   synonymsCount: number;
+  antonymsCount: number;
   spellingCount: number;
   definitionCount: number;
   randomizeOrder: boolean;
@@ -21,6 +22,7 @@ type DatabaseWordStats = {
   totalPseudo: number;
   diffCounts: Record<number, number>;
   realSynonyms: number;
+  realAntonyms: number;
   realDefinitions: number;
 };
 
@@ -192,6 +194,20 @@ export function AdminTicketConfigPage({
                   />
                 </div>
                 <div class="form-group">
+                  <label for="antonymsCount" class="admin-label">
+                    Antonyms
+                  </label>
+                  <input
+                    type="number"
+                    id="antonymsCount"
+                    name="antonymsCount"
+                    min="0"
+                    value={String(config.antonymsCount)}
+                    required
+                    class="m-0"
+                  />
+                </div>
+                <div class="form-group">
                   <label for="spellingCount" class="admin-label">
                     Spelling
                   </label>
@@ -293,6 +309,10 @@ export function AdminTicketConfigPage({
                 <tr>
                   <td>Real Words w/ Synonyms</td>
                   <td>{stats.realSynonyms}</td>
+                </tr>
+                <tr>
+                  <td>Real Words w/ Antonyms</td>
+                  <td>{stats.realAntonyms}</td>
                 </tr>
                 <tr>
                   <td>Real Words w/ Definitions</td>
