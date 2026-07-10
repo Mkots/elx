@@ -1,5 +1,6 @@
 import { Layout } from "../components/Layout.tsx";
 import type { AnalyticsProps } from "../../analytics.ts";
+import type { Stage3Summary } from "../../session.ts";
 
 type ResultPageProps = {
   analytics?: AnalyticsProps;
@@ -7,6 +8,8 @@ type ResultPageProps = {
   truthfulness: number;
   vocabularySize?: number | null;
   cefrLevel?: string;
+  stage3ChallengeAvailable?: boolean;
+  stage3Summary?: Stage3Summary;
 };
 
 function confidenceLabel(truthfulness: number) {
@@ -16,8 +19,15 @@ function confidenceLabel(truthfulness: number) {
 }
 
 export function ResultPage(
-  { analytics, score, truthfulness, vocabularySize, cefrLevel }:
-    ResultPageProps,
+  {
+    analytics,
+    score,
+    truthfulness,
+    vocabularySize,
+    cefrLevel,
+    stage3ChallengeAvailable,
+    stage3Summary,
+  }: ResultPageProps,
 ) {
   return (
     <Layout analytics={analytics} title="ELX – Results">
@@ -71,6 +81,29 @@ export function ResultPage(
             </span>
           </div>
         </div>
+
+        {stage3Summary && (
+          <div class="result-stage3-summary" data-testid="stage3-summary">
+            <span class="result-label">Stage 3: Synonym Challenge</span>
+            <p>
+              You answered <strong>{stage3Summary.answeredCount}</strong>{" "}
+              Stage 3 question{stage3Summary.answeredCount === 1 ? "" : "s"},
+              {" "}
+              <strong>{stage3Summary.correctCount}</strong> correct.
+            </p>
+          </div>
+        )}
+
+        {stage3ChallengeAvailable && (
+          <a
+            class="result-stage3-cta"
+            href="/stage/3"
+            role="button"
+            data-testid="stage3-cta"
+          >
+            Start Synonym Challenge
+          </a>
+        )}
 
         <a class="result-restart-btn" href="/stage/1" role="button">
           Start Over
