@@ -1,4 +1,4 @@
-FROM denoland/deno:debian-2.9.3
+FROM denoland/deno:debian-2.9.5
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
 
